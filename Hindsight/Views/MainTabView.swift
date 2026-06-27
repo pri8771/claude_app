@@ -37,6 +37,8 @@ struct MainTabView: View {
                 .tag(Tab.settings)
         }
         .tint(HindsightTheme.Colors.accent)
+        // Tab switch (moment #12) — very subtle selection feedback.
+        .haptics(.selection, trigger: selectedTab)
         // Deep-link target for onboarding's "Start First Decision" path.
         .sheet(isPresented: $router.presentNewDecision) {
             NewDecisionWizard()

@@ -46,12 +46,7 @@ struct HButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: {
-            #if canImport(UIKit)
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            #endif
-            action()
-        }) {
+        Button(action: action) {
             HStack(spacing: HindsightTheme.Spacing.sm) {
                 if let icon { Image(systemName: icon) }
                 Text(title)
@@ -181,9 +176,7 @@ struct HSlider: View {
                             let newValue = range.lowerBound + Int((newFraction * span).rounded())
                             if newValue != value {
                                 value = min(max(range.lowerBound, newValue), range.upperBound)
-                                #if canImport(UIKit)
-                                UISelectionFeedbackGenerator().selectionChanged()
-                                #endif
+                                HapticsManager.shared.selectionChanged()
                             }
                         }
                 )
@@ -243,9 +236,7 @@ struct HStarRating: View {
                     .onTapGesture {
                         guard isEditable else { return }
                         rating = index
-                        #if canImport(UIKit)
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        #endif
+                        HapticsManager.shared.selectionChanged()
                     }
             }
         }

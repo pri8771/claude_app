@@ -25,9 +25,12 @@ struct HindsightApp: App {
         } catch {
             fatalError("Failed to create the SwiftData container: \(error)")
         }
-        // Default review reminders to ON so the very first decision schedules
-        // a reminder before the user ever visits Settings.
-        UserDefaults.standard.register(defaults: [AppStorageKeys.reviewReminders: true])
+        // Default review reminders + haptics to ON so they work before the
+        // user ever visits Settings.
+        UserDefaults.standard.register(defaults: [
+            AppStorageKeys.reviewReminders: true,
+            AppStorageKeys.hapticsEnabled: true
+        ])
         Appearance.configure()
     }
 

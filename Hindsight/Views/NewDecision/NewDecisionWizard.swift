@@ -87,11 +87,13 @@ struct NewDecisionWizard: View {
         HStack(spacing: HindsightTheme.Spacing.md) {
             if step > 0 {
                 HButton(title: "Back", icon: "chevron.left", style: .secondary, fullWidth: false) {
+                    HapticsManager.shared.stepReversed()
                     withAnimation { step -= 1 }
                 }
             }
             if step < totalSteps - 1 {
                 HButton(title: "Next", icon: "chevron.right", isEnabled: currentStepValid) {
+                    HapticsManager.shared.stepAdvanced()
                     withAnimation { step += 1 }
                 }
             } else {
@@ -127,9 +129,7 @@ struct NewDecisionWizard: View {
         try? context.save()
         notificationManager.scheduleReviewReminder(for: decision)
 
-        #if canImport(UIKit)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        #endif
+        HapticsManager.shared.decisionSealed()
         dismiss()
     }
 }

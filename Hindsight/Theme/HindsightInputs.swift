@@ -100,9 +100,7 @@ struct HStepper: View {
                 ForEach(range, id: \.self) { i in
                     Button {
                         value = i
-                        #if canImport(UIKit)
-                        UISelectionFeedbackGenerator().selectionChanged()
-                        #endif
+                        HapticsManager.shared.selectionChanged()
                     } label: {
                         Text("\(i)")
                             .font(HindsightTheme.Typography.subheadline)

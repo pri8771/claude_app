@@ -55,9 +55,7 @@ struct TodayView: View {
                 .refreshable {
                     // SwiftData @Query updates automatically; this just gives
                     // the pull-to-refresh affordance a satisfying beat.
-                    #if canImport(UIKit)
-                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                    #endif
+                    HapticsManager.shared.play(.soft)
                     try? await Task.sleep(nanoseconds: 350_000_000)
                 }
 
@@ -154,9 +152,7 @@ struct TodayView: View {
 
     private var floatingAddButton: some View {
         Button {
-            #if canImport(UIKit)
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            #endif
+            HapticsManager.shared.play(.medium)
             showNewDecision = true
         } label: {
             Image(systemName: "plus")

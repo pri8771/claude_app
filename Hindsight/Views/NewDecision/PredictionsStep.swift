@@ -47,9 +47,7 @@ struct PredictionsStep: View {
                 if draft.predictions.count < maxPredictions {
                     Button {
                         withAnimation { draft.predictions.append(PredictionDraft()) }
-                        #if canImport(UIKit)
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        #endif
+                        HapticsManager.shared.itemAdded()
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -79,6 +77,7 @@ struct PredictionsStep: View {
 
     private func remove(_ prediction: PredictionDraft) {
         withAnimation { draft.predictions.removeAll { $0.id == prediction.id } }
+        HapticsManager.shared.itemRemoved()
     }
 }
 

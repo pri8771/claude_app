@@ -18,4 +18,6 @@ enum AppStorageKeys {
     static let hasLaunchedBefore = "hasLaunchedBefore"
     /// Whether the first-run onboarding flow has been completed.
     static let hasCompletedOnboarding = "hasCompletedOnboarding"
+    /// Whether haptic feedback is enabled.
+    static let hapticsEnabled = "hapticsEnabled"
 }

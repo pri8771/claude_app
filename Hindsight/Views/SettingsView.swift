@@ -19,6 +19,7 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.userName) private var userName = "Priyansh"
     @AppStorage(AppStorageKeys.reviewReminders) private var reviewReminders = true
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
+    @AppStorage(AppStorageKeys.hapticsEnabled) private var hapticsEnabled = true
 
     @State private var shareURL: ShareItem?
     @State private var showClearConfirm = false
@@ -34,6 +35,7 @@ struct SettingsView: View {
                         privacyCard
                         profileSection
                         notificationSection
+                        hapticsSection
                         dataSection
                         helpSection
                         dangerSection
@@ -172,6 +174,31 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: Haptics
+
+    private var hapticsSection: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HSectionHeader(title: "Feedback", systemImage: "hand.tap.fill")
+            HCard {
+                Toggle(isOn: $hapticsEnabled) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Haptic Feedback")
+                            .font(HindsightTheme.Typography.headline)
+                            .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                        Text("Subtle taps as you capture, resolve and review.")
+                            .font(HindsightTheme.Typography.caption)
+                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    }
+                }
+                .tint(HindsightTheme.Colors.accent)
+                .onChange(of: hapticsEnabled) { _, enabled in
+                    // Give immediate confirmation when switching on.
+                    if enabled { HapticsManager.shared.selectionChanged() }
+                }
+            }
+        }
+    }
+
     // MARK: Help
 
     private var helpSection: some View {
@@ -274,9 +301,7 @@ struct SettingsView: View {
         notificationManager.cancelAll()
         for decision in decisions { context.delete(decision) }
         try? context.save()
-        #if canImport(UIKit)
-        UINotificationFeedbackGenerator().notificationOccurred(.warning)
-        #endif
+        HapticsManager.shared.deleteConfirmed()
     }
 
     private func openSystemSettings() {

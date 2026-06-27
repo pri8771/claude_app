@@ -49,7 +49,10 @@ struct DecisionDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     if decision.status == .active {
-                        Button { markDecided() } label: { Label("Mark as decided", systemImage: "checkmark.circle") }
+                        Button {
+                            HapticsManager.shared.optionCommitted()
+                            markDecided()
+                        } label: { Label("Mark as decided", systemImage: "checkmark.circle") }
                     }
                     if decision.status != .reviewed {
                         Button { showOutcomeReview = true } label: { Label("Write outcome review", systemImage: "square.and.pencil") }
@@ -287,9 +290,7 @@ struct DecisionDetailView: View {
             markDecided()
         }
         try? context.save()
-        #if canImport(UIKit)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        #endif
+        HapticsManager.shared.optionCommitted()
     }
 
     private func markDecided() {
@@ -300,6 +301,7 @@ struct DecisionDetailView: View {
     }
 
     private func deleteDecision() {
+        HapticsManager.shared.deleteConfirmed()
         notificationManager.cancelReminder(for: decision)
         context.delete(decision)
         try? context.save()

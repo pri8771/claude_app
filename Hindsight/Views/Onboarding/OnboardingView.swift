@@ -120,6 +120,8 @@ struct OnboardingView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .animation(.easeInOut, value: page)
+        // Onboarding page swipe / advance (moment #10).
+        .haptics(.light, trigger: page)
     }
 
     // MARK: Bottom bar (dots + Continue)
@@ -141,8 +143,8 @@ struct OnboardingView: View {
     // MARK: Actions
 
     private func advance() {
+        // Page-change haptic is fired by `.haptics(.light, trigger: page)`.
         withAnimation(.easeInOut) { page = min(page + 1, pageCount - 1) }
-        haptic(.light)
     }
 
     private func goBack() {
@@ -155,25 +157,9 @@ struct OnboardingView: View {
         case .sampleData:    SampleData.insertIfEmpty(into: context)
         case .empty:         break
         }
-        notificationSuccess()
+        HapticsManager.shared.onboardingCompleted()
         withAnimation(.easeInOut(duration: 0.35)) { hasCompletedOnboarding = true }
     }
-
-    // MARK: Haptics
-
-    private func haptic(_ style: HapticStyle) {
-        #if canImport(UIKit)
-        UIImpactFeedbackGenerator(style: style == .light ? .light : .medium).impactOccurred()
-        #endif
-    }
-
-    private func notificationSuccess() {
-        #if canImport(UIKit)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        #endif
-    }
-
-    private enum HapticStyle { case light, medium }
 }
 
 // MARK: - Cinematic background
@@ -225,9 +211,8 @@ struct OnboardingButton: View {
 
     var body: some View {
         Button {
-            #if canImport(UIKit)
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            #endif
+            // Haptics for onboarding are handled centrally: page changes via
+            // `.haptics(trigger: page)`, completion via `onboardingCompleted()`.
             action()
         } label: {
             HStack(spacing: HindsightTheme.Spacing.sm) {

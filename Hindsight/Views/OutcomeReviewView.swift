@@ -29,6 +29,7 @@ struct OutcomeReviewView: View {
     @State private var mainLesson = ""
     @State private var predictionVerdicts: [UUID: PredictionStatus] = [:]
     @State private var predictionResults: [UUID: String] = [:]
+    @State private var showValidationHint = false
 
     var body: some View {
         NavigationStack {
@@ -79,6 +80,12 @@ struct OutcomeReviewView: View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
             HSectionHeader(title: "What actually happened?", systemImage: "text.bubble.fill")
             HTextEditor(text: $whatHappened, placeholder: "Describe how it turned out…")
+            if showValidationHint {
+                Label("Add a line about what happened before saving.", systemImage: "exclamationmark.circle.fill")
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.amber)
+                    .transition(.opacity)
+            }
         }
     }
 
@@ -181,6 +188,13 @@ struct OutcomeReviewView: View {
     }
 
     private func save() {
+        // Gentle validation: a review should at least say what happened.
+        guard !whatHappened.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            withAnimation { showValidationHint = true }
+            HapticsManager.shared.validationWarning()
+            return
+        }
+
         let review = decision.outcomeReview ?? OutcomeReview()
         review.whatHappened = whatHappened
         review.outcomeQuality = outcomeQuality
@@ -206,9 +220,7 @@ struct OutcomeReviewView: View {
         notificationManager.cancelReminder(for: decision)
         try? context.save()
 
-        #if canImport(UIKit)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        #endif
+        HapticsManager.shared.outcomeReviewed()
         dismiss()
     }
 }
@@ -242,9 +254,11 @@ private struct PredictionVerdictRow: View {
                     ForEach(options) { status in
                         Button {
                             verdict = status
-                            #if canImport(UIKit)
-                            UISelectionFeedbackGenerator().selectionChanged()
-                            #endif
+                            switch status {
+                            case .correct:   HapticsManager.shared.predictionResolvedCorrect()
+                            case .incorrect: HapticsManager.shared.predictionResolvedIncorrect()
+                            default:         HapticsManager.shared.selectionChanged()
+                            }
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: status.icon).font(.system(size: 11, weight: .bold))

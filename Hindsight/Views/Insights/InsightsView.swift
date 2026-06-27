@@ -249,6 +249,9 @@ struct InsightsView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        HapticsManager.shared.selectionChanged()
+                    })
                 }
             }
             .navigationDestination(for: Decision.self) { DecisionDetailView(decision: $0) }

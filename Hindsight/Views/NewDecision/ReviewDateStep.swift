@@ -69,9 +69,7 @@ struct ReviewDateStep: View {
                                 let date = Calendar.current.date(byAdding: .day, value: preset.days, to: Date()) ?? Date()
                                 Button {
                                     draft.reviewDate = date
-                                    #if canImport(UIKit)
-                                    UISelectionFeedbackGenerator().selectionChanged()
-                                    #endif
+                                    HapticsManager.shared.selectionChanged()
                                 } label: {
                                     Text(preset.label)
                                         .font(HindsightTheme.Typography.subheadline)

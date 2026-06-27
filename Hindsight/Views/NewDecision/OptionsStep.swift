@@ -40,9 +40,7 @@ struct OptionsStep: View {
                 if draft.options.count < maxOptions {
                     Button {
                         withAnimation { draft.options.append(OptionDraft()) }
-                        #if canImport(UIKit)
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        #endif
+                        HapticsManager.shared.itemAdded()
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -72,6 +70,7 @@ struct OptionsStep: View {
 
     private func remove(_ option: OptionDraft) {
         withAnimation { draft.options.removeAll { $0.id == option.id } }
+        HapticsManager.shared.itemRemoved()
     }
 }
 

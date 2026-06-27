@@ -105,9 +105,7 @@ private struct CategoryButton: View {
     var body: some View {
         Button(action: {
             action()
-            #if canImport(UIKit)
-            UISelectionFeedbackGenerator().selectionChanged()
-            #endif
+            HapticsManager.shared.selectionChanged()
         }) {
             HStack(spacing: HindsightTheme.Spacing.sm) {
                 Image(systemName: category.icon)
@@ -141,9 +139,7 @@ private struct StakesRow: View {
     var body: some View {
         Button(action: {
             action()
-            #if canImport(UIKit)
-            UISelectionFeedbackGenerator().selectionChanged()
-            #endif
+            HapticsManager.shared.selectionChanged()
         }) {
             HStack(spacing: HindsightTheme.Spacing.md) {
                 Image(systemName: level.icon)
