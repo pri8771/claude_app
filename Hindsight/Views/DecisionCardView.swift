@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct DecisionCardView: View {
     let decision: Decision
