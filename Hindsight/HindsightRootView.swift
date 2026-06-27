@@ -22,6 +22,8 @@ struct HindsightRootView: View {
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @StateObject private var router = AppRouter()
 
+    @State private var showSplash = true
+
     var body: some View {
         ZStack {
             if hasCompletedOnboarding {
@@ -34,6 +36,18 @@ struct HindsightRootView: View {
         }
         .environmentObject(router)
         .animation(.easeInOut(duration: 0.35), value: hasCompletedOnboarding)
+        // Branded launch animation that fades into the app.
+        .overlay {
+            if showSplash {
+                SplashView()
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
+        }
+        .task {
+            try? await Task.sleep(nanoseconds: 1_300_000_000)
+            withAnimation(.easeInOut(duration: 0.45)) { showSplash = false }
+        }
     }
 }
 
