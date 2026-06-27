@@ -1,0 +1,33 @@
+# Xcode / Swift
+## User settings
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+## Build products
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## CocoaPods / Carthage (not used, but ignored just in case)
+Pods/
+Carthage/Build/
+
+## Misc
+*.swp
+*~
