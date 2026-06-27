@@ -16,4 +16,6 @@ enum AppStorageKeys {
     static let didRequestNotifications = "didRequestNotifications"
     /// Whether the user has completed first-run setup.
     static let hasLaunchedBefore = "hasLaunchedBefore"
+    /// Whether the first-run onboarding flow has been completed.
+    static let hasCompletedOnboarding = "hasCompletedOnboarding"
 }

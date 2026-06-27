@@ -33,7 +33,7 @@ struct HindsightApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HindsightRootView()
                 .environmentObject(notificationManager)
                 .tint(HindsightTheme.Colors.accent)
                 .preferredColorScheme(.dark)

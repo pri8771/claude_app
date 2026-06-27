@@ -18,6 +18,7 @@ struct SettingsView: View {
 
     @AppStorage(AppStorageKeys.userName) private var userName = "Priyansh"
     @AppStorage(AppStorageKeys.reviewReminders) private var reviewReminders = true
+    @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
 
     @State private var shareURL: ShareItem?
     @State private var showClearConfirm = false
@@ -34,6 +35,7 @@ struct SettingsView: View {
                         profileSection
                         notificationSection
                         dataSection
+                        helpSection
                         dangerSection
                         aboutSection
                         Color.clear.frame(height: 24)
@@ -165,6 +167,21 @@ struct SettingsView: View {
                                 title: "Load sample data", subtitle: "Populate the app to explore") {
                         SampleData.insert(into: context)
                     }
+                }
+            }
+        }
+    }
+
+    // MARK: Help
+
+    private var helpSection: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HSectionHeader(title: "Help", systemImage: "questionmark.circle.fill")
+            HCard {
+                settingsRow(icon: "sparkles", tint: HindsightTheme.Colors.amber,
+                            title: "Show Onboarding Again",
+                            subtitle: "Replay the intro — your data is kept") {
+                    hasCompletedOnboarding = false
                 }
             }
         }

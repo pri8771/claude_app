@@ -128,6 +128,17 @@ enum SampleData {
         try? context.save()
     }
 
+    /// Inserts the sample decisions only if the store is currently empty,
+    /// so onboarding's "Explore Sample Data" path never creates duplicates.
+    @MainActor
+    @discardableResult
+    static func insertIfEmpty(into context: ModelContext) -> Bool {
+        let existing = (try? context.fetchCount(FetchDescriptor<Decision>())) ?? 0
+        guard existing == 0 else { return false }
+        insert(into: context)
+        return true
+    }
+
     /// Returns an in-memory model container pre-populated for previews.
     @MainActor
     static var previewContainer: ModelContainer = {
