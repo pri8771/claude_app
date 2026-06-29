@@ -64,11 +64,12 @@ enum Statistics {
         return Double(reviews.reduce(0) { $0 + $1.outcomeQuality }) / Double(reviews.count)
     }
 
-    /// Average stated confidence across every prediction (0–100).
+    /// Average stated confidence across every prediction (0–100), rounded.
     static func averageConfidence(_ decisions: [Decision]) -> Int {
         let predictions = decisions.flatMap { $0.predictions }
         guard !predictions.isEmpty else { return 0 }
-        return predictions.reduce(0) { $0 + $1.probabilityPercent } / predictions.count
+        let total = predictions.reduce(0) { $0 + $1.probabilityPercent }
+        return Int((Double(total) / Double(predictions.count)).rounded())
     }
 
     // MARK: Prediction accuracy
@@ -125,9 +126,10 @@ enum Statistics {
             )]
         }
 
-        // Stakes vs decision quality.
-        let highStakes = reviewed.filter { $0.stakesLevel.weight >= 3 }
-        let lowStakes  = reviewed.filter { $0.stakesLevel.weight < 3 }
+        // Stakes vs decision quality. "High" = at or above the High level.
+        let highStakesThreshold = StakesLevel.high.weight
+        let highStakes = reviewed.filter { $0.stakesLevel.weight >= highStakesThreshold }
+        let lowStakes  = reviewed.filter { $0.stakesLevel.weight < highStakesThreshold }
         if !highStakes.isEmpty && !lowStakes.isEmpty {
             let highAvg = avgDecisionQuality(highStakes)
             let lowAvg  = avgDecisionQuality(lowStakes)

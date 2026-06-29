@@ -9,22 +9,44 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import os
 
 @main
 struct HindsightApp: App {
-    @StateObject private var notificationManager = NotificationManager.shared
+    // The notification manager is a process-lifetime singleton; we hold a
+    // plain reference and inject it, rather than letting @StateObject imply
+    // SwiftUI owns its lifecycle.
+    private let notificationManager = NotificationManager.shared
 
-    /// One shared, on-disk SwiftData container for the whole app.
+    /// One shared SwiftData container for the whole app.
     let modelContainer: ModelContainer
+    /// True when the on-disk store couldn't be opened and we fell back to an
+    /// in-memory store (so the app stays usable and can warn the user).
+    let usingFallbackStore: Bool
 
     init() {
-        do {
-            modelContainer = try ModelContainer(
-                for: Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self
-            )
-        } catch {
-            fatalError("Failed to create the SwiftData container: \(error)")
+        let models: [any PersistentModel.Type] = [
+            Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self
+        ]
+        let schema = Schema(models)
+        let log = Logger(subsystem: "com.hindsight.app", category: "storage")
+
+        if let container = try? ModelContainer(for: schema) {
+            modelContainer = container
+            usingFallbackStore = false
+        } else {
+            // On-disk store failed (e.g. an incompatible migration). Rather
+            // than crash, fall back to an in-memory store so the app launches
+            // and the user keeps access to the UI.
+            log.error("On-disk store unavailable; falling back to in-memory store.")
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            guard let fallback = try? ModelContainer(for: schema, configurations: [config]) else {
+                fatalError("Failed to create even an in-memory SwiftData container.")
+            }
+            modelContainer = fallback
+            usingFallbackStore = true
         }
+
         // Default review reminders + haptics to ON so they work before the
         // user ever visits Settings.
         UserDefaults.standard.register(defaults: [
@@ -36,7 +58,7 @@ struct HindsightApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HindsightRootView()
+            HindsightRootView(usingFallbackStore: usingFallbackStore)
                 .environmentObject(notificationManager)
                 .tint(HindsightTheme.Colors.accent)
                 .preferredColorScheme(.dark)

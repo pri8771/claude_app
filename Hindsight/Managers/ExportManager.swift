@@ -87,7 +87,7 @@ enum ExportManager {
                     status: decision.status.rawValue,
                     isReversible: decision.isReversible,
                     clarityScore: decision.clarityScore,
-                    chosenOptionTitle: decision.chosenOptionTitle,
+                    chosenOptionTitle: decision.chosenOptionDisplayTitle,
                     createdAt: decision.createdAt,
                     dueDate: decision.dueDate,
                     options: decision.options.map {
@@ -113,6 +113,7 @@ enum ExportManager {
 
     /// Writes the journal to a temporary JSON file and returns its URL.
     static func exportJSON(_ decisions: [Decision]) throws -> URL {
+        cleanUpPreviousExports()
         let export = makeExport(from: decisions)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
@@ -129,7 +130,8 @@ enum ExportManager {
 
     /// Renders a simple paginated PDF report and returns its URL.
     static func exportPDF(_ decisions: [Decision]) throws -> URL {
-        let pageSize = CGSize(width: 612, height: 792) // US Letter @ 72dpi
+        cleanUpPreviousExports()
+        let pageSize = pdfPageSize
         let margin: CGFloat = 48
         let contentWidth = pageSize.width - margin * 2
 
@@ -203,7 +205,7 @@ enum ExportManager {
                 if !decision.options.isEmpty {
                     draw("Options considered", font: .systemFont(ofSize: 12, weight: .semibold), spacingAfter: 4)
                     for opt in decision.options {
-                        let chosen = (opt.title == decision.chosenOptionTitle) ? " ✓ chosen" : ""
+                        let chosen = decision.isChosen(opt) ? " ✓ chosen" : ""
                         draw("• \(opt.title)\(chosen)", font: .systemFont(ofSize: 11, weight: .medium))
                         if !opt.upside.isEmpty { draw("   + \(opt.upside)", font: .systemFont(ofSize: 10), color: .darkGray, spacingAfter: 2) }
                         if !opt.downside.isEmpty { draw("   – \(opt.downside)", font: .systemFont(ofSize: 10), color: .darkGray, spacingAfter: 2) }
@@ -241,5 +243,28 @@ enum ExportManager {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd-HHmm"
         return formatter.string(from: Date())
+    }
+
+    /// Page size at 72dpi, locale-aware: US Letter where it's standard,
+    /// A4 everywhere else.
+    private static var pdfPageSize: CGSize {
+        let usLetterRegions: Set<String> = ["US", "CA", "MX", "PH", "CL", "CO", "VE", "PR"]
+        let region = Locale.current.region?.identifier ?? "US"
+        return usLetterRegions.contains(region)
+            ? CGSize(width: 612, height: 792)   // US Letter
+            : CGSize(width: 595, height: 842)   // A4
+    }
+
+    /// Removes any export files left in the temp directory from prior shares,
+    /// so repeated exports don't accumulate.
+    private static func cleanUpPreviousExports() {
+        let fm = FileManager.default
+        let tmp = fm.temporaryDirectory
+        guard let contents = try? fm.contentsOfDirectory(
+            at: tmp, includingPropertiesForKeys: nil
+        ) else { return }
+        for url in contents where url.lastPathComponent.hasPrefix("Hindsight-Journal-") {
+            try? fm.removeItem(at: url)
+        }
     }
 }

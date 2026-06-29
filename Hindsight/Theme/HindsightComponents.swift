@@ -183,6 +183,18 @@ struct HSlider: View {
             }
             .frame(height: thumbSize)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Confidence")
+        .accessibilityValue("\(value) percent, \(confidenceLabel)")
+        .accessibilityAdjustableAction { direction in
+            let step = 5
+            switch direction {
+            case .increment: value = min(range.upperBound, value + step)
+            case .decrement: value = max(range.lowerBound, value - step)
+            @unknown default: break
+            }
+            HapticsManager.shared.selectionChanged()
+        }
     }
 
     private var confidenceLabel: String {
@@ -240,6 +252,18 @@ struct HStarRating: View {
                     }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Rating")
+        .accessibilityValue("\(rating) of \(max)")
+        .accessibilityAdjustableAction { direction in
+            guard isEditable else { return }
+            switch direction {
+            case .increment: rating = Swift.min(max, rating + 1)
+            case .decrement: rating = Swift.max(0, rating - 1)
+            @unknown default: break
+            }
+            HapticsManager.shared.selectionChanged()
+        }
     }
 }
 
@@ -283,6 +307,9 @@ struct HProgressRing: View {
             }
         }
         .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel([label, caption].compactMap { $0 }.joined(separator: " "))
+        .accessibilityValue("\(Int((Swift.max(0, Swift.min(1, progress)) * 100).rounded())) percent")
     }
 }
 

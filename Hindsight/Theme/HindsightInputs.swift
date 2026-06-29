@@ -113,5 +113,16 @@ struct HStepper: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue("\(value) of \(range.upperBound)")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: value = Swift.min(range.upperBound, value + 1)
+            case .decrement: value = Swift.max(range.lowerBound, value - 1)
+            @unknown default: break
+            }
+            HapticsManager.shared.selectionChanged()
+        }
     }
 }

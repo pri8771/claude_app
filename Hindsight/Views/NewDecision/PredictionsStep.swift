@@ -104,6 +104,7 @@ private struct PredictionEditorCard: View {
                                 .font(.system(size: 13))
                                 .foregroundStyle(HindsightTheme.Colors.accent)
                         }
+                        .accessibilityLabel("Remove prediction \(index + 1)")
                     }
                 }
 

@@ -29,7 +29,10 @@ final class Decision {
     /// 0–100 completeness score calculated when the decision is saved.
     var clarityScore: Int = 0
 
-    /// The option the user ultimately committed to (if any).
+    /// The option the user ultimately committed to (if any). The ID is the
+    /// source of truth; the title is kept in sync for export readability and
+    /// as a fallback for older records created before IDs were tracked.
+    var chosenOptionID: UUID?
     var chosenOptionTitle: String?
 
     var createdAt: Date = Date()
@@ -57,6 +60,7 @@ final class Decision {
         status: DecisionStatus = .active,
         isReversible: Bool = true,
         clarityScore: Int = 0,
+        chosenOptionID: UUID? = nil,
         chosenOptionTitle: String? = nil,
         createdAt: Date = Date(),
         decidedAt: Date? = nil,
@@ -71,6 +75,7 @@ final class Decision {
         self.status = status
         self.isReversible = isReversible
         self.clarityScore = clarityScore
+        self.chosenOptionID = chosenOptionID
         self.chosenOptionTitle = chosenOptionTitle
         self.createdAt = createdAt
         self.decidedAt = decidedAt
@@ -86,20 +91,35 @@ final class Decision {
 
 extension Decision {
 
-    /// True once the review date has passed and no outcome has been logged.
+    /// True once the review date has reached/passed and no outcome has been
+    /// logged. This is the single source of truth for "reality has arrived".
     var isPastDue: Bool {
-        status != .reviewed && dueDate < Date()
-    }
-
-    /// Surfaced in the "Needs Review" section on the home screen.
-    var needsReview: Bool {
         status != .reviewed && dueDate <= Date()
     }
 
-    /// The option flagged as chosen, resolved against the stored title.
+    /// Surfaced in the "Needs Review" section on the home screen. Identical
+    /// to `isPastDue` — kept as a named alias for readability at call sites.
+    var needsReview: Bool { isPastDue }
+
+    /// The option flagged as chosen, resolved by stable ID first and falling
+    /// back to a title match for records created before IDs were tracked.
     var chosenOption: DecisionOption? {
+        if let chosenOptionID, let match = options.first(where: { $0.id == chosenOptionID }) {
+            return match
+        }
         guard let chosenOptionTitle else { return nil }
         return options.first { $0.title == chosenOptionTitle }
+    }
+
+    /// Whether the given option is the one the user committed to.
+    func isChosen(_ option: DecisionOption) -> Bool {
+        if let chosenOptionID { return option.id == chosenOptionID }
+        return chosenOptionTitle != nil && option.title == chosenOptionTitle
+    }
+
+    /// The chosen option's title for display, regardless of how it was stored.
+    var chosenOptionDisplayTitle: String? {
+        chosenOption?.title ?? chosenOptionTitle
     }
 
     /// Sorted predictions (pending first, then by due date).
@@ -111,11 +131,11 @@ extension Decision {
         }
     }
 
-    /// Average stated confidence across all predictions (0–100).
+    /// Average stated confidence across all predictions (0–100), rounded.
     var averageConfidence: Int {
         guard !predictions.isEmpty else { return 0 }
         let total = predictions.reduce(0) { $0 + $1.probabilityPercent }
-        return total / predictions.count
+        return Int((Double(total) / Double(predictions.count)).rounded())
     }
 
     /// Whether the most recent outcome was a "win" (good result, would repeat).

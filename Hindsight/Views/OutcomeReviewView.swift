@@ -27,9 +27,11 @@ struct OutcomeReviewView: View {
     @State private var wouldDoAgain = true
     @State private var whatSurprised = ""
     @State private var mainLesson = ""
+    // Absent key = not yet graded by the user. We never assume a verdict.
     @State private var predictionVerdicts: [UUID: PredictionStatus] = [:]
     @State private var predictionResults: [UUID: String] = [:]
     @State private var showValidationHint = false
+    @State private var saveFailed = false
 
     var body: some View {
         NavigationStack {
@@ -59,6 +61,11 @@ struct OutcomeReviewView: View {
                 }
             }
             .onAppear(perform: seedExistingReview)
+            .alert("Couldn't save", isPresented: $saveFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Something went wrong saving your review. Please try again.")
+            }
         }
         .preferredColorScheme(.dark)
     }
@@ -157,7 +164,7 @@ struct OutcomeReviewView: View {
                     PredictionVerdictRow(
                         prediction: prediction,
                         verdict: Binding(
-                            get: { predictionVerdicts[prediction.id] ?? .correct },
+                            get: { predictionVerdicts[prediction.id] },
                             set: { predictionVerdicts[prediction.id] = $0 }
                         ),
                         result: Binding(
@@ -182,7 +189,11 @@ struct OutcomeReviewView: View {
             mainLesson = review.mainLesson
         }
         for prediction in decision.predictions {
-            predictionVerdicts[prediction.id] = prediction.status == .pending ? .correct : prediction.status
+            // Only pre-select a verdict that was actually recorded before;
+            // a still-pending prediction starts ungraded.
+            if prediction.status != .pending {
+                predictionVerdicts[prediction.id] = prediction.status
+            }
             predictionResults[prediction.id] = prediction.actualResult ?? ""
         }
     }
@@ -211,14 +222,23 @@ struct OutcomeReviewView: View {
         }
 
         for prediction in decision.predictions {
-            prediction.status = predictionVerdicts[prediction.id] ?? .correct
+            // Only record a verdict the user explicitly chose; ungraded
+            // predictions keep their current status (so accuracy stays honest).
+            if let verdict = predictionVerdicts[prediction.id] {
+                prediction.status = verdict
+            }
             let result = predictionResults[prediction.id]?.trimmingCharacters(in: .whitespacesAndNewlines)
             prediction.actualResult = (result?.isEmpty == false) ? result : nil
         }
 
         decision.status = .reviewed
+
+        guard context.saveChanges() else {
+            HapticsManager.shared.validationWarning()
+            saveFailed = true
+            return
+        }
         notificationManager.cancelReminder(for: decision)
-        try? context.save()
 
         HapticsManager.shared.outcomeReviewed()
         dismiss()
@@ -229,7 +249,8 @@ struct OutcomeReviewView: View {
 
 private struct PredictionVerdictRow: View {
     let prediction: Prediction
-    @Binding var verdict: PredictionStatus
+    /// `nil` means the user hasn't graded this prediction yet.
+    @Binding var verdict: PredictionStatus?
     @Binding var result: String
 
     private let options: [PredictionStatus] = [.correct, .partial, .incorrect]
@@ -271,7 +292,14 @@ private struct PredictionVerdictRow: View {
                             .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityAddTraits(verdict == status ? [.isSelected] : [])
                     }
+                }
+
+                if verdict == nil {
+                    Text("Tap how this prediction turned out.")
+                        .font(HindsightTheme.Typography.caption2)
+                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
                 }
 
                 HTextField(text: $result, placeholder: "What actually happened? (optional)")

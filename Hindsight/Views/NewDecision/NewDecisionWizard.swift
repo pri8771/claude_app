@@ -19,6 +19,7 @@ struct NewDecisionWizard: View {
 
     @State private var draft = DecisionDraft()
     @State private var step = 0
+    @State private var saveFailed = false
 
     private let totalSteps = 4
     private let titles = ["Basics", "Options", "Predictions", "Review"]
@@ -49,6 +50,11 @@ struct NewDecisionWizard: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }.tint(HindsightTheme.Colors.textSecondary)
                 }
+            }
+            .alert("Couldn't save", isPresented: $saveFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Something went wrong saving this decision. Please try again.")
             }
         }
         .interactiveDismissDisabled(!draft.title.isEmpty)
@@ -126,7 +132,12 @@ struct NewDecisionWizard: View {
     private func save() {
         let decision = draft.makeDecision()
         context.insert(decision)
-        try? context.save()
+        guard context.saveChanges() else {
+            context.delete(decision)
+            HapticsManager.shared.validationWarning()
+            saveFailed = true
+            return
+        }
         notificationManager.scheduleReviewReminder(for: decision)
 
         HapticsManager.shared.decisionSealed()

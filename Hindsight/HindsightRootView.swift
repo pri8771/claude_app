@@ -19,10 +19,15 @@ final class AppRouter: ObservableObject {
 }
 
 struct HindsightRootView: View {
+    /// True when the app is running on a temporary in-memory store because
+    /// the persistent store couldn't be opened (see `HindsightApp`).
+    var usingFallbackStore: Bool = false
+
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @StateObject private var router = AppRouter()
 
     @State private var showSplash = true
+    @State private var showStoreWarning = false
 
     var body: some View {
         ZStack {
@@ -44,9 +49,15 @@ struct HindsightRootView: View {
                     .zIndex(1)
             }
         }
+        .alert("Storage unavailable", isPresented: $showStoreWarning) {
+            Button("Continue", role: .cancel) {}
+        } message: {
+            Text("Hindsight couldn't open your saved data, so it's running in temporary mode. Anything you add now won't be saved. Reinstalling the app usually fixes this.")
+        }
         .task {
             try? await Task.sleep(nanoseconds: 1_300_000_000)
             withAnimation(.easeInOut(duration: 0.45)) { showSplash = false }
+            if usingFallbackStore { showStoreWarning = true }
         }
     }
 }

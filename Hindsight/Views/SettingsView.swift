@@ -16,7 +16,7 @@ struct SettingsView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @Query private var decisions: [Decision]
 
-    @AppStorage(AppStorageKeys.userName) private var userName = "Priyansh"
+    @AppStorage(AppStorageKeys.userName) private var userName = ""
     @AppStorage(AppStorageKeys.reviewReminders) private var reviewReminders = true
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @AppStorage(AppStorageKeys.hapticsEnabled) private var hapticsEnabled = true
@@ -24,6 +24,7 @@ struct SettingsView: View {
     @State private var shareURL: ShareItem?
     @State private var showClearConfirm = false
     @State private var exportError: String?
+    @State private var infoMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -55,6 +56,11 @@ struct SettingsView: View {
             )) {
                 Button("OK", role: .cancel) { exportError = nil }
             } message: { Text(exportError ?? "") }
+            .alert("Heads up", isPresented: Binding(
+                get: { infoMessage != nil }, set: { if !$0 { infoMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { infoMessage = nil }
+            } message: { Text(infoMessage ?? "") }
             .confirmationDialog("Delete everything?", isPresented: $showClearConfirm, titleVisibility: .visible) {
                 Button("Delete all data", role: .destructive) { clearAllData() }
                 Button("Cancel", role: .cancel) {}
@@ -167,7 +173,7 @@ struct SettingsView: View {
                     Divider().overlay(HindsightTheme.Colors.border)
                     settingsRow(icon: "wand.and.stars", tint: HindsightTheme.Colors.success,
                                 title: "Load sample data", subtitle: "Populate the app to explore") {
-                        SampleData.insert(into: context)
+                        loadSampleData()
                     }
                 }
             }
@@ -297,10 +303,19 @@ struct SettingsView: View {
         catch { exportError = "Couldn't create the PDF file." }
     }
 
+    private func loadSampleData() {
+        let inserted = SampleData.insertIfEmpty(into: context)
+        if inserted {
+            HapticsManager.shared.selectionChanged()
+        } else {
+            infoMessage = "Sample data only loads into an empty journal. Clear your data first if you want to start fresh."
+        }
+    }
+
     private func clearAllData() {
         notificationManager.cancelAll()
         for decision in decisions { context.delete(decision) }
-        try? context.save()
+        context.saveChanges()
         HapticsManager.shared.deleteConfirmed()
     }
 

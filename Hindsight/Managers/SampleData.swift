@@ -122,10 +122,15 @@ enum SampleData {
             Prediction(title: "I'll still be excited about it in a month", probabilityPercent: 65, dueDate: days(45))
         ]
 
+        // Resolve the chosen-option IDs now that options exist, so the
+        // chosen option is tracked by stable ID (not just title).
         for decision in [job, move, gym, side] {
+            if let title = decision.chosenOptionTitle {
+                decision.chosenOptionID = decision.options.first { $0.title == title }?.id
+            }
             context.insert(decision)
         }
-        try? context.save()
+        context.saveChanges()
     }
 
     /// Inserts the sample decisions only if the store is currently empty,

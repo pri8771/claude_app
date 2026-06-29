@@ -14,8 +14,6 @@ enum AppStorageKeys {
     static let reviewReminders   = "reviewReminders"
     /// Whether the notification-permission prompt has been shown once.
     static let didRequestNotifications = "didRequestNotifications"
-    /// Whether the user has completed first-run setup.
-    static let hasLaunchedBefore = "hasLaunchedBefore"
     /// Whether the first-run onboarding flow has been completed.
     static let hasCompletedOnboarding = "hasCompletedOnboarding"
     /// Whether haptic feedback is enabled.

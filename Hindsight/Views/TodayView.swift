@@ -16,7 +16,7 @@ import UIKit
 struct TodayView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Decision.createdAt, order: .reverse) private var decisions: [Decision]
-    @AppStorage(AppStorageKeys.userName) private var userName = "Priyansh"
+    @AppStorage(AppStorageKeys.userName) private var userName = ""
 
     @State private var showNewDecision = false
     @State private var selectedDecision: Decision?
@@ -73,11 +73,13 @@ struct TodayView: View {
     // MARK: Sections
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(greeting + ",")
+        let trimmedName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasName = !trimmedName.isEmpty
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(hasName ? greeting + "," : "Welcome back")
                 .font(HindsightTheme.Typography.body)
                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
-            Text(userName)
+            Text(hasName ? trimmedName : greeting)
                 .font(HindsightTheme.Typography.largeTitle)
                 .foregroundStyle(HindsightTheme.Colors.textPrimary)
             Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
@@ -164,12 +166,15 @@ struct TodayView: View {
                 .hindsightShadow(HindsightTheme.Shadows.glow)
         }
         .padding(HindsightTheme.Spacing.lg)
+        .accessibilityLabel("New decision")
     }
 
     // MARK: Helpers
 
+    /// Decisions whose review date has arrived and still need grading — this
+    /// matches the "Needs Review" section below the stats strip.
     private var pendingReviewCount: Int {
-        decisions.filter { $0.status != .reviewed }.count
+        decisions.filter { $0.needsReview }.count
     }
 
     private var greeting: String {

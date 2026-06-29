@@ -96,6 +96,7 @@ private struct OptionEditorCard: View {
                                 .font(.system(size: 13))
                                 .foregroundStyle(HindsightTheme.Colors.accent)
                         }
+                        .accessibilityLabel("Remove option \(index + 1)")
                     }
                 }
 

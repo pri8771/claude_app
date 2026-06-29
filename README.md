@@ -49,6 +49,18 @@ Select an iOS 17+ simulator (or device) and press **Run**.
 To explore the app with realistic content, open **Settings → Your Data → Load
 sample data**.
 
+## Running the tests
+
+Unit tests cover the pure logic that drives the app's numbers — the clarity
+score, the analytics in `Statistics`, the `Decision` derived state, and JSON
+export:
+
+```bash
+xcodebuild test -scheme Hindsight -destination 'platform=iOS Simulator,name=iPhone 15'
+```
+
+Or press **⌘U** in Xcode. Tests live in `HindsightTests/`.
+
 ## Design system
 
 The visual language is dark and premium, built on an exact palette:
@@ -70,7 +82,8 @@ and shadows all live in `HindsightTheme`, and the reusable UI primitives
 ```
 Hindsight/
 ├── HindsightApp.swift            # @main entry, SwiftData container, appearance
-├── ContentView.swift             # Root TabView (Today · Decisions · Insights · Settings)
+├── HindsightRootView.swift       # Splash + onboarding gate, root router
+├── Views/MainTabView.swift       # Root TabView (Today · Decisions · Insights · Settings)
 ├── Models/
 │   ├── Decision.swift            # @Model — the core entity
 │   ├── DecisionOption.swift      # @Model — a choice that was weighed
@@ -87,6 +100,7 @@ Hindsight/
 │   ├── ClarityScore.swift        # 0–100 completeness score
 │   ├── Statistics.swift          # Analytics + pattern detection
 │   ├── SampleData.swift          # Preview / demo seed data
+│   ├── ModelContext+Save.swift   # Safe, logged SwiftData saves
 │   └── AppStorageKeys.swift
 └── Views/
     ├── TodayView.swift           # Home: greeting, stats, needs-review, wins, FAB
@@ -98,6 +112,8 @@ Hindsight/
     ├── SettingsView.swift        # Profile, reminders, privacy, export, wipe
     ├── Insights/InsightsView.swift
     └── NewDecision/              # The 4-step wizard + its draft model
+
+HindsightTests/                  # Unit tests (clarity score, statistics, model, export)
 ```
 
 ## Privacy

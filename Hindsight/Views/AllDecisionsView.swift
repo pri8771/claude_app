@@ -63,6 +63,7 @@ struct AllDecisionsView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showNewDecision = true } label: { Image(systemName: "plus") }
                         .tint(HindsightTheme.Colors.accent)
+                        .accessibilityLabel("New decision")
                 }
             }
             .sheet(isPresented: $showNewDecision) { NewDecisionWizard() }

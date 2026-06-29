@@ -6,16 +6,33 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXFileReference section */
+		A100000000000000000000E1 /* Hindsight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hindsight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A100000000000000000000E2 /* HindsightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HindsightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A100000000000000000000B1 /* Hindsight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Hindsight;
 			sourceTree = "<group>";
 		};
+		A100000000000000000000B2 /* HindsightTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = HindsightTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000104 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000204 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -37,6 +54,7 @@
 			isa = PBXGroup;
 			children = (
 				A100000000000000000000E1 /* Hindsight.app */,
+				A100000000000000000000E2 /* HindsightTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,6 +82,27 @@
 			productReference = A100000000000000000000E1 /* Hindsight.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A100000000000000000000F2 /* HindsightTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000201 /* Build configuration list for PBXNativeTarget "HindsightTests" */;
+			buildPhases = (
+				A10000000000000000000203 /* Sources */,
+				A10000000000000000000204 /* Frameworks */,
+				A10000000000000000000205 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A10000000000000000000301 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A100000000000000000000B2 /* HindsightTests */,
+			);
+			name = HindsightTests;
+			productName = HindsightTests;
+			productReference = A100000000000000000000E2 /* HindsightTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -76,6 +115,10 @@
 				TargetAttributes = {
 					A100000000000000000000F1 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					A100000000000000000000F2 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A100000000000000000000F1;
 					};
 				};
 			};
@@ -95,12 +138,20 @@
 			projectRoot = "";
 			targets = (
 				A100000000000000000000F1 /* Hindsight */,
+				A100000000000000000000F2 /* HindsightTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A10000000000000000000105 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000205 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -117,7 +168,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000203 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000301 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A100000000000000000000F1 /* Hindsight */;
+			targetProxy = A10000000000000000000302 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000302 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A100000000000000000000A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A100000000000000000000F1;
+			remoteInfo = Hindsight;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin XCBuildConfiguration section */
 		A10000000000000000000106 /* Debug */ = {
@@ -299,6 +375,42 @@
 			};
 			name = Release;
 		};
+		A10000000000000000000208 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Hindsight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Hindsight";
+			};
+			name = Debug;
+		};
+		A10000000000000000000209 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Hindsight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Hindsight";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -316,6 +428,15 @@
 			buildConfigurations = (
 				A10000000000000000000106 /* Debug */,
 				A10000000000000000000107 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000201 /* Build configuration list for PBXNativeTarget "HindsightTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000208 /* Debug */,
+				A10000000000000000000209 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

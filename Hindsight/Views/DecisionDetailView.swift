@@ -63,6 +63,7 @@ struct DecisionDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle").tint(HindsightTheme.Colors.textPrimary)
                 }
+                .accessibilityLabel("More actions")
             }
         }
         .sheet(isPresented: $showOutcomeReview) {
@@ -111,7 +112,7 @@ struct DecisionDetailView: View {
                 )
             }
 
-            if let chosen = decision.chosenOptionTitle {
+            if let chosen = decision.chosenOptionDisplayTitle {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(HindsightTheme.Colors.success)
                     Text("You chose: ").foregroundStyle(HindsightTheme.Colors.textSecondary)
@@ -202,7 +203,7 @@ struct DecisionDetailView: View {
                 ForEach(decision.options) { option in
                     OptionDetailCard(
                         option: option,
-                        isChosen: option.title == decision.chosenOptionTitle,
+                        isChosen: decision.isChosen(option),
                         isExpanded: expandedOptionID == option.id,
                         canChoose: decision.status != .reviewed,
                         onToggle: {
@@ -285,11 +286,16 @@ struct DecisionDetailView: View {
     // MARK: Actions
 
     private func chooseOption(_ option: DecisionOption) {
+        decision.chosenOptionID = option.id
         decision.chosenOptionTitle = option.title
         if decision.status == .active {
-            markDecided()
+            // Transition to awaiting-review and schedule the reminder without
+            // an extra redundant save (this method saves once at the end).
+            decision.status = .awaitingReview
+            decision.decidedAt = Date()
+            notificationManager.scheduleReviewReminder(for: decision)
         }
-        try? context.save()
+        context.saveChanges()
         HapticsManager.shared.optionCommitted()
     }
 
@@ -297,14 +303,14 @@ struct DecisionDetailView: View {
         decision.status = .awaitingReview
         decision.decidedAt = Date()
         notificationManager.scheduleReviewReminder(for: decision)
-        try? context.save()
+        context.saveChanges()
     }
 
     private func deleteDecision() {
         HapticsManager.shared.deleteConfirmed()
         notificationManager.cancelReminder(for: decision)
         context.delete(decision)
-        try? context.save()
+        context.saveChanges()
         dismiss()
     }
 }
