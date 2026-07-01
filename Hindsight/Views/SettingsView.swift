@@ -16,7 +16,7 @@ struct SettingsView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @Query private var decisions: [Decision]
 
-    @AppStorage(AppStorageKeys.userName) private var userName = "Priyansh"
+    @AppStorage(AppStorageKeys.userName) private var userName = "there"
     @AppStorage(AppStorageKeys.reviewReminders) private var reviewReminders = true
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @AppStorage(AppStorageKeys.hapticsEnabled) private var hapticsEnabled = true
@@ -167,7 +167,7 @@ struct SettingsView: View {
                     Divider().overlay(HindsightTheme.Colors.border)
                     settingsRow(icon: "wand.and.stars", tint: HindsightTheme.Colors.success,
                                 title: "Load sample data", subtitle: "Populate the app to explore") {
-                        SampleData.insert(into: context)
+                        _ = SampleData.insertIfEmpty(into: context)
                     }
                 }
             }

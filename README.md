@@ -70,7 +70,7 @@ and shadows all live in `HindsightTheme`, and the reusable UI primitives
 ```
 Hindsight/
 ├── HindsightApp.swift            # @main entry, SwiftData container, appearance
-├── ContentView.swift             # Root TabView (Today · Decisions · Insights · Settings)
+├── HindsightRootView.swift       # Splash / onboarding gate / app router
 ├── Models/
 │   ├── Decision.swift            # @Model — the core entity
 │   ├── DecisionOption.swift      # @Model — a choice that was weighed
@@ -89,6 +89,7 @@ Hindsight/
 │   ├── SampleData.swift          # Preview / demo seed data
 │   └── AppStorageKeys.swift
 └── Views/
+    ├── MainTabView.swift         # Root TabView (Today · Decisions · Insights · Settings)
     ├── TodayView.swift           # Home: greeting, stats, needs-review, wins, FAB
     ├── AllDecisionsView.swift    # Searchable / filterable list
     ├── DecisionDetailView.swift  # Header, timeline, options, predictions, outcome

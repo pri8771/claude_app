@@ -10,14 +10,17 @@ import Foundation
 import UserNotifications
 
 @MainActor
-final class NotificationManager: ObservableObject {
+final class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
 
     @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    @Published var tappedDecisionID: UUID?
 
     private let center = UNUserNotificationCenter.current()
 
-    private init() {
+    private override init() {
+        super.init()
+        center.delegate = self
         Task { await refreshAuthorizationStatus() }
     }
 
@@ -38,6 +41,25 @@ final class NotificationManager: ObservableObject {
         } catch {
             await refreshAuthorizationStatus()
             return false
+        }
+    }
+
+    /// Requests notification permission only when needed, then schedules the
+    /// reminder if the user has allowed local notifications.
+    func scheduleReviewReminderIfAllowed(for decision: Decision) async {
+        guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
+
+        await refreshAuthorizationStatus()
+        switch authorizationStatus {
+        case .notDetermined:
+            guard await requestAuthorization() else { return }
+            scheduleReviewReminder(for: decision)
+        case .authorized, .provisional, .ephemeral:
+            scheduleReviewReminder(for: decision)
+        case .denied:
+            return
+        @unknown default:
+            return
         }
     }
 
@@ -87,5 +109,29 @@ final class NotificationManager: ObservableObject {
 
     private func requestID(for decision: Decision) -> String {
         "review-\(decision.id.uuidString)"
+    }
+
+    // MARK: Notification response
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let rawID = response.notification.request.content.userInfo["decisionID"] as? String
+        Task { @MainActor in
+            if let rawID, let decisionID = UUID(uuidString: rawID) {
+                self.tappedDecisionID = decisionID
+            }
+            completionHandler()
+        }
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .badge])
     }
 }

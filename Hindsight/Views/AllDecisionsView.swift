@@ -9,15 +9,17 @@ import SwiftUI
 import SwiftData
 
 struct AllDecisionsView: View {
+    @EnvironmentObject private var router: AppRouter
     @Query(sort: \Decision.createdAt, order: .reverse) private var decisions: [Decision]
 
     @State private var searchText = ""
     @State private var categoryFilter: DecisionCategory?
     @State private var statusFilter: DecisionStatus?
     @State private var showNewDecision = false
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 HindsightTheme.Colors.backgroundGradient.ignoresSafeArea()
 
@@ -66,6 +68,8 @@ struct AllDecisionsView: View {
                 }
             }
             .sheet(isPresented: $showNewDecision) { NewDecisionWizard() }
+            .onAppear(perform: openPendingRoutedDecision)
+            .onChange(of: router.focusDecisionID) { _, _ in openPendingRoutedDecision() }
         }
     }
 
@@ -121,6 +125,14 @@ struct AllDecisionsView: View {
             let matchesStatus = statusFilter == nil || decision.status == statusFilter
             return matchesSearch && matchesCategory && matchesStatus
         }
+    }
+
+    private func openPendingRoutedDecision() {
+        guard let id = router.focusDecisionID,
+              let decision = decisions.first(where: { $0.id == id }) else { return }
+        path = NavigationPath()
+        path.append(decision)
+        router.focusDecisionID = nil
     }
 }
 

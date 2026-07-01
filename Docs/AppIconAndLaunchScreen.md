@@ -61,10 +61,15 @@ let data = r.uiImage?.pngData()   // write to disk
 
 Path: `Hindsight/Assets.xcassets/AppIcon.appiconset/`
 
-### Recommended — single-size (modern)
-The committed `Contents.json` uses one **universal 1024×1024** slot. In Xcode,
-drag `AppIcon-1024.png` onto that well (or set its `filename`). Xcode generates
-every device size at build time. Done.
+### Current checked-in state
+
+The asset catalog now includes explicit PNGs for every iPhone, iPad and
+App Store marketing icon size, generated from the 1024×1024 source artwork.
+The App Store source file is:
+
+`Hindsight/Assets.xcassets/AppIcon.appiconset/icon-1024.png`
+
+Re-run the generator below whenever the icon artwork changes.
 
 ### Alternative — explicit per-size PNGs
 Run the generator (macOS, built-in `sips` only):
@@ -88,9 +93,9 @@ It writes all sizes **and** a matching `Contents.json`. Required sizes:
 | iPad Pro app | 83.5 | @2x | 167 |
 | App Store marketing | 1024 | @1x | 1024 |
 
-> **Status:** the AppIcon slot ships **empty** (a blank placeholder, not fake
-> art) until you export and drop in the real PNG. The app builds cleanly
-> either way.
+> **Status:** app icons are ready for local device testing and App Store
+> screenshot/device installs. The SwiftUI icon preview remains the source of
+> truth for future visual changes.
 
 ---
 

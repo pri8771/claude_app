@@ -296,8 +296,8 @@ struct DecisionDetailView: View {
     private func markDecided() {
         decision.status = .awaitingReview
         decision.decidedAt = Date()
-        notificationManager.scheduleReviewReminder(for: decision)
         try? context.save()
+        Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
     }
 
     private func deleteDecision() {

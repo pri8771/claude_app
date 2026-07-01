@@ -2,15 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!--
-	  Custom keys only. All standard keys (bundle id, version, orientations,
-	  scene manifest, dark appearance, etc.) are still injected by Xcode via
-	  GENERATE_INFOPLIST_FILE = YES and the INFOPLIST_KEY_* build settings,
-	  which merge into this file at build time.
-	-->
 	<key>UILaunchScreen</key>
 	<dict>
-		<!-- Solid dark-navy launch background (#1A1A2E). No image needed. -->
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 		<key>UIImageRespectsSafeAreaInsets</key>

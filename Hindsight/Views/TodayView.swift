@@ -16,7 +16,7 @@ import UIKit
 struct TodayView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Decision.createdAt, order: .reverse) private var decisions: [Decision]
-    @AppStorage(AppStorageKeys.userName) private var userName = "Priyansh"
+    @AppStorage(AppStorageKeys.userName) private var userName = "there"
 
     @State private var showNewDecision = false
     @State private var selectedDecision: Decision?

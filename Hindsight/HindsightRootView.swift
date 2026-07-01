@@ -16,6 +16,9 @@ import SwiftUI
 final class AppRouter: ObservableObject {
     /// When set, the main app presents the New Decision wizard.
     @Published var presentNewDecision = false
+    /// Set when a local reminder is tapped and the Decisions tab should open
+    /// a specific decision detail screen.
+    @Published var focusDecisionID: UUID?
 }
 
 struct HindsightRootView: View {

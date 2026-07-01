@@ -12,7 +12,6 @@ import SwiftData
 struct MainTabView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @EnvironmentObject private var router: AppRouter
-    @AppStorage(AppStorageKeys.didRequestNotifications) private var didRequestNotifications = false
 
     @State private var selectedTab: Tab = .today
 
@@ -44,13 +43,13 @@ struct MainTabView: View {
             NewDecisionWizard()
         }
         .task {
-            // Ask for notification permission once, on first launch.
-            if !didRequestNotifications {
-                didRequestNotifications = true
-                _ = await notificationManager.requestAuthorization()
-            } else {
-                await notificationManager.refreshAuthorizationStatus()
-            }
+            await notificationManager.refreshAuthorizationStatus()
+        }
+        .onChange(of: notificationManager.tappedDecisionID) { _, decisionID in
+            guard let decisionID else { return }
+            selectedTab = .decisions
+            router.focusDecisionID = decisionID
+            notificationManager.tappedDecisionID = nil
         }
     }
 }

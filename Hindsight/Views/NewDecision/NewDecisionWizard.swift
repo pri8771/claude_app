@@ -127,7 +127,7 @@ struct NewDecisionWizard: View {
         let decision = draft.makeDecision()
         context.insert(decision)
         try? context.save()
-        notificationManager.scheduleReviewReminder(for: decision)
+        Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
 
         HapticsManager.shared.decisionSealed()
         dismiss()
