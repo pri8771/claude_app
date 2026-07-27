@@ -158,8 +158,14 @@ struct OutcomeReviewView: View {
                     PredictionVerdictRow(
                         prediction: prediction,
                         verdict: Binding(
-                            get: { predictionVerdicts[prediction.id] ?? .correct },
-                            set: { predictionVerdicts[prediction.id] = $0 }
+                            get: { predictionVerdicts[prediction.id] },
+                            set: {
+                                if let verdict = $0 {
+                                    predictionVerdicts[prediction.id] = verdict
+                                } else {
+                                    predictionVerdicts.removeValue(forKey: prediction.id)
+                                }
+                            }
                         ),
                         result: Binding(
                             get: { predictionResults[prediction.id] ?? "" },
@@ -183,7 +189,10 @@ struct OutcomeReviewView: View {
             mainLesson = review.mainLesson
         }
         for prediction in decision.predictions {
-            predictionVerdicts[prediction.id] = prediction.status == .pending ? .correct : prediction.status
+            // Only seed verdicts for already-resolved predictions; pending predictions get no entry (nil)
+            if prediction.status != .pending {
+                predictionVerdicts[prediction.id] = prediction.status
+            }
             predictionResults[prediction.id] = prediction.actualResult ?? ""
         }
     }
@@ -212,7 +221,7 @@ struct OutcomeReviewView: View {
         }
 
         for prediction in decision.predictions {
-            prediction.status = predictionVerdicts[prediction.id] ?? .correct
+            prediction.status = predictionVerdicts[prediction.id] ?? prediction.status
             let result = predictionResults[prediction.id]?.trimmingCharacters(in: .whitespacesAndNewlines)
             prediction.actualResult = (result?.isEmpty == false) ? result : nil
             notificationManager.cancelReminder(for: prediction)
@@ -231,7 +240,7 @@ struct OutcomeReviewView: View {
 
 private struct PredictionVerdictRow: View {
     let prediction: Prediction
-    @Binding var verdict: PredictionStatus
+    @Binding var verdict: PredictionStatus?
     @Binding var result: String
 
     private let options: [PredictionStatus] = [.correct, .partial, .incorrect]
