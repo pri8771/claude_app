@@ -23,6 +23,7 @@ struct SettingsView: View {
 
     @State private var shareURL: ShareItem?
     @State private var showClearConfirm = false
+    @State private var showRemoveDemoConfirm = false
     @State private var exportError: String?
 
     var body: some View {
@@ -60,6 +61,15 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This permanently erases all \(decisions.count) decisions, predictions and reviews. This can't be undone.")
+            }
+            .confirmationDialog("Remove demo data?", isPresented: $showRemoveDemoConfirm, titleVisibility: .visible) {
+                Button("Remove demo data", role: .destructive) {
+                    _ = SampleData.remove(from: context)
+                    HapticsManager.shared.deleteConfirmed()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Your own decisions will be kept.")
             }
             .task { await notificationManager.refreshAuthorizationStatus() }
         }
@@ -165,9 +175,18 @@ struct SettingsView: View {
                         exportPDF()
                     }
                     Divider().overlay(HindsightTheme.Colors.border)
-                    settingsRow(icon: "wand.and.stars", tint: HindsightTheme.Colors.success,
-                                title: "Load sample data", subtitle: "Populate the app to explore") {
-                        _ = SampleData.insertIfEmpty(into: context)
+                    settingsRow(
+                        icon: hasDemoData ? "trash.slash" : "wand.and.stars",
+                        tint: HindsightTheme.Colors.success,
+                        title: hasDemoData ? "Remove demo data" : "Explore with demo data",
+                        subtitle: hasDemoData ? "Keep your decisions, remove the examples" : "See reviews, predictions and insights"
+                    ) {
+                        if hasDemoData {
+                            showRemoveDemoConfirm = true
+                        } else {
+                            _ = SampleData.insertIfMissing(into: context)
+                            HapticsManager.shared.selectionChanged()
+                        }
                     }
                 }
             }
@@ -275,6 +294,10 @@ struct SettingsView: View {
     }
 
     // MARK: Actions
+
+    private var hasDemoData: Bool {
+        decisions.contains(where: SampleData.isDemoDecision)
+    }
 
     private func handleReminderToggle(_ enabled: Bool) {
         Task {

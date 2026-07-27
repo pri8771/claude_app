@@ -21,12 +21,12 @@ struct OnboardingFinalCTAView: View {
                     .padding(.top, HindsightTheme.Spacing.lg)
 
                 VStack(spacing: HindsightTheme.Spacing.sm) {
-                    Text("Seal your first decision")
+                    Text("See Hindsight in action")
                         .font(.system(.title, design: .rounded).weight(.bold))
                         .foregroundStyle(OnboardingTheme.Colors.textPrimary)
                         .multilineTextAlignment(.center)
 
-                    Text("Future-you will thank past-you for writing it down.")
+                    Text("Explore a few example decisions, reviews and insights. Remove them anytime.")
                         .font(.body)
                         .foregroundStyle(OnboardingTheme.Colors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -34,10 +34,10 @@ struct OnboardingFinalCTAView: View {
                 }
 
                 VStack(spacing: HindsightTheme.Spacing.sm) {
+                    OnboardingButton(title: "Explore the Demo", icon: "wand.and.stars",
+                                     kind: .primary, action: onSampleData)
                     OnboardingButton(title: "Start First Decision", icon: "square.and.pencil",
-                                     kind: .primary, action: onFirstDecision)
-                    OnboardingButton(title: "Explore Sample Data", icon: "wand.and.stars",
-                                     kind: .secondary, action: onSampleData)
+                                     kind: .secondary, action: onFirstDecision)
                     OnboardingButton(title: "Start Empty", kind: .tertiary, action: onEmpty)
                 }
                 .padding(.top, HindsightTheme.Spacing.xs)

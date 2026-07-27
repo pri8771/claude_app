@@ -214,6 +214,7 @@ struct OutcomeReviewView: View {
             prediction.status = predictionVerdicts[prediction.id] ?? .correct
             let result = predictionResults[prediction.id]?.trimmingCharacters(in: .whitespacesAndNewlines)
             prediction.actualResult = (result?.isEmpty == false) ? result : nil
+            notificationManager.cancelReminder(for: prediction)
         }
 
         decision.status = .reviewed

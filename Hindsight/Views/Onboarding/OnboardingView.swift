@@ -154,7 +154,7 @@ struct OnboardingView: View {
     private func finish(_ kind: Finish) {
         switch kind {
         case .firstDecision: router.presentNewDecision = true
-        case .sampleData:    SampleData.insertIfEmpty(into: context)
+        case .sampleData:    SampleData.insertIfMissing(into: context)
         case .empty:         break
         }
         HapticsManager.shared.onboardingCompleted()

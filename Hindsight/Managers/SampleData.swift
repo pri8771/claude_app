@@ -11,6 +11,20 @@ import SwiftData
 
 enum SampleData {
 
+    private static let decisionIDs: [UUID] = [
+        UUID(uuidString: "A1F00100-0000-4000-8000-000000000001")!,
+        UUID(uuidString: "A1F00100-0000-4000-8000-000000000002")!,
+        UUID(uuidString: "A1F00100-0000-4000-8000-000000000003")!,
+        UUID(uuidString: "A1F00100-0000-4000-8000-000000000004")!
+    ]
+
+    static let legacyDecisionTitles: Set<String> = [
+        "Accept the offer at Northwind",
+        "Move to a cheaper apartment across town",
+        "Commit to morning workouts for a quarter",
+        "Should I start a small side project?"
+    ]
+
     /// Inserts a handful of realistic decisions into the given context.
     @MainActor
     static func insert(into context: ModelContext) {
@@ -32,6 +46,7 @@ enum SampleData {
             decidedAt: days(-118),
             dueDate: days(-30)
         )
+        job.id = decisionIDs[0]
         job.options = [
             DecisionOption(title: "Take the Northwind offer", upside: "30% raise, staff title, equity",
                            downside: "Early-stage risk, longer commute", effortLevel: 4, riskLevel: 4, gutFeeling: 4),
@@ -66,6 +81,7 @@ enum SampleData {
             decidedAt: days(-45),
             dueDate: days(-3)
         )
+        move.id = decisionIDs[1]
         move.options = [
             DecisionOption(title: "Move and bank the savings", upside: "$600/mo saved", downside: "Longer trips to see friends",
                            effortLevel: 3, riskLevel: 2, gutFeeling: 3),
@@ -91,6 +107,7 @@ enum SampleData {
             decidedAt: days(-9),
             dueDate: days(20)
         )
+        gym.id = decisionIDs[2]
         gym.options = [
             DecisionOption(title: "5am gym, 3x a week", upside: "Energy, routine", downside: "Earlier nights",
                            effortLevel: 4, riskLevel: 1, gutFeeling: 4)
@@ -112,6 +129,7 @@ enum SampleData {
             createdAt: days(-2),
             dueDate: days(45)
         )
+        side.id = decisionIDs[3]
         side.options = [
             DecisionOption(title: "Build a tiny MVP", upside: "Learn, ship, fun", downside: "Less rest",
                            effortLevel: 4, riskLevel: 2, gutFeeling: 4),
@@ -128,15 +146,48 @@ enum SampleData {
         try? context.save()
     }
 
-    /// Inserts the sample decisions only if the store is currently empty,
-    /// so onboarding's "Explore Sample Data" path never creates duplicates.
+    /// Inserts demo decisions if they are not already present. Demo data can
+    /// safely coexist with real decisions and is identified by stable IDs.
+    @MainActor
+    @discardableResult
+    static func insertIfMissing(into context: ModelContext) -> Bool {
+        guard !containsDemoData(in: context) else { return false }
+        insert(into: context)
+        return true
+    }
+
+    @MainActor
+    static func containsDemoData(in context: ModelContext) -> Bool {
+        let decisions = (try? context.fetch(FetchDescriptor<Decision>())) ?? []
+        return decisions.contains { isDemoDecision($0) }
+    }
+
+    static func isDemoDecision(_ decision: Decision) -> Bool {
+        decisionIDs.contains(decision.id) || legacyDecisionTitles.contains(decision.title)
+    }
+
+    /// Removes only records created by the demo-data feature. The title check
+    /// also cleans up sample records created before stable demo IDs existed.
+    @MainActor
+    @discardableResult
+    static func remove(from context: ModelContext) -> Int {
+        let decisions = (try? context.fetch(FetchDescriptor<Decision>())) ?? []
+        let demoDecisions = decisions.filter { isDemoDecision($0) }
+        for decision in demoDecisions {
+            context.delete(decision)
+        }
+        try? context.save()
+        return demoDecisions.count
+    }
+
+    /// Compatibility for existing call sites that want samples only in an
+    /// otherwise empty store, such as previews.
     @MainActor
     @discardableResult
     static func insertIfEmpty(into context: ModelContext) -> Bool {
         let existing = (try? context.fetchCount(FetchDescriptor<Decision>())) ?? 0
         guard existing == 0 else { return false }
-        insert(into: context)
-        return true
+        return insertIfMissing(into: context)
     }
 
     /// Returns an in-memory model container pre-populated for previews.

@@ -65,7 +65,8 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
 
     // MARK: Scheduling
 
-    /// Schedules a review reminder for a decision on its `dueDate`.
+    /// Schedules a review reminder for a decision on its `dueDate`, plus a
+    /// reminder for each prediction that has its own future due date.
     func scheduleReviewReminder(for decision: Decision) {
         // Only schedule if reminders are enabled and the date is in the future.
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
@@ -87,11 +88,52 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
             trigger: trigger
         )
         center.add(request)
+
+        for prediction in decision.predictions {
+            schedulePredictionReminder(prediction, for: decision)
+        }
     }
 
-    /// Cancels any pending reminder for a decision.
+    /// Schedules a reminder for an individual prediction whose `dueDate`
+    /// differs from the owning decision's and lies in the future. Tapping it
+    /// deep-links back to the owning decision, just like the decision reminder.
+    private func schedulePredictionReminder(_ prediction: Prediction, for decision: Decision) {
+        guard prediction.status == .pending else { return }
+        guard prediction.dueDate > Date() else { return }
+        // Skip predictions that share the decision's due date — the decision
+        // reminder already covers that moment.
+        guard prediction.dueDate != decision.dueDate else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "A prediction is due"
+        content.body = "Time to grade: \(prediction.title)"
+        content.sound = .default
+        content.userInfo = ["decisionID": decision.id.uuidString]
+
+        let components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute], from: prediction.dueDate
+        )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: requestID(for: prediction),
+            content: content,
+            trigger: trigger
+        )
+        center.add(request)
+    }
+
+    /// Cancels any pending reminder for a decision, including reminders for
+    /// each of its predictions.
     func cancelReminder(for decision: Decision) {
-        center.removePendingNotificationRequests(withIdentifiers: [requestID(for: decision)])
+        var ids = [requestID(for: decision)]
+        ids.append(contentsOf: decision.predictions.map { requestID(for: $0) })
+        center.removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
+    /// Cancels the pending reminder for a single prediction (e.g. once its
+    /// outcome has been recorded).
+    func cancelReminder(for prediction: Prediction) {
+        center.removePendingNotificationRequests(withIdentifiers: [requestID(for: prediction)])
     }
 
     /// Removes every pending reminder (used by "clear all data" and the toggle).
@@ -109,6 +151,10 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
 
     private func requestID(for decision: Decision) -> String {
         "review-\(decision.id.uuidString)"
+    }
+
+    private func requestID(for prediction: Prediction) -> String {
+        "prediction-\(prediction.id.uuidString)"
     }
 
     // MARK: Notification response
