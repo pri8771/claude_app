@@ -44,13 +44,21 @@ struct MainTabView: View {
         }
         .task {
             await notificationManager.refreshAuthorizationStatus()
+            // Handle cold-launch notification deep link
+            if let decisionID = notificationManager.tappedDecisionID {
+                route(to: decisionID)
+            }
         }
         .onChange(of: notificationManager.tappedDecisionID) { _, decisionID in
             guard let decisionID else { return }
-            selectedTab = .decisions
-            router.focusDecisionID = decisionID
-            notificationManager.tappedDecisionID = nil
+            route(to: decisionID)
         }
+    }
+
+    private func route(to decisionID: UUID) {
+        selectedTab = .decisions
+        router.focusDecisionID = decisionID
+        notificationManager.tappedDecisionID = nil
     }
 }
 
