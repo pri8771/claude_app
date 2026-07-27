@@ -3,9 +3,9 @@
 //  HindsightTests
 //
 //  Covers the demo-data contract from Docs/TEST_PLAN.md: insertion is
-//  idempotent, demo data coexists with real user decisions, legacy
-//  (pre-stable-ID) demo records are still recognized, and removal targets
-//  only demo records — never the user's own.
+//  idempotent, demo data coexists with real user decisions, and removal
+//  targets only stable-ID demo records — never the user's own, even if
+//  the user's title happens to match a demo title.
 //
 
 import XCTest
@@ -89,13 +89,14 @@ final class SampleDataTests: XCTestCase {
         XCTAssertTrue(SampleData.containsDemoData(in: context))
     }
 
-    // MARK: Legacy recognition
+    // MARK: UUID-based identification
 
-    func testIsDemoDecisionRecognizesLegacyTitlesWithoutStableIDs() {
-        let legacy = Decision(title: "Accept the offer at Northwind")
-        // Deliberately does NOT set one of the stable demo IDs, simulating a
-        // sample decision created before stable IDs existed.
-        XCTAssertTrue(SampleData.isDemoDecision(legacy))
+    func testIsDemoDecisionUsesStableIDsNotTitles() {
+        let titleMatch = Decision(title: "Accept the offer at Northwind")
+        // Deliberately does NOT set one of the stable demo IDs.
+        // Even though the title matches a demo title, it should NOT be recognized as demo.
+        XCTAssertFalse(SampleData.isDemoDecision(titleMatch),
+                       "Title matching alone should not identify a decision as demo")
 
         let unrelated = Decision(title: "Accept the offer at Northwind, but different")
         XCTAssertFalse(SampleData.isDemoDecision(unrelated))
@@ -133,16 +134,19 @@ final class SampleDataTests: XCTestCase {
         XCTAssertFalse(SampleData.containsDemoData(in: context))
     }
 
-    func testRemoveAlsoDeletesLegacyTitleMatchedRecords() throws {
+    func testRemoveDoesNotDeleteTitleMatchedNonDemoRecords() throws {
         let context = try makeContext()
-        // A legacy demo decision with no stable ID and no dependents.
-        let legacy = Decision(title: "Should I start a small side project?")
-        context.insert(legacy)
+        // A user decision with a title that matches a demo title,
+        // but without a stable demo UUID.
+        let userWithDemoTitle = Decision(title: "Should I start a small side project?")
+        context.insert(userWithDemoTitle)
         try context.save()
 
         let removedCount = SampleData.remove(from: context)
-        XCTAssertEqual(removedCount, 1)
-        XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 0)
+        // No demo data was inserted, so nothing should be removed.
+        XCTAssertEqual(removedCount, 0)
+        // The user's decision should survive, despite the title match.
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 1)
     }
 
     func testRemoveOnEmptyStoreIsANoOp() throws {

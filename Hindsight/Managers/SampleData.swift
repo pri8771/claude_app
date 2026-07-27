@@ -18,13 +18,6 @@ enum SampleData {
         UUID(uuidString: "A1F00100-0000-4000-8000-000000000004")!
     ]
 
-    static let legacyDecisionTitles: Set<String> = [
-        "Accept the offer at Northwind",
-        "Move to a cheaper apartment across town",
-        "Commit to morning workouts for a quarter",
-        "Should I start a small side project?"
-    ]
-
     /// Inserts a handful of realistic decisions into the given context.
     @MainActor
     static func insert(into context: ModelContext) {
@@ -163,11 +156,12 @@ enum SampleData {
     }
 
     static func isDemoDecision(_ decision: Decision) -> Bool {
-        decisionIDs.contains(decision.id) || legacyDecisionTitles.contains(decision.title)
+        decisionIDs.contains(decision.id)
     }
 
-    /// Removes only records created by the demo-data feature. The title check
-    /// also cleans up sample records created before stable demo IDs existed.
+    /// Removes only records created by the demo-data feature, identified by
+    /// stable demo UUIDs. Demo records are identified purely by provenance,
+    /// not by heuristic title matching.
     @MainActor
     @discardableResult
     static func remove(from context: ModelContext) -> Int {
