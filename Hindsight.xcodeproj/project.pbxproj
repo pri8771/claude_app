@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		247DE3FDA377B26BFC64CB67 /* OutcomeReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29C4A230579C2F1F000912F /* OutcomeReview.swift */; };
 		2C0E641FD6AD79789A78C9A0 /* ModelPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */; };
+		2BE28C68-6411-44 /* ResolutionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8A13FF6-D8AF-44 /* ResolutionTests.swift */; };
 		2CB3F5531828D03F785E0AC9 /* HindsightEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81799E0771D63F9C63302B2 /* HindsightEnums.swift */; };
 		37947D8E7334A2CB7AABF814 /* HindsightCaptureFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 514370623BA20CD8BBD293C1 /* HindsightCaptureFlowUITests.swift */; };
 		64AD0159B66EC89DD750A029 /* Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A95B827EAA5119D6180958 /* Prediction.swift */; };
@@ -16,6 +17,8 @@
 		82CBC57996FA61270C403DBB /* Statistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14191FF7560ECFBF26FCA6D3 /* Statistics.swift */; };
 		86C7329068B44FE21B38EC53 /* ClarityScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D96D7964C938C51D696FDE0 /* ClarityScore.swift */; };
 		8C0FAADF06583B93D921EA9E /* SampleDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */; };
+		8D5A9B3F7E42C4D19A1F5B8C /* StoreBootstrapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C4E8A2B3D19E5F4A2B6C8D9 /* StoreBootstrapTests.swift */; };
+		8F2A4B1D6C53D9E7A4F1C3B5 /* StoreBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9F1A3D5C42B8F6A7D9C2E1 /* StoreBootstrap.swift */; };
 		9283D8EA2ABF6B4C2379D0CC /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACACC821FD6DA81C231CF47 /* SampleData.swift */; };
 		9CCF4259388BAC7E2CF1A322 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
 		A735AE42B2F25A8E484CECCB /* HindsightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCF5D395BBCF47C56249FBF9 /* HindsightTheme.swift */; };
@@ -49,6 +52,7 @@
 		1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatisticsTests.swift; sourceTree = "<group>"; };
 		2D96D7964C938C51D696FDE0 /* ClarityScore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClarityScore.swift; path = Hindsight/Managers/ClarityScore.swift; sourceTree = SOURCE_ROOT; };
 		3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ModelPersistenceTests.swift; sourceTree = "<group>"; };
+		A8A13FF6-D8AF-44 /* ResolutionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ResolutionTests.swift; sourceTree = "<group>"; };
 		40761C85F1EF1906656F4B9F /* HindsightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HindsightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		514370623BA20CD8BBD293C1 /* HindsightCaptureFlowUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HindsightCaptureFlowUITests.swift; sourceTree = "<group>"; };
 		52A95B827EAA5119D6180958 /* Prediction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Prediction.swift; path = Hindsight/Models/Prediction.swift; sourceTree = SOURCE_ROOT; };
@@ -58,6 +62,8 @@
 		B81799E0771D63F9C63302B2 /* HindsightEnums.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HindsightEnums.swift; path = Hindsight/Models/HindsightEnums.swift; sourceTree = SOURCE_ROOT; };
 		BCF5D395BBCF47C56249FBF9 /* HindsightTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HindsightTheme.swift; path = Hindsight/Theme/HindsightTheme.swift; sourceTree = SOURCE_ROOT; };
 		C37DEFBBCC18503FCF479716 /* DecisionOption.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DecisionOption.swift; path = Hindsight/Models/DecisionOption.swift; sourceTree = SOURCE_ROOT; };
+		7C4E8A2B3D19E5F4A2B6C8D9 /* StoreBootstrapTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StoreBootstrapTests.swift; sourceTree = "<group>"; };
+		8E9F1A3D5C42B8F6A7D9C2E1 /* StoreBootstrap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoreBootstrap.swift; path = Hindsight/Managers/StoreBootstrap.swift; sourceTree = SOURCE_ROOT; };
 		D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SampleDataTests.swift; sourceTree = "<group>"; };
 		D6324FA5E38911E67CDBACEC /* Decision.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Decision.swift; path = Hindsight/Models/Decision.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -123,6 +129,7 @@
 				14191FF7560ECFBF26FCA6D3 /* Statistics.swift */,
 				2D96D7964C938C51D696FDE0 /* ClarityScore.swift */,
 				0ACACC821FD6DA81C231CF47 /* SampleData.swift */,
+				8E9F1A3D5C42B8F6A7D9C2E1 /* StoreBootstrap.swift */,
 			);
 			name = "HindsightTests Support (App Sources)";
 			sourceTree = "<group>";
@@ -171,7 +178,9 @@
 				9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */,
 				3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */,
 				D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */,
+				7C4E8A2B3D19E5F4A2B6C8D9 /* StoreBootstrapTests.swift */,
 				1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */,
+				A8A13FF6-D8AF-44 /* ResolutionTests.swift */,
 			);
 			name = HindsightTests;
 			path = HindsightTests;
@@ -307,7 +316,9 @@
 				FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */,
 				2C0E641FD6AD79789A78C9A0 /* ModelPersistenceTests.swift in Sources */,
 				8C0FAADF06583B93D921EA9E /* SampleDataTests.swift in Sources */,
+				8D5A9B3F7E42C4D19A1F5B8C /* StoreBootstrapTests.swift in Sources */,
 				E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */,
+				2BE28C68-6411-44 /* ResolutionTests.swift in Sources */,
 				8065521F49B35EAEED16B554 /* Decision.swift in Sources */,
 				F3F992BA7C80A6BCD3462C31 /* DecisionOption.swift in Sources */,
 				64AD0159B66EC89DD750A029 /* Prediction.swift in Sources */,
@@ -317,6 +328,7 @@
 				82CBC57996FA61270C403DBB /* Statistics.swift in Sources */,
 				86C7329068B44FE21B38EC53 /* ClarityScore.swift in Sources */,
 				9283D8EA2ABF6B4C2379D0CC /* SampleData.swift in Sources */,
+				8F2A4B1D6C53D9E7A4F1C3B5 /* StoreBootstrap.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

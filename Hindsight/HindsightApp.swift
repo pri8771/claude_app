@@ -13,9 +13,15 @@ import UIKit
 @main
 struct HindsightApp: App {
     @StateObject private var notificationManager = NotificationManager.shared
+    @State private var bootResult: Result<ModelContainer, Error>?
 
-    /// One shared, on-disk SwiftData container for the whole app.
-    let modelContainer: ModelContainer
+    /// One shared, on-disk SwiftData container for the whole app, if successful.
+    private var modelContainer: ModelContainer? {
+        if case .success(let container) = bootResult {
+            return container
+        }
+        return nil
+    }
 
     init() {
         if Self.isUITesting {
@@ -33,16 +39,17 @@ struct HindsightApp: App {
         }
 
         do {
-            let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
             if Self.isUITesting {
+                let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
                 let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-                modelContainer = try ModelContainer(for: schema, configurations: [config])
+                self.bootResult = .success(try StoreBootstrap.makeContainer(configuration: config))
             } else {
-                modelContainer = try ModelContainer(for: schema)
+                self.bootResult = .success(try StoreBootstrap.makeContainer())
             }
         } catch {
-            fatalError("Failed to create the SwiftData container: \(error)")
+            self.bootResult = .failure(error)
         }
+
         // Default review reminders + haptics to ON so they work before the
         // user ever visits Settings.
         UserDefaults.standard.register(defaults: [
@@ -59,12 +66,36 @@ struct HindsightApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HindsightRootView()
-                .environmentObject(notificationManager)
-                .tint(HindsightTheme.Colors.accent)
-                .preferredColorScheme(.dark)
+            if let container = modelContainer {
+                HindsightRootView()
+                    .environmentObject(notificationManager)
+                    .tint(HindsightTheme.Colors.accent)
+                    .preferredColorScheme(.dark)
+                    .modelContainer(container)
+            } else if case .failure(let error) = bootResult {
+                StoreRecoveryView(error: error, onRetry: { retryBootstrap() })
+                    .tint(HindsightTheme.Colors.accent)
+                    .preferredColorScheme(.dark)
+            } else {
+                // Loading state (shouldn't occur in practice, but defensive)
+                ProgressView()
+                    .preferredColorScheme(.dark)
+            }
         }
-        .modelContainer(modelContainer)
+    }
+
+    private func retryBootstrap() {
+        do {
+            if Self.isUITesting {
+                let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
+                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+                self.bootResult = .success(try StoreBootstrap.makeContainer(configuration: config))
+            } else {
+                self.bootResult = .success(try StoreBootstrap.makeContainer())
+            }
+        } catch {
+            self.bootResult = .failure(error)
+        }
     }
 }
 
