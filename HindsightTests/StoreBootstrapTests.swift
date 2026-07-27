@@ -31,16 +31,29 @@ final class StoreBootstrapTests: XCTestCase {
     // MARK: Failure recovery
 
     func testStoreOpenFailureIsRecoverable() throws {
-        // Deliberately create a bad configuration that points to an unwritable path,
-        // proving that failure is catchable and does not crash.
+        // Deterministic failure injection: create a temporary FILE, then try to nest
+        // the store URL under it. Since a file cannot be a parent directory, the
+        // container must throw on every platform.
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFile = tempDir.appendingPathComponent(UUID().uuidString)
+
+        // Write a file to ensure it exists
+        try Data().write(to: tempFile)
+
+        defer {
+            // Clean up the temporary file
+            try? FileManager.default.removeItem(at: tempFile)
+        }
+
+        // Build a store URL nested under the file (impossible since files can't be directories)
+        let badURL = tempFile.appendingPathComponent("sub").appendingPathComponent("store.sqlite")
         let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
-        let badURL = URL(fileURLWithPath: "/dev/null/hindsight-test-unwritable.store")
         let badConfig = ModelConfiguration(schema: schema, url: badURL)
 
-        // This should throw, not crash.
+        // This should throw, not crash, because the path is nested under a file.
         XCTAssertThrowsError(
             try StoreBootstrap.makeContainer(configuration: badConfig),
-            "Opening a store at an unwritable path should throw"
+            "Opening a store at a path nested under a file should throw"
         )
     }
 
