@@ -36,6 +36,7 @@ struct BasicInfoStep: View {
                         .padding(HindsightTheme.Spacing.md)
                         .background(HindsightTheme.Colors.cardElevated)
                         .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                        .accessibilityIdentifier("newDecision.title")
                 }
 
                 // Category grid

@@ -20,6 +20,34 @@
                ReferencedContainer = "container:Hindsight.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5DA732724968C3EB1E47AE80"
+               BuildableName = "HindsightTests.xctest"
+               BlueprintName = "HindsightTests"
+               ReferencedContainer = "container:Hindsight.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "40036F34BFCFB4C3F213C159"
+               BuildableName = "HindsightUITests.xctest"
+               BlueprintName = "HindsightUITests"
+               ReferencedContainer = "container:Hindsight.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -28,6 +56,26 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5DA732724968C3EB1E47AE80"
+               BuildableName = "HindsightTests.xctest"
+               BlueprintName = "HindsightTests"
+               ReferencedContainer = "container:Hindsight.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "40036F34BFCFB4C3F213C159"
+               BuildableName = "HindsightUITests.xctest"
+               BlueprintName = "HindsightUITests"
+               ReferencedContainer = "container:Hindsight.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

@@ -18,10 +18,28 @@ struct HindsightApp: App {
     let modelContainer: ModelContainer
 
     init() {
+        if Self.isUITesting {
+            // Deterministic, isolated state for the UI test target: an
+            // in-memory store (never touches the developer's real on-disk
+            // data), onboarding pre-completed, and reminders off so a
+            // system notification-permission prompt can never interrupt an
+            // automated run.
+            let defaults = UserDefaults.standard
+            defaults.set(true, forKey: AppStorageKeys.hasCompletedOnboarding)
+            defaults.set(false, forKey: AppStorageKeys.reviewReminders)
+            defaults.set(true, forKey: AppStorageKeys.hapticsEnabled)
+            defaults.set(true, forKey: AppStorageKeys.hasLaunchedBefore)
+            defaults.set(true, forKey: AppStorageKeys.didRequestNotifications)
+        }
+
         do {
-            modelContainer = try ModelContainer(
-                for: Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self
-            )
+            let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
+            if Self.isUITesting {
+                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+                modelContainer = try ModelContainer(for: schema, configurations: [config])
+            } else {
+                modelContainer = try ModelContainer(for: schema)
+            }
         } catch {
             fatalError("Failed to create the SwiftData container: \(error)")
         }
@@ -32,6 +50,11 @@ struct HindsightApp: App {
             AppStorageKeys.hapticsEnabled: true
         ])
         Appearance.configure()
+    }
+
+    /// True when launched by the `HindsightUITests` target.
+    private static var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uiTestReset")
     }
 
     var body: some Scene {

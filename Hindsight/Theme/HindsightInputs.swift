@@ -17,6 +17,9 @@ struct HTextField: View {
     @Binding var text: String
     var placeholder: String
     var icon: String? = nil
+    /// Optional stable identifier for UI tests, since these fields have no
+    /// visible label to query by.
+    var accessibilityIdentifier: String? = nil
 
     var body: some View {
         HStack(spacing: HindsightTheme.Spacing.sm) {
@@ -34,6 +37,7 @@ struct HTextField: View {
                     .foregroundStyle(HindsightTheme.Colors.textPrimary)
                     .font(HindsightTheme.Typography.body)
                     .tint(HindsightTheme.Colors.accent)
+                    .accessibilityIdentifier(accessibilityIdentifier ?? "")
             }
         }
         .padding(.horizontal, HindsightTheme.Spacing.md)
@@ -54,6 +58,9 @@ struct HTextEditor: View {
     @Binding var text: String
     var placeholder: String
     var minHeight: CGFloat = 110
+    /// Optional stable identifier for UI tests, since these fields have no
+    /// visible label to query by.
+    var accessibilityIdentifier: String? = nil
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -72,6 +79,7 @@ struct HTextEditor: View {
                 .padding(.horizontal, HindsightTheme.Spacing.sm + 4)
                 .padding(.vertical, 8)
                 .frame(minHeight: minHeight)
+                .accessibilityIdentifier(accessibilityIdentifier ?? "")
         }
         .background(HindsightTheme.Colors.cardElevated)
         .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))

@@ -66,6 +66,9 @@ struct HButton: View {
         .buttonStyle(.plain)
         .opacity(isEnabled ? 1 : 0.4)
         .disabled(!isEnabled)
+        // Every HButton is reachable in UI tests by its exact title, since
+        // titles are unique per screen (e.g. "Next", "Save Decision").
+        .accessibilityIdentifier(title)
     }
 
     private var foreground: Color {

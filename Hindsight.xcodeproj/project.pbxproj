@@ -6,11 +6,85 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		247DE3FDA377B26BFC64CB67 /* OutcomeReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29C4A230579C2F1F000912F /* OutcomeReview.swift */; };
+		2C0E641FD6AD79789A78C9A0 /* ModelPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */; };
+		2CB3F5531828D03F785E0AC9 /* HindsightEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81799E0771D63F9C63302B2 /* HindsightEnums.swift */; };
+		37947D8E7334A2CB7AABF814 /* HindsightCaptureFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 514370623BA20CD8BBD293C1 /* HindsightCaptureFlowUITests.swift */; };
+		64AD0159B66EC89DD750A029 /* Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A95B827EAA5119D6180958 /* Prediction.swift */; };
+		8065521F49B35EAEED16B554 /* Decision.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6324FA5E38911E67CDBACEC /* Decision.swift */; };
+		82CBC57996FA61270C403DBB /* Statistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14191FF7560ECFBF26FCA6D3 /* Statistics.swift */; };
+		86C7329068B44FE21B38EC53 /* ClarityScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D96D7964C938C51D696FDE0 /* ClarityScore.swift */; };
+		8C0FAADF06583B93D921EA9E /* SampleDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */; };
+		9283D8EA2ABF6B4C2379D0CC /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACACC821FD6DA81C231CF47 /* SampleData.swift */; };
+		9CCF4259388BAC7E2CF1A322 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
+		A735AE42B2F25A8E484CECCB /* HindsightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCF5D395BBCF47C56249FBF9 /* HindsightTheme.swift */; };
+		BB0BBF582CC05B6D7AE94CF4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
+		E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */; };
+		F3F992BA7C80A6BCD3462C31 /* DecisionOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = C37DEFBBCC18503FCF479716 /* DecisionOption.swift */; };
+		FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		094A271A9DA60710C80C13CF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A100000000000000000000A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A100000000000000000000F1;
+			remoteInfo = Hindsight;
+		};
+		5CCEE83C8BDD0B38D23245ED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A100000000000000000000A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A100000000000000000000F1;
+			remoteInfo = Hindsight;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		036FF59B35EDBD9D983C21D1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		0ACACC821FD6DA81C231CF47 /* SampleData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SampleData.swift; path = Hindsight/Managers/SampleData.swift; sourceTree = SOURCE_ROOT; };
+		14191FF7560ECFBF26FCA6D3 /* Statistics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Statistics.swift; path = Hindsight/Managers/Statistics.swift; sourceTree = SOURCE_ROOT; };
+		1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatisticsTests.swift; sourceTree = "<group>"; };
+		2D96D7964C938C51D696FDE0 /* ClarityScore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClarityScore.swift; path = Hindsight/Managers/ClarityScore.swift; sourceTree = SOURCE_ROOT; };
+		3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ModelPersistenceTests.swift; sourceTree = "<group>"; };
+		40761C85F1EF1906656F4B9F /* HindsightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HindsightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		514370623BA20CD8BBD293C1 /* HindsightCaptureFlowUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HindsightCaptureFlowUITests.swift; sourceTree = "<group>"; };
+		52A95B827EAA5119D6180958 /* Prediction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Prediction.swift; path = Hindsight/Models/Prediction.swift; sourceTree = SOURCE_ROOT; };
+		9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClarityScoreTests.swift; sourceTree = "<group>"; };
+		A29C4A230579C2F1F000912F /* OutcomeReview.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OutcomeReview.swift; path = Hindsight/Models/OutcomeReview.swift; sourceTree = SOURCE_ROOT; };
+		B19F1AF8C34823F3A3BAAC2B /* HindsightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HindsightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B81799E0771D63F9C63302B2 /* HindsightEnums.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HindsightEnums.swift; path = Hindsight/Models/HindsightEnums.swift; sourceTree = SOURCE_ROOT; };
+		BCF5D395BBCF47C56249FBF9 /* HindsightTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HindsightTheme.swift; path = Hindsight/Theme/HindsightTheme.swift; sourceTree = SOURCE_ROOT; };
+		C37DEFBBCC18503FCF479716 /* DecisionOption.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DecisionOption.swift; path = Hindsight/Models/DecisionOption.swift; sourceTree = SOURCE_ROOT; };
+		D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SampleDataTests.swift; sourceTree = "<group>"; };
+		D6324FA5E38911E67CDBACEC /* Decision.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Decision.swift; path = Hindsight/Models/Decision.swift; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A100000000000000000000B1 /* Hindsight */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Hindsight; sourceTree = "<group>"; };
+		A100000000000000000000B1 /* Hindsight */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Hindsight;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3966A1F5197295D7BCA77B07 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0BBF582CC05B6D7AE94CF4 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A10000000000000000000104 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -18,27 +92,130 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3E779DC7DF520945AE43AA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CCF4259388BAC7E2CF1A322 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		043291A72D834E1A539F0F5C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A31CD69BDEC7FD6EF6992A6A /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		0FFF4068405DACBBA10C220D /* HindsightTests Support (App Sources) */ = {
+			isa = PBXGroup;
+			children = (
+				D6324FA5E38911E67CDBACEC /* Decision.swift */,
+				C37DEFBBCC18503FCF479716 /* DecisionOption.swift */,
+				52A95B827EAA5119D6180958 /* Prediction.swift */,
+				A29C4A230579C2F1F000912F /* OutcomeReview.swift */,
+				B81799E0771D63F9C63302B2 /* HindsightEnums.swift */,
+				BCF5D395BBCF47C56249FBF9 /* HindsightTheme.swift */,
+				14191FF7560ECFBF26FCA6D3 /* Statistics.swift */,
+				2D96D7964C938C51D696FDE0 /* ClarityScore.swift */,
+				0ACACC821FD6DA81C231CF47 /* SampleData.swift */,
+			);
+			name = "HindsightTests Support (App Sources)";
+			sourceTree = "<group>";
+		};
 		A100000000000000000000C1 = {
 			isa = PBXGroup;
 			children = (
 				A100000000000000000000B1 /* Hindsight */,
 				A100000000000000000000D1 /* Products */,
+				043291A72D834E1A539F0F5C /* Frameworks */,
+				DBB7883A37A8BE1EC3347B71 /* HindsightTests */,
+				A158F3C5A4D5F39A525AB723 /* HindsightUITests */,
+				0FFF4068405DACBBA10C220D /* HindsightTests Support (App Sources) */,
 			);
 			sourceTree = "<group>";
 		};
 		A100000000000000000000D1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				40761C85F1EF1906656F4B9F /* HindsightTests.xctest */,
+				B19F1AF8C34823F3A3BAAC2B /* HindsightUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A158F3C5A4D5F39A525AB723 /* HindsightUITests */ = {
+			isa = PBXGroup;
+			children = (
+				514370623BA20CD8BBD293C1 /* HindsightCaptureFlowUITests.swift */,
+			);
+			name = HindsightUITests;
+			path = HindsightUITests;
+			sourceTree = "<group>";
+		};
+		A31CD69BDEC7FD6EF6992A6A /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				036FF59B35EDBD9D983C21D1 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		DBB7883A37A8BE1EC3347B71 /* HindsightTests */ = {
+			isa = PBXGroup;
+			children = (
+				9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */,
+				3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */,
+				D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */,
+				1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */,
+			);
+			name = HindsightTests;
+			path = HindsightTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		40036F34BFCFB4C3F213C159 /* HindsightUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F393B9CC660EDF6A82F6516 /* Build configuration list for PBXNativeTarget "HindsightUITests" */;
+			buildPhases = (
+				C28595F95BEB9F8E54ED570C /* Sources */,
+				F3E779DC7DF520945AE43AA8 /* Frameworks */,
+				BA9601C8479172C0510328E4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				430DAA0A2BCD906DBFAE8BEE /* PBXTargetDependency */,
+			);
+			name = HindsightUITests;
+			productName = HindsightUITests;
+			productReference = B19F1AF8C34823F3A3BAAC2B /* HindsightUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		5DA732724968C3EB1E47AE80 /* HindsightTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A7CDF548673B48C16FAEB96 /* Build configuration list for PBXNativeTarget "HindsightTests" */;
+			buildPhases = (
+				2F7B4B3E561778474B4D5312 /* Sources */,
+				3966A1F5197295D7BCA77B07 /* Frameworks */,
+				36FF9E99ADDED8BAE443E72A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EEF8CF702636132CA076F090 /* PBXTargetDependency */,
+			);
+			name = HindsightTests;
+			productName = HindsightTests;
+			productReference = 40761C85F1EF1906656F4B9F /* HindsightTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		A100000000000000000000F1 /* Hindsight */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A10000000000000000000101 /* Build configuration list for PBXNativeTarget "Hindsight" */;
@@ -68,6 +245,10 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					40036F34BFCFB4C3F213C159 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A100000000000000000000F1;
+					};
 					A100000000000000000000F1 = {
 						CreatedOnToolsVersion = 16.0;
 					};
@@ -88,12 +269,28 @@
 			projectRoot = "";
 			targets = (
 				A100000000000000000000F1 /* Hindsight */,
+				5DA732724968C3EB1E47AE80 /* HindsightTests */,
+				40036F34BFCFB4C3F213C159 /* HindsightUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		36FF9E99ADDED8BAE443E72A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A10000000000000000000105 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA9601C8479172C0510328E4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -103,6 +300,26 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2F7B4B3E561778474B4D5312 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */,
+				2C0E641FD6AD79789A78C9A0 /* ModelPersistenceTests.swift in Sources */,
+				8C0FAADF06583B93D921EA9E /* SampleDataTests.swift in Sources */,
+				E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */,
+				8065521F49B35EAEED16B554 /* Decision.swift in Sources */,
+				F3F992BA7C80A6BCD3462C31 /* DecisionOption.swift in Sources */,
+				64AD0159B66EC89DD750A029 /* Prediction.swift in Sources */,
+				247DE3FDA377B26BFC64CB67 /* OutcomeReview.swift in Sources */,
+				2CB3F5531828D03F785E0AC9 /* HindsightEnums.swift in Sources */,
+				A735AE42B2F25A8E484CECCB /* HindsightTheme.swift in Sources */,
+				82CBC57996FA61270C403DBB /* Statistics.swift in Sources */,
+				86C7329068B44FE21B38EC53 /* ClarityScore.swift in Sources */,
+				9283D8EA2ABF6B4C2379D0CC /* SampleData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A10000000000000000000103 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -110,9 +327,126 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C28595F95BEB9F8E54ED570C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				37947D8E7334A2CB7AABF814 /* HindsightCaptureFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		430DAA0A2BCD906DBFAE8BEE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Hindsight;
+			target = A100000000000000000000F1 /* Hindsight */;
+			targetProxy = 094A271A9DA60710C80C13CF /* PBXContainerItemProxy */;
+		};
+		EEF8CF702636132CA076F090 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Hindsight;
+			target = A100000000000000000000F1 /* Hindsight */;
+			targetProxy = 5CCEE83C8BDD0B38D23245ED /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		13957827B6E497683C0AB6F0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Hindsight;
+			};
+			name = Debug;
+		};
+		52A1622C7229C23299F17E1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		645B535FF6259E14C2F16F01 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Hindsight;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9B2BA563C6229AA2EBC89BE7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		A10000000000000000000106 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -297,6 +631,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5F393B9CC660EDF6A82F6516 /* Build configuration list for PBXNativeTarget "HindsightUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				645B535FF6259E14C2F16F01 /* Release */,
+				13957827B6E497683C0AB6F0 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A7CDF548673B48C16FAEB96 /* Build configuration list for PBXNativeTarget "HindsightTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9B2BA563C6229AA2EBC89BE7 /* Release */,
+				52A1622C7229C23299F17E1B /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A10000000000000000000101 /* Build configuration list for PBXNativeTarget "Hindsight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

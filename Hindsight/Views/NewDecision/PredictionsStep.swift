@@ -107,7 +107,8 @@ private struct PredictionEditorCard: View {
                     }
                 }
 
-                HTextEditor(text: $prediction.statement, placeholder: placeholder, minHeight: 60)
+                HTextEditor(text: $prediction.statement, placeholder: placeholder, minHeight: 60,
+                            accessibilityIdentifier: "newDecision.prediction.statement.\(index)")
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("HOW CONFIDENT ARE YOU?")

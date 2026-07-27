@@ -79,7 +79,8 @@ struct OutcomeReviewView: View {
     private var whatHappenedSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
             HSectionHeader(title: "What actually happened?", systemImage: "text.bubble.fill")
-            HTextEditor(text: $whatHappened, placeholder: "Describe how it turned out…")
+            HTextEditor(text: $whatHappened, placeholder: "Describe how it turned out…",
+                        accessibilityIdentifier: "outcomeReview.whatHappened")
             if showValidationHint {
                 Label("Add a line about what happened before saving.", systemImage: "exclamationmark.circle.fill")
                     .font(HindsightTheme.Typography.caption)

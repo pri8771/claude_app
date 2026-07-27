@@ -99,7 +99,8 @@ private struct OptionEditorCard: View {
                     }
                 }
 
-                HTextField(text: $option.title, placeholder: "Option title", icon: "circle")
+                HTextField(text: $option.title, placeholder: "Option title", icon: "circle",
+                           accessibilityIdentifier: "newDecision.option.title.\(index)")
 
                 HStack(alignment: .top, spacing: HindsightTheme.Spacing.sm) {
                     labelledField(label: "UPSIDE", tint: HindsightTheme.Colors.success) {
