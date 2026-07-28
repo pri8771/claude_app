@@ -1,0 +1,52 @@
+{
+  "$schema": "https://raw.githubusercontent.com/pri8771/iOS_app_factory_rules/main/schemas/feature-contract.schema.json",
+  "id": "PHASE1-TRUST",
+  "name": "Phase 1 Launch Blocker Fixes",
+  "status": "code_complete",
+  "userOutcome": "Users can save outcome reviews without forcing verdict selections, navigate from terminated-app notifications to outcomes, recover from store initialization failures, and have their data preserved when demo data is removed. Save failures do not silently abandon draft state.",
+  "entryPoints": [
+    "OutcomeReviewView save flow",
+    "Notification deep link from terminated state (MainTabView .task)",
+    "App launch with corrupted/missing store files (HindsightApp)",
+    "SettingsView demo removal with mixed real/demo data",
+    "All model save sites (OutcomeReviewView, NewDecisionWizard, SettingsView, DecisionDetailView, SampleData)"
+  ],
+  "productionDataSource": "Decision model with embedded Prediction entries; locally persisted Call schedule and notification receipts",
+  "states": [
+    "idle",
+    "loading",
+    "content",
+    "recovery_required",
+    "save_failed_retryable",
+    "empty"
+  ],
+  "errorBehavior": "Store init failure: no crash, recovery screen with Retry/Export/Reset options; save failure: screen stays open, draft preserved, non-blocking retryable alert, no success haptic, no dismissal, no notification side-effects executed. Demo removal: only UUID-matched records deleted; title-matched orphans acceptable.",
+  "duplicateProtectionRequired": false,
+  "persistenceRequired": true,
+  "layoutScenarios": [
+    "iPhone SE to 17 Pro",
+    "Portrait orientation",
+    "Recovery screen after store open failure"
+  ],
+  "accessibilityRequirements": [
+    "Recovery screen buttons labeled and routable",
+    "Alert messages announced on save failure"
+  ],
+  "prohibitedBehavior": [
+    "Do not preselect any verdict chip in outcome review.",
+    "Do not delete user records by title heuristic.",
+    "Do not crash on corrupted store; must offer recovery.",
+    "Do not execute notification side-effects after failed save.",
+    "Do not silently suppress save errors with try?."
+  ],
+  "acceptanceTests": [
+    "testResolution_newCallHasNoPreselectedVerdict: new prediction seeds nil, renders unselected",
+    "testResolution_allowsOneTerminalChoice: ungraded prediction can be saved",
+    "testDemoCleanup_deletesOnlyExplicitDemoProvenance: real decision with demo-sample title survives removal",
+    "testStoreOpenFailureIsRecoverable: injected failing config shows recovery screen, no crash",
+    "testPersistence_failurePreservesDraft: wizard save failure keeps sheet open with draft",
+    "testPersistence_failureCancelsNoSideEffects: review save failure executes no success haptics/notifications",
+    "testColdLaunchDeepLink_tappedDecisionIDConsumedInTask: terminated-app notification tap routes to target detail",
+    "Full unit test suite: 59/59 green on iPhone 17 Pro simulator"
+  ]
+}
