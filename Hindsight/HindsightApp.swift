@@ -38,17 +38,28 @@ struct HindsightApp: App {
             defaults.set(true, forKey: AppStorageKeys.didRequestNotifications)
         }
 
+        // Built locally and handed to `_bootResult`'s initial value below.
+        // Assigning through `self.bootResult = ...` from inside init() does
+        // NOT reliably reach the storage `body` reads: SwiftUI only wires up
+        // @State's backing box once view identity is established, so a plain
+        // property write during init() can target a transient copy and
+        // silently vanish — leaving `body` stuck on `nil` forever, which
+        // renders as a black screen with the defensive ProgressView.
+        // (Writing `self.bootResult` from retryBootstrap() below is fine:
+        // by then the view exists and @State behaves normally.)
+        let result: Result<ModelContainer, Error>
         do {
             if Self.isUITesting {
                 let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
                 let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-                self.bootResult = .success(try StoreBootstrap.makeContainer(configuration: config))
+                result = .success(try StoreBootstrap.makeContainer(configuration: config))
             } else {
-                self.bootResult = .success(try StoreBootstrap.makeContainer())
+                result = .success(try StoreBootstrap.makeContainer())
             }
         } catch {
-            self.bootResult = .failure(error)
+            result = .failure(error)
         }
+        _bootResult = State(initialValue: result)
 
         // Default review reminders + haptics to ON so they work before the
         // user ever visits Settings.
