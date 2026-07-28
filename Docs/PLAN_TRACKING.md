@@ -12,6 +12,56 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 
 ---
 
+# ACTIVE — Baseline M1.0 (MVP → TestFlight)
+
+*This is the current work. The E-series below does not start until this ships.*
+
+## M1 — Quick capture MVP (Build 1)
+
+| ID | Task | Fn | Base | Current | Actual | Status | Cause | Blocked by |
+|---|---|---|---|---|---|---|---|---|
+| M1.1 | Quick Capture sheet | ENG | 3 | 3 | | — | | *ready* |
+| M1.2 | Entry point on Today | ENG | 1 | 1 | | — | | M1.1 |
+| M1.3 | Short-horizon date chips | ENG | 1 | 1 | | — | | M1.1 |
+| M1.4 | First-session short-horizon nudge | DESIGN | 1 | 1 | | — | | M1.3 |
+| M1.5 | Clarity score reframe | DESIGN | 1 | 1 | | — | | *ready* |
+| M1.6 | Resolve ritual card stack | ENG | 3 | 3 | | — | | *ready* |
+| M1.7 | Overconfidence stat | ENG | 2 | 2 | | — | | *ready* |
+| M1.8 | Gentle reveal copy pass | DESIGN | 1 | 1 | | — | | M1.6, M1.7 |
+| M1.9 | MVP test coverage | QA | 3 | 3 | | — | | M1.1–M1.7 |
+| M1.10 | Manual VoiceOver pass | QA | 2 | 2 | | — | | M1.1–M1.7 |
+
+## T — TestFlight release track
+
+| ID | Task | Fn | Base | Current | Actual | Status | Cause | Blocked by |
+|---|---|---|---|---|---|---|---|---|
+| T1 | Bundle ID + App Store Connect record | OPS | 0.5 | 0.5 | | ⏸ | | **user: account access** |
+| T2 | Distribution cert + provisioning | OPS | 0.5 | 0.5 | | — | | T1 |
+| T3 | Release config audit | ENG | 1 | 1 | | — | | *ready* |
+| T4 | Privacy nutrition labels | LEGAL | 0.5 | 0.5 | | — | | T1 |
+| T5 | Privacy policy — write + host | LEGAL | 1 | 1 | | — | | *ready* |
+| T6 | First archive + upload + internal testers | OPS | 1 | 1 | | — | | T2, T3, T4 |
+| T7 | TestFlight beta description + feedback email | MKT | 0.5 | 0.5 | | — | | T1 |
+| T8 | External testing: Beta App Review | OPS | 0.5 | 0.5 | | — | | T5, T6 |
+
+## V — Voice capture (Build 2, after Build 1 ships)
+
+| ID | Task | Fn | Base | Current | Actual | Status | Cause | Blocked by |
+|---|---|---|---|---|---|---|---|---|
+| V1 | Speech + Foundation Models API spike | ENG | 2 | 2 | | — | | Build 1 ships |
+| V2 | Record + on-device transcription | ENG | 3 | 3 | | — | | V1 |
+| V3 | Parse utterance → draft | ENG | 4 | 4 | | — | | V1 |
+| V4 | Confirmation / correction UI | ENG | 3 | 3 | | — | | V3 |
+| V5 | Confidence follow-up | ENG | 2 | 2 | | — | | V3 |
+| V6 | Non-Apple-Intelligence fallback | ENG | 2 | 2 | | — | | V3 |
+| V7 | Voice test coverage | QA | 2 | 2 | | — | | V2–V6 |
+
+---
+
+# QUEUED — Baseline v1.0 (post-MVP)
+
+*Does not start until Baseline M1.0 ships. Listed for reference.*
+
 ## E1 — Hands-free capture
 
 | ID | Task | Fn | Base | Current | Actual | Status | Cause | CR |
@@ -75,7 +125,7 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 | E5.1 | CI: build + unit tests on PR | QA | 2 | 2 | | — | | |
 | E5.2 | CI: UI test suite on merge | QA | 2 | 2 | | — | | |
 | E5.3 | Device/OS test matrix | QA | 1 | 1 | | — | | |
-| E5.4 | Manual VoiceOver audit | QA | 2 | 2 | | — | | |
+| E5.4 | Manual VoiceOver audit | QA | 2 | 2 | | ✂ | | superseded by M1.10 (CR-001) |
 | E5.5 | Dynamic Type + small-device sweep | QA | 2 | 2 | | — | | |
 | E5.6 | TestFlight beta programme | QA | 3 | 3 | | — | | |
 | E5.7 | Privacy-compatible crash reporting | QA | 3 | 3 | | — | | |
@@ -163,10 +213,12 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 
 ## Running totals
 
-| | Base | Actual | Ratio |
-|---|---|---|---|
-| Completed tasks (5) | 5.5 | 2.0 | 0.36 |
-| **All 92 tasks** | **231.5** | **2.0** | — |
+| Track | Tasks | Base | Actual | Ratio |
+|---|---|---|---|---|
+| **ACTIVE — M1.0 to TestFlight** | 18 | **23.5** | 0 | — |
+| M1.0 voice (Build 2) | 7 | 18.0 | 0 | — |
+| QUEUED — v1.0 post-MVP | 92 | 231.5 | 2.0 | — |
+| Completed so far (5, all PM/OPS setup) | 5 | 5.5 | 2.0 | 0.36 |
 
 *The 0.36 ratio is not a real signal — the five completed tasks are all PM/OPS setup done inside
 one session, which is the least representative work in the plan. Expect this number to move sharply
