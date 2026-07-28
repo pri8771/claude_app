@@ -1,153 +1,177 @@
-# Plan: Siri, Widgets, and Voice Capture
+# Plan: Voice-First Capture (Siri, Widgets, Natural Language)
 
 **Status:** Draft for review — not ratified, not started
-**Target architecture:** Decision / Prediction / OutcomeReview (post-revert, `dev` @ 6edc85f)
+**Target architecture:** Decision / Prediction / OutcomeReview (post-revert, `dev`)
 **Date:** 2026-07-28
 
 ---
 
-## The one fact that shapes everything
+## The reframing
 
-Widgets and Siri intents **run in separate processes** from the app. They cannot read the
-app's SwiftData store as it exists today, because it lives in the app's private container.
+The original framing treated voice as a *convenience* on top of the wizard. That was wrong.
 
-Everything below therefore depends on one prerequisite: moving the store into an **App Group**
-shared container. This is a data migration on real user data and carries the same risk profile
-as any store move — it must be backup-first and reversible.
+The actual problem: **capture costs too many taps for anyone to use this habitually.** A decision
+journal only works if capture is nearly free at the moment of thinking. A 4-step wizard is a
+reflection tool, not a capture tool — and reflection-grade friction at capture time means the
+journal stays empty.
 
-There is no way to build a data-driven widget or a "log a decision with Siri" intent without it.
-(A launch-only widget that just deep-links into the app is the sole exception, and it is not
-worth shipping alone.)
+So voice is not a feature. Voice is *the* capture path, and the wizard becomes what you use to
+deepen an entry later.
 
----
+**Target utterance:**
 
-## Phase A — App Group + shared store (prerequisite, no visible feature)
+> "Hey Siri, I'm thinking of quitting my job, I think it will make me happy, remind me in 6 months"
 
-**Goal:** app, widget, and intents all read/write one store.
+**Target decomposition:**
 
-1. Add App Group capability (`group.com.hindsight.pchordia.app`) to the app target.
-2. Change `StoreBootstrap` to resolve the store URL from the App Group container instead of
-   Application Support — SwiftData supports this via `ModelConfiguration(groupContainer:)`.
-3. **Migration:** on first launch after the change, if a store exists at the old path and none
-   exists in the group container, copy it across, validate the row counts match, and only then
-   switch over. Keep the old file untouched until validated. This mirrors the backup-first
-   pattern already proven in the Call migration work (recoverable, idempotent, verifiable).
-4. Add a regression test that the migration is idempotent and preserves every Decision,
-   Prediction, and OutcomeReview.
-
-**Risk:** medium-high (touches real user data). **Mitigation:** backup-first, validate-then-swap.
-**User-visible outcome:** none. This is pure plumbing.
-
-**⚠️ Account check needed:** App Groups and extension provisioning generally require a paid
-Apple Developer Program membership. Current builds are dev-signed with a personal team. Confirm
-membership status before committing to this phase — it gates all three features.
-
----
-
-## Phase B — Widgets (WidgetKit)
-
-Do this first among the visible features: widgets are **read-only**, so they cannot corrupt data,
-and they prove the shared store works before anything writes through it.
-
-**Widgets worth building, in value order:**
-
-| Widget | Sizes | Content |
+| Field | Value | Source |
 |---|---|---|
-| **Due for review** | small, medium, Lock Screen rectangular | Count of decisions past `dueDate`, plus the next one's title. Taps deep-link straight to that decision's review. |
-| **Review rate** | small, Lock Screen circular | The `Statistics.reviewRate` number — the honest "are you actually closing the loop" metric. |
-| **Quick capture** | small, Lock Screen | Single button → deep-links into the wizard. Cheap, high daily utility. |
+| `Decision.title` | "Quitting my job" | parsed |
+| `Prediction.title` | "It will make me happy" | parsed |
+| `Decision.dueDate` | now + 6 months | parsed |
+| `Decision.category` | `.career` | inferred |
+| `Decision.stakesLevel` | `.high` | inferred |
+| `Prediction.probabilityPercent` | **⚠️ unstated** | see below |
 
-**Implementation notes:**
-- New Widget Extension target; shares the models + `Statistics` via a shared framework or by
-  adding the files to both targets.
-- Timeline policy: refresh at the next `dueDate` boundary rather than on a fixed interval —
-  a review-due widget that lags by hours is worse than useless.
-- App calls `WidgetCenter.shared.reloadAllTimelines()` after any save that changes due counts.
-- Widgets must render correctly with **zero decisions** (new user) — design the empty state.
-
-**Risk:** low. **Effort:** moderate — the extension target and timeline logic are the bulk.
+This maps cleanly onto the existing model. No schema change is required for the core case.
 
 ---
 
-## Phase C — Siri via App Intents
+## The one thing the utterance does not contain
 
-Use the modern **App Intents** framework (iOS 16+), not legacy SiriKit. It gives Siri, Shortcuts,
-Spotlight, and the Action button from one implementation.
+`probabilityPercent` is load-bearing — calibration is the entire point of the app. "I think it
+will make me happy" carries no number.
 
-**Intents to expose:**
+Three options, and only one is acceptable:
 
-1. **`LogDecisionIntent`** — *"Log a decision in Hindsight"*
-   Captures title (and optionally category/stakes) and creates a **draft** decision.
-2. **`ReviewDueDecisionsIntent`** — *"What decisions do I need to review?"*
-   Read-only; speaks the count and the next title back.
-3. **`OpenDecisionIntent`** — deep link by title, for Shortcuts automation.
+- ❌ **Default to 50% (or anything).** Fabricating a confidence number silently poisons the
+  calibration data the app exists to produce. Never do this.
+- ❌ **Leave it unset and hope the user fills it in later.** They won't. That is the friction we
+  are removing.
+- ✅ **One Siri follow-up turn.** *"How confident are you that it'll make you happy?"* Accept
+  either a number ("seventy percent") or a qualitative answer ("pretty confident") mapped to a
+  band. One extra turn is a fair price; a fake number is not.
 
-**Honest design constraint:** the capture flow is a 4-step wizard (basic info → options →
-predictions → review date). That does **not** compress into a voice turn — asking someone to
-dictate weighted options and probability percentages to Siri is a bad experience.
-
-So the intent should capture the *title and notes only*, save it as an incomplete draft, and
-surface it in-app as "finish this decision." Voice is the **inbox**, not the whole wizard. A
-decision captured at a red light gets completed properly later, which is also better for
-decision quality.
-
-Expose zero-setup phrases through `AppShortcutsProvider` so no Shortcuts setup is required.
-
-**Risk:** medium — it writes to the store from another process. **Effort:** moderate.
+**Design rule:** the app may infer category and stakes (cosmetic, correctable). It must never
+infer confidence (load-bearing, corrupting).
 
 ---
 
-## Phase D — Voice capture
+## How the parsing actually works
 
-Two genuinely different things are bundled under "voice." Separating them matters:
+This is the critical technical decision.
 
-**D1 — Dictation into text fields (nearly free)**
-The system keyboard's mic button already dictates into any `TextField`. Cost is essentially
-zero: confirm the wizard's fields don't fight it and that dictation works in the notes field.
-Ship this immediately — it may satisfy most of the actual need.
+**Recommended: Apple's on-device Foundation Models framework (iOS 26).** It exposes the
+on-device LLM to apps with structured/guided generation — you define a result type and the model
+fills it. That is precisely this problem, and it runs entirely on-device: no network, no backend,
+no change to the privacy promise.
 
-**D2 — Record-and-transcribe capture (real work)**
-Speak a decision freely, transcribe it, pre-fill the wizard.
+- Pair it with `NSDataDetector` to independently parse and validate the date phrase ("in 6
+  months"), since date handling is where LLM output most often needs a deterministic check.
+- **Device requirement:** the on-device model needs Apple Intelligence-capable hardware.
+  Your iPhone 16 Pro Max qualifies; older devices do not. A graceful fallback is required —
+  likely "transcribe into the notes field, open the wizard pre-filled."
 
-**The critical constraint:** the app's core promise is 100% on-device, no backend, no tracking.
-`SFSpeechRecognizer` defaults to **server-based** recognition — audio leaves the device. That
-would silently break the central privacy claim. On-device recognition must be forced
-(`requiresOnDeviceRecognition = true`), and the app should refuse to transcribe rather than fall
-back to the network if on-device is unavailable on that device/locale.
+*⚠️ Verification needed before implementation: the Foundation Models framework post-dates my
+training data. I know the capability exists and that this is its intended use case, but I should
+confirm the current API surface, availability checks, and structured-output syntax against
+Apple's documentation rather than writing it from memory.*
 
-*(iOS 26 introduced a newer on-device speech API — worth verifying current best practice against
-Apple's documentation before implementing, rather than assuming `SFSpeechRecognizer` is still the
-right entry point.)*
+**Explicitly rejected: any cloud LLM.** The app's core claim is that nothing leaves the device.
+Sending decision text — some of the most private content a person has — to a server would break
+that promise. Not a tradeoff worth making.
 
-Also required: `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription`, with
-copy that states plainly that audio never leaves the device.
-
-**Open product question:** is transcribed free speech parsed into structured fields (title vs.
-notes vs. options), or dumped into notes for the user to organise? Parsing is where this gets
-expensive and error-prone. Recommend: dump into notes first, ship it, see if parsing is even
-wanted.
-
-**Risk:** high (privacy-sensitive + permissions + accuracy). **Effort:** highest of the four.
+**Also insufficient on its own: App Intents parameter resolution.** It handles structured phrases
+matching a defined shape; it will not reliably decompose free-form speech like the target
+utterance. Useful as the *entry point*, not as the parser.
 
 ---
 
-## Recommended sequence
+## The widget microphone button — a platform constraint
 
-```
-A (App Group)  →  B (Widgets)  →  C (Siri intents)  →  D1 (dictation)  →  D2 (transcription)
-```
+**Widgets cannot record audio.** Microphone access is not available to widget extensions. A
+widget button can only run an App Intent or launch the app.
 
-D1 can jump the queue at any time — it is independent of the App Group work.
+So the mic button works like this: tap → app launches directly into recording state → speak →
+parse → confirm. Still a one-tap capture, but the app does come to the foreground. There is no
+way around this, and any plan promising in-widget recording is wrong.
 
-**Suggested first step:** confirm the Apple Developer Program status, then do Phase A + the
-"Due for review" widget as a single vertical slice. That proves the whole shared-store
-architecture end-to-end with the lowest-risk feature attached, and delivers something useful
-on the Home Screen.
+Worth considering alongside the widget:
 
-## Open questions for the user
+- **Control Center control (iOS 18+)** — arguably a better home for "start capture" than a
+  Home Screen widget; reachable from anywhere.
+- **Action Button** (Pro devices) — one physical press to capture. Strong fit for this app.
+- **Lock Screen widget** — capture without unlocking.
 
-1. Paid Apple Developer Program membership — active? (Gates A, B, C.)
-2. Is "voice" primarily *dictation* (D1, cheap) or *speak-a-whole-decision* (D2, expensive)?
-3. Which widget matters most day to day — due-for-review, review rate, or quick capture?
-4. Should a Siri-captured decision be a draft to finish later (recommended), or should Siri try
-   to walk the full wizard by voice?
+---
+
+## Two capture paths, and which to build first
+
+| Path | Pro | Con |
+|---|---|---|
+| **Siri** ("Hey Siri, I'm thinking of…") | Hands-free, app never opens | Depends on Siri routing the phrase correctly; hardest to debug; failure is invisible to you |
+| **Mic button** (widget / Control / Action Button) | One tap, full control over recording and confirmation UI, testable | Requires app foreground |
+
+**Recommendation: build the mic-button path first.** It exercises the same recording →
+transcription → parsing → confirmation pipeline, but you control every step and can actually
+test it. Once parsing is proven, wrapping it in an App Intent for Siri is comparatively small.
+
+Building Siri first means debugging speech routing and NL parsing simultaneously, with the
+hardest-to-observe failure mode.
+
+---
+
+## Phasing
+
+**Phase A — App Group + shared store** *(prerequisite, no visible feature)*
+Widgets and intents run in separate processes and cannot read the app's current private store.
+Move it to an App Group container, backup-first, validate-then-swap, with an idempotency test.
+✅ Unblocked — paid developer account confirmed.
+
+**Phase B — Voice capture in-app** *(the core bet)*
+Record → on-device transcribe → parse to a draft Decision + Prediction → **confirmation screen**
+(never save silently; the user must see and correct the parse) → one follow-up for confidence.
+
+**Phase C — Entry points**
+Mic button as a widget, Control Center control, and Action Button target. Plus the read-only
+"due for review" widget, which is cheap once Phase A exists.
+
+**Phase D — Siri App Intent**
+Wrap the proven Phase B pipeline in an App Intent with `AppShortcutsProvider` phrases.
+
+**Phase E — Dictation polish** *(can jump the queue anytime)*
+The keyboard mic already dictates into any text field. Nearly free; verify it works well in the
+wizard's notes field. May satisfy part of the need immediately.
+
+---
+
+## Future: parsing decisions out of email
+
+Recorded as a real idea, with a hard platform constraint stated up front.
+
+**iOS gives third-party apps no read access to Mail.** There is no API for scanning the user's
+inbox on-device. The options are:
+
+- ❌ **Gmail/IMAP integration** — means credentials, network calls, and someone's entire inbox
+  flowing through the app. Categorically incompatible with the privacy promise.
+- ✅ **Share Sheet extension** — the user shares a specific email (or any text) into Hindsight,
+  which parses it into a draft decision using the same Phase B pipeline. User-initiated,
+  scoped to one item, nothing leaves the device.
+- ✅ **Proactive prompting from data already in the app** — "you decided this 6 months ago and
+  never reviewed it" is a strong nudge that needs no new data source at all.
+
+**Recommendation:** the Share Sheet version captures most of the value at a fraction of the cost
+and risk, and reuses Phase B entirely. The inbox-scanning version should stay off the table
+unless the privacy positioning changes deliberately.
+
+---
+
+## Open questions
+
+1. Confidence follow-up: accept qualitative answers ("pretty confident") mapped to bands, or
+   require a number?
+2. Confirmation screen after parsing — full edit, or accept/reject with edit-in-app-later?
+3. Fallback behaviour on non-Apple-Intelligence devices: transcribe-to-notes, or hide voice
+   capture entirely?
+4. Should voice capture create a *complete* decision, or an explicitly-marked draft that the
+   wizard later deepens?
