@@ -22,7 +22,6 @@
 		7F3A9C1B2D8E4F5A6B7C9D0E /* PersistenceBoundaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E8B7C6D5A4F3E2D1C0B9A8F /* PersistenceBoundaryTests.swift */; };
 		8F2A4B1D6C53D9E7A4F1C3B5 /* StoreBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9F1A3D5C42B8F6A7D9C2E1 /* StoreBootstrap.swift */; };
 		9283D8EA2ABF6B4C2379D0CC /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACACC821FD6DA81C231CF47 /* SampleData.swift */; };
-		6E9F8C7D2A5B3E1F0D4C8B9A /* Persisting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8E7C6B4A3F2E1D0C9B8A7F /* Persisting.swift */; };
 		9CCF4259388BAC7E2CF1A322 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
 		A735AE42B2F25A8E484CECCB /* HindsightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCF5D395BBCF47C56249FBF9 /* HindsightTheme.swift */; };
 		BB0BBF582CC05B6D7AE94CF4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
@@ -51,7 +50,6 @@
 /* Begin PBXFileReference section */
 		036FF59B35EDBD9D983C21D1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		0ACACC821FD6DA81C231CF47 /* SampleData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SampleData.swift; path = Hindsight/Managers/SampleData.swift; sourceTree = SOURCE_ROOT; };
-		5D8E7C6B4A3F2E1D0C9B8A7F /* Persisting.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Persisting.swift; path = Hindsight/Managers/Persisting.swift; sourceTree = SOURCE_ROOT; };
 		14191FF7560ECFBF26FCA6D3 /* Statistics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Statistics.swift; path = Hindsight/Managers/Statistics.swift; sourceTree = SOURCE_ROOT; };
 		1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatisticsTests.swift; sourceTree = "<group>"; };
 		2D96D7964C938C51D696FDE0 /* ClarityScore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClarityScore.swift; path = Hindsight/Managers/ClarityScore.swift; sourceTree = SOURCE_ROOT; };
@@ -327,7 +325,6 @@
 				8C0FAADF06583B93D921EA9E /* SampleDataTests.swift in Sources */,
 				8D5A9B3F7E42C4D19A1F5B8C /* StoreBootstrapTests.swift in Sources */,
 				7F3A9C1B2D8E4F5A6B7C9D0E /* PersistenceBoundaryTests.swift in Sources */,
-				6E9F8C7D2A5B3E1F0D4C8B9A /* Persisting.swift in Sources */,
 				E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */,
 				2BE28C68-6411-44 /* ResolutionTests.swift in Sources */,
 				8065521F49B35EAEED16B554 /* Decision.swift in Sources */,
