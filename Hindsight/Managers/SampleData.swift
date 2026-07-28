@@ -136,7 +136,12 @@ enum SampleData {
         for decision in [job, move, gym, side] {
             context.insert(decision)
         }
-        try? context.save()
+
+        // Persist demo data; return early on failure without disrupting caller.
+        if !PersistenceService.saveOrReport(context) {
+            // Insertion failed; caller should retry or handle gracefully
+            return
+        }
     }
 
     /// Inserts demo decisions if they are not already present. Demo data can
@@ -170,7 +175,11 @@ enum SampleData {
         for decision in demoDecisions {
             context.delete(decision)
         }
-        try? context.save()
+
+        // Persist demo data removal; return 0 on failure (no deletions confirmed).
+        if !PersistenceService.saveOrReport(context) {
+            return 0
+        }
         return demoDecisions.count
     }
 

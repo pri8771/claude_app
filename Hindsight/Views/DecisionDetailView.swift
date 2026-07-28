@@ -23,6 +23,7 @@ struct DecisionDetailView: View {
     @State private var showOutcomeReview = false
     @State private var showDeleteConfirm = false
     @State private var expandedOptionID: UUID?
+    @State private var saveError: String?
 
     var body: some View {
         ZStack {
@@ -74,6 +75,11 @@ struct DecisionDetailView: View {
         } message: {
             Text("This permanently removes the decision and its predictions. This can't be undone.")
         }
+        .alert("Couldn't save", isPresented: Binding(
+            get: { saveError != nil }, set: { if !$0 { saveError = nil } }
+        )) {
+            Button("Cancel", role: .cancel) { saveError = nil }
+        } message: { Text(saveError ?? "An error occurred while saving.") }
     }
 
     // MARK: Header
@@ -289,23 +295,38 @@ struct DecisionDetailView: View {
         if decision.status == .active {
             markDecided()
         }
-        try? context.save()
-        HapticsManager.shared.optionCommitted()
+
+        // Attempt save; side effects (haptic) only on success
+        if PersistenceService.saveOrReport(context) {
+            HapticsManager.shared.optionCommitted()
+        } else {
+            saveError = "An error occurred while saving."
+        }
     }
 
     private func markDecided() {
         decision.status = .awaitingReview
         decision.decidedAt = Date()
-        try? context.save()
-        Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
+
+        // Attempt save; side effects (reminder scheduling) only on success
+        if PersistenceService.saveOrReport(context) {
+            Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
+        } else {
+            saveError = "An error occurred while saving."
+        }
     }
 
     private func deleteDecision() {
-        HapticsManager.shared.deleteConfirmed()
-        notificationManager.cancelReminder(for: decision)
         context.delete(decision)
-        try? context.save()
-        dismiss()
+
+        // Attempt save; side effects (reminder cancellation, haptic, dismiss) only on success
+        if PersistenceService.saveOrReport(context) {
+            notificationManager.cancelReminder(for: decision)
+            HapticsManager.shared.deleteConfirmed()
+            dismiss()
+        } else {
+            saveError = "An error occurred while saving."
+        }
     }
 }
 

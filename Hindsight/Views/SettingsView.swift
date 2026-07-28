@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var showClearConfirm = false
     @State private var showRemoveDemoConfirm = false
     @State private var exportError: String?
+    @State private var clearError: String?
 
     var body: some View {
         NavigationStack {
@@ -71,6 +72,12 @@ struct SettingsView: View {
             } message: {
                 Text("Your own decisions will be kept.")
             }
+            .alert("Couldn't delete data", isPresented: Binding(
+                get: { clearError != nil }, set: { if !$0 { clearError = nil } }
+            )) {
+                Button("Try Again") { clearAllData() }
+                Button("Cancel", role: .cancel) { clearError = nil }
+            } message: { Text(clearError ?? "An error occurred while deleting your data.") }
             .task { await notificationManager.refreshAuthorizationStatus() }
         }
     }
@@ -321,10 +328,16 @@ struct SettingsView: View {
     }
 
     private func clearAllData() {
-        notificationManager.cancelAll()
         for decision in decisions { context.delete(decision) }
-        try? context.save()
-        HapticsManager.shared.deleteConfirmed()
+
+        // Attempt save; side effects (notification cancellation, haptic) only on success
+        if PersistenceService.saveOrReport(context) {
+            // Only after successful save, cancel notifications and fire success haptic
+            notificationManager.cancelAll()
+            HapticsManager.shared.deleteConfirmed()
+        } else {
+            clearError = "An error occurred while deleting your data."
+        }
     }
 
     private func openSystemSettings() {

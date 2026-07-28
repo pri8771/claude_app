@@ -19,6 +19,7 @@ struct NewDecisionWizard: View {
 
     @State private var draft = DecisionDraft()
     @State private var step = 0
+    @State private var saveError: String?
 
     private let totalSteps = 4
     private let titles = ["Basics", "Options", "Predictions", "Review"]
@@ -50,6 +51,12 @@ struct NewDecisionWizard: View {
                     Button("Cancel") { dismiss() }.tint(HindsightTheme.Colors.textSecondary)
                 }
             }
+            .alert("Couldn't save decision", isPresented: Binding(
+                get: { saveError != nil }, set: { if !$0 { saveError = nil } }
+            )) {
+                Button("Try Again") { save() }
+                Button("Cancel", role: .cancel) { saveError = nil }
+            } message: { Text(saveError ?? "An error occurred while saving your decision.") }
         }
         .interactiveDismissDisabled(!draft.title.isEmpty)
         .preferredColorScheme(.dark)
@@ -126,11 +133,16 @@ struct NewDecisionWizard: View {
     private func save() {
         let decision = draft.makeDecision()
         context.insert(decision)
-        try? context.save()
-        Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
 
-        HapticsManager.shared.decisionSealed()
-        dismiss()
+        // Attempt save; side effects (reminder scheduling, haptic, dismiss) only on success
+        if PersistenceService.saveOrReport(context) {
+            // Only after successful save, schedule the reminder and fire success haptic
+            Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
+            HapticsManager.shared.decisionSealed()
+            dismiss()
+        } else {
+            saveError = "An error occurred while saving your decision."
+        }
     }
 }
 

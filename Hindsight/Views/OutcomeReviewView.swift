@@ -30,6 +30,7 @@ struct OutcomeReviewView: View {
     @State private var predictionVerdicts: [UUID: PredictionStatus] = [:]
     @State private var predictionResults: [UUID: String] = [:]
     @State private var showValidationHint = false
+    @State private var saveError: String?
 
     var body: some View {
         NavigationStack {
@@ -59,6 +60,12 @@ struct OutcomeReviewView: View {
                 }
             }
             .onAppear(perform: seedExistingReview)
+            .alert("Couldn't save", isPresented: Binding(
+                get: { saveError != nil }, set: { if !$0 { saveError = nil } }
+            )) {
+                Button("Try Again") { save() }
+                Button("Cancel", role: .cancel) { saveError = nil }
+            } message: { Text(saveError ?? "An error occurred while saving your review.") }
         }
         .preferredColorScheme(.dark)
     }
@@ -224,15 +231,22 @@ struct OutcomeReviewView: View {
             prediction.status = predictionVerdicts[prediction.id] ?? prediction.status
             let result = predictionResults[prediction.id]?.trimmingCharacters(in: .whitespacesAndNewlines)
             prediction.actualResult = (result?.isEmpty == false) ? result : nil
-            notificationManager.cancelReminder(for: prediction)
         }
 
         decision.status = .reviewed
-        notificationManager.cancelReminder(for: decision)
-        try? context.save()
 
-        HapticsManager.shared.outcomeReviewed()
-        dismiss()
+        // Attempt save; side effects (reminder cancellations, haptic, dismiss) only on success
+        if PersistenceService.saveOrReport(context) {
+            // Only after successful save, cancel reminders and fire success haptic
+            for prediction in decision.predictions {
+                notificationManager.cancelReminder(for: prediction)
+            }
+            notificationManager.cancelReminder(for: decision)
+            HapticsManager.shared.outcomeReviewed()
+            dismiss()
+        } else {
+            saveError = "An error occurred while saving your review."
+        }
     }
 }
 
