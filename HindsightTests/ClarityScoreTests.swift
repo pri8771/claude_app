@@ -7,6 +7,7 @@
 //
 
 import XCTest
+@testable import Hindsight
 
 final class ClarityScoreTests: XCTestCase {
 

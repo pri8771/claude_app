@@ -8,6 +8,7 @@
 
 import XCTest
 import SwiftData
+@testable import Hindsight
 
 @MainActor
 final class StoreBootstrapTests: XCTestCase {

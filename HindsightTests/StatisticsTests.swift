@@ -9,6 +9,7 @@
 //
 
 import XCTest
+@testable import Hindsight
 
 @MainActor
 final class StatisticsTests: XCTestCase {

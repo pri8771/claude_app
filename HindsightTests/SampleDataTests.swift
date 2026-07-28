@@ -10,6 +10,7 @@
 
 import XCTest
 import SwiftData
+@testable import Hindsight
 
 @MainActor
 final class SampleDataTests: XCTestCase {
