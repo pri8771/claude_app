@@ -133,3 +133,32 @@ data points about how this project changes direction.
    Siri extensions need the shared container. That risk moves later than the baseline implies.
 2. `E5.4` (manual VoiceOver audit) is duplicated as `M1.10`. `E5.4` should be marked superseded
    rather than done twice.
+
+### CR-002 — Jira field configuration blocks all issue creation
+
+- **Raised:** 2026-07-28 by Claude (found by test-creating one issue before bulk creation)
+- **Status:** accepted
+- **Tasks affected:** E6.1, E6.2, E6.3
+- **What changes:** the HIND project inherited a shared field configuration and screen scheme from
+  existing projects. 30 fields are marked required, ~20 of them belonging to unrelated projects
+  (Execution Agent, Agent Plan, Commit SHA(s), Delegation Mode, …). Issue creation fails outright.
+  Fixing it requires a dedicated field configuration, field configuration scheme, screen, screen
+  scheme, and issue type screen scheme for HIND — none of which were in the original 1-day estimate
+  for E6.2.
+- **Why:** new Jira projects inherit shared configuration objects by default. The baseline assumed
+  "create custom fields" was the whole job; the actual job is "isolate this project's configuration
+  from every other project's."
+- **Estimated delay:** 0.5 days
+- **Actual delay:** *(pending)*
+- **Delay cause:** `discovery`
+- **Lesson:** **test one before creating many.** A single test issue surfaced a total blocker in one
+  API call; creating 117 blind would have produced 117 failures or, worse, 117 issues carrying
+  fabricated values for `Actual` and `Delay Cause`. Any bulk operation against an unfamiliar system
+  should be preceded by a single-item probe.
+
+**Second, subtler finding:** `Actual` and `Delay Cause` were marked required *at creation*. Those
+fields are only meaningful once a task is finished — requiring them at creation would have made
+every issue start life with a fabricated actual and a fabricated cause, corrupting the exact
+measurement this project exists to produce. This is the same error the app guards against by
+refusing to default a confidence value the user never gave. **Never make a field required at a
+point in the lifecycle where its true value cannot be known.**
