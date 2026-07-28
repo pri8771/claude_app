@@ -92,3 +92,18 @@ data points about how this project changes direction.
 - **Lesson:** the friction problem was visible in the original audit but was treated as a UI
   concern rather than an existential one. **Rank problems by whether they block adoption, not by
   how hard they are to fix.**
+
+### CR-000c — Baseline task count corrected 78 → 92
+
+- **Raised:** 2026-07-28 by Claude (self-reported)
+- **Status:** accepted
+- **Tasks affected:** none (documentation only)
+- **What changes:** the baseline commit claimed 78 tasks; the epic breakdown actually totals 92.
+  Corrected in the plan and in the Notion hub.
+- **Why:** the total was summarised from memory rather than counted from the list.
+- **Estimated delay:** 0 days
+- **Actual delay:** 0 days
+- **Delay cause:** `underestimate`
+- **Lesson:** an 18% undercount of a list that was *already fully written down* is the cheapest
+  possible warning about estimate quality. Arithmetic on the plan must be computed, not recalled —
+  and every effort estimate in Baseline v1.0 should be read as optimistic by at least that margin.

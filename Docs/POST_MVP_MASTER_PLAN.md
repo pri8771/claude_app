@@ -284,8 +284,16 @@ Baseline estimates in ideal days. IDs are stable and referenced by Jira/Notion.
 | E11 Planning discipline | PM | 6.5 | ongoing |
 | **Total** | | **231.5** | |
 
+**92 tasks across 11 epics.**
+
 **By function:** ENG ~96 · QA ~45 · MKT ~23 · UA ~27 · SALES ~17 · OPS ~13 · DESIGN ~16 ·
 LEGAL ~15 · PM ~9 *(approximate; some tasks span functions)*
+
+> **First planning-accuracy data point, recorded before any work started:** the commit that
+> introduced this baseline claimed 78 tasks. The actual count is 92 — an 18% undercount of a
+> list that was sitting in front of me, fully enumerated. Cause: `underestimate`, from summarising
+> rather than counting. If the count of a *written-down* list is off by 18%, treat every effort
+> estimate below as optimistic by at least that margin.
 
 **Predictions to grade later — this plan's own falsifiable calls:**
 
