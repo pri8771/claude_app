@@ -107,3 +107,29 @@ data points about how this project changes direction.
 - **Lesson:** an 18% undercount of a list that was *already fully written down* is the cheapest
   possible warning about estimate quality. Arithmetic on the plan must be computed, not recalled —
   and every effort estimate in Baseline v1.0 should be read as optimistic by at least that margin.
+
+### CR-001 — MVP had no baselined task list
+
+- **Raised:** 2026-07-28 by Claude (gap found when asked "how do we get to MVP?")
+- **Status:** accepted
+- **Tasks affected:** none in Baseline v1.0 — creates a new Baseline M1.0 that precedes it
+- **What changes:** `POST_MVP_MASTER_PLAN.md` covers H2–H4 only, on the assumption the MVP was
+  already planned. It was not: the MVP existed as a recommendation in `PRODUCT_BRAINSTORM.md`
+  with no task breakdown, estimates, or release track. Added `MVP_PLAN.md` (Baseline M1.0):
+  23.5 days to first TestFlight, 41.5 to voice-complete.
+- **Why:** planning started at the wrong end. The post-MVP plan was requested and delivered
+  before the thing it comes after had been costed.
+- **Estimated delay:** 0 days (found before execution started)
+- **Actual delay:** 0 days
+- **Delay cause:** `discovery`
+- **Lesson:** **plan the nearest milestone first.** A detailed 231-day post-MVP plan sat on top of
+  an uncosted MVP — precision at the far horizon while the near one was a sketch. Sequence
+  planning the way work executes: nearest deliverable first, in the most detail.
+
+**Two findings from writing M1.0 that reduce risk in Baseline v1.0:**
+
+1. The App Group store migration (`E1.1`/`E1.2`) — the highest-risk item in Baseline v1.0 — is
+   **not required for the MVP**. In-app voice runs in the app's own process; only widgets and
+   Siri extensions need the shared container. That risk moves later than the baseline implies.
+2. `E5.4` (manual VoiceOver audit) is duplicated as `M1.10`. `E5.4` should be marked superseded
+   rather than done twice.
