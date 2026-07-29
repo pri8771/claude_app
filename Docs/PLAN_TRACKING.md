@@ -137,9 +137,9 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 
 | ID | Task | Fn | Base | Current | Actual | Status | Cause | CR |
 |---|---|---|---|---|---|---|---|---|
-| E6.1 | Jira project HIND + workflow | OPS | 1 | 1 | | ⏸ | | deferred by user 2026-07-28 |
-| E6.2 | Jira custom fields | OPS | 1 | 1 | | ⏸ | | deferred by user 2026-07-28 |
-| E6.3 | Jira board views by Function | OPS | 1 | 1 | | ⏸ | | deferred by user 2026-07-28 |
+| E6.1 | Jira projects HIND + AURA + workflow | OPS | 1 | 1 | 0.5 | ✓ | | both created, company-managed |
+| E6.2 | Jira custom fields | OPS | 1 | 1.5 | 1 | ⏸ | discovery | CR-002 — 9 fields exist; blocked by inherited field config |
+| E6.3 | Jira board views by Function | OPS | 1 | 1 | | ⏸ | | parked 2026-07-29 — repo is source of truth |
 | E6.4 | Notion planning hub | OPS | 2 | 2 | 0.5 | ✓ | | |
 | E6.5 | Repo/Jira/Notion sync convention | PM | 1 | 1 | 0.25 | ✓ | | repo is system of record |
 | E6.6 | Design tool setup (Figma) | DESIGN | 2 | 2 | | — | | |
@@ -217,8 +217,11 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 |---|---|---|---|---|
 | **ACTIVE — M1.0 to TestFlight** | 18 | **23.5** | 0 | — |
 | M1.0 voice (Build 2) | 7 | 18.0 | 0 | — |
-| QUEUED — v1.0 post-MVP | 92 | 231.5 | 2.0 | — |
-| Completed so far (5, all PM/OPS setup) | 5 | 5.5 | 2.0 | 0.36 |
+| QUEUED — v1.0 post-MVP | 92 | 231.5 | 3.5 | — |
+| Completed so far (7, all PM/OPS setup) | 7 | 7.5 | 3.5 | **0.47** |
+
+*Caveat unchanged: seven PM/OPS setup tasks done inside two sessions are the least representative
+work in the plan. E6.2 is the first task to overrun (1 → 1.5 baseline days, cause `discovery`).*
 
 *The 0.36 ratio is not a real signal — the five completed tasks are all PM/OPS setup done inside
 one session, which is the least representative work in the plan. Expect this number to move sharply
@@ -228,7 +231,11 @@ once engineering starts.*
 
 | Cause | Days | % of slip |
 |---|---|---|
-| *(no slip recorded yet)* | 0 | — |
+| `discovery` | 0.5 | 100% |
+| *all others* | 0 | 0% |
+
+Single data point, but it is `discovery` — unknown work found mid-task — which is what baseline
+prediction **P2** expects to dominate.
 
 ## Phase-boundary review log
 

@@ -36,11 +36,31 @@ Insights.
 - Insights correctness, sample-size behavior, drill-through, and visual polish (phase 4).
 - Small-phone, keyboard, Dynamic Type layout testing.
 
+## Direction change — 2026-07-28
+
+The Call / Timestamped Receipt / Brier-calibration pivot (T7–T22) was **reverted**. The product is
+the original Decision journal with its original Insights analytics. See `CHANGE_REQUEST_LOG.md`
+CR-000a. All pivot work is preserved on branch `archive/call-pivot-complete` and is recoverable.
+
+Phase 1 trust fixes (T2–T6) were **kept** — they fixed crashes and data-loss bugs in the original
+app and are unrelated to the pivot.
+
+One production bug was reintroduced by the revert and fixed again: `bootResult` assigned inside
+`App.init()` never reached `body`, hanging the app on a black screen with a spinner
+(commit 25d6971).
+
 ## Blockers
 
-None remaining for phase 1 merge to `qa`.
+- **T1 (App Store Connect record)** — needs the paid developer account; blocks the whole
+  TestFlight release track (T2, T4, T6, T7).
+- **Dev-signed build on device expires ~2026-08-03.** Re-sign before then or the app stops
+  launching.
+- Jira issue creation is blocked by an inherited field configuration (CR-002). **Deferred by
+  decision on 2026-07-29** — the repo is the source of truth; Jira gets populated later.
 
 ## Next action
 
-Phase 2 (Call schema): begin with T7 (Complete additive Call schema, register in
-StoreBootstrap, demo inserts set `isDemo = true`).
+**M1.1 — Quick Capture sheet.** See `MVP_PLAN.md` (Baseline M1.0) for the full breakdown and
+`PLAN_TRACKING.md` for live status.
+
+Ready to start with no blockers: M1.1, M1.5, M1.6, M1.7, T3, T5.

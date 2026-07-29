@@ -1,3 +1,8 @@
+> ## ⚠️ SUPERSEDED
+>
+> Pivot-era product direction. Superseded by `LONG_TERM_PLAN.md` (strategy) and
+> `PRODUCT_BRAINSTORM.md` (MVP rationale). Kept for reasoning only.
+
 # Hindsight Product Plan
 
 Status: `proposed`  

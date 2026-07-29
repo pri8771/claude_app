@@ -33,27 +33,40 @@ Nothing in the baseline is ever edited. This log is how the plan legally changes
 
 ## Open
 
-*(none yet — baseline frozen 2026-07-28)*
+*(none — CR-002 is deferred, not open)*
 
 ---
 
 ## Closed
 
-*(none yet)*
+| CR | Title | Status | Cause |
+|---|---|---|---|
+| CR-000a | Revert the Call/Receipt pivot | accepted | `change-request` |
+| CR-000b | Voice-first capture becomes the thesis | accepted | `discovery` |
+| CR-000c | Baseline task count 78 → 92 | accepted | `underestimate` |
+| CR-001 | MVP had no baselined task list | accepted | `discovery` |
+| CR-002 | Jira field config blocks issue creation | deferred | `discovery` |
 
 ---
 
 ## Running totals
 
+*Counts post-baseline CRs only (CR-001 onward). The CR-000x series pre-dates the baseline.*
+
 | Metric | Value |
 |---|---|
-| CRs raised | 0 |
-| CRs accepted | 0 |
+| CRs raised | 2 |
+| CRs accepted | 1 |
 | CRs rejected | 0 |
-| CRs deferred | 0 |
-| Total estimated delay | 0 days |
-| Total actual delay | 0 days |
-| CR estimate accuracy (actual ÷ estimated) | — |
+| CRs deferred | 1 |
+| Total estimated delay | 0.5 days |
+| Total actual delay | 0 days (deferred rather than absorbed) |
+| CR estimate accuracy (actual ÷ estimated) | — *(no CR has both values yet)* |
+
+**Delay attribution so far:** `discovery` 100% (1 of 1 measurable). Both post-baseline CRs were
+found by checking rather than by being surprised mid-execution — CR-001 by asking "how do we reach
+the MVP", CR-002 by test-creating one issue before creating 117. Cheap to find, cheap to fix.
+Baseline prediction **P3** (≥10 CRs before E4) is tracking at 2.
 
 ---
 
@@ -137,7 +150,7 @@ data points about how this project changes direction.
 ### CR-002 — Jira field configuration blocks all issue creation
 
 - **Raised:** 2026-07-28 by Claude (found by test-creating one issue before bulk creation)
-- **Status:** accepted
+- **Status:** deferred *(2026-07-29 — repo is source of truth; Jira populated later)*
 - **Tasks affected:** E6.1, E6.2, E6.3
 - **What changes:** the HIND project inherited a shared field configuration and screen scheme from
   existing projects. 30 fields are marked required, ~20 of them belonging to unrelated projects
@@ -149,7 +162,8 @@ data points about how this project changes direction.
   "create custom fields" was the whole job; the actual job is "isolate this project's configuration
   from every other project's."
 - **Estimated delay:** 0.5 days
-- **Actual delay:** *(pending)*
+- **Actual delay:** 0 days to the project — Jira was deferred rather than fixed, so the
+  delay landed on E6.2/E6.3 (parked) and not on the critical path to TestFlight
 - **Delay cause:** `discovery`
 - **Lesson:** **test one before creating many.** A single test issue surfaced a total blocker in one
   API call; creating 117 blind would have produced 117 failures or, worse, 117 issues carrying

@@ -1,3 +1,9 @@
+> ## ⚠️ SUPERSEDED
+>
+> Voice/Siri/widget work is now baselined and costed in `MVP_PLAN.md` (V-series) and
+> `POST_MVP_MASTER_PLAN.md` (E1). This doc holds the original reasoning, including the
+> widget-cannot-record-audio constraint and the on-device-parsing requirement.
+
 # Plan: Voice-First Capture (Siri, Widgets, Natural Language)
 
 **Status:** Draft for review — not ratified, not started

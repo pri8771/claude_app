@@ -1,3 +1,9 @@
+> ## ⚠️ SUPERSEDED — do not follow
+>
+> This is the 22-task Call/Receipt/Brier pivot plan. **The pivot was reverted on 2026-07-28**
+> (`CHANGE_REQUEST_LOG.md` CR-000a). The code is archived on `archive/call-pivot-complete`.
+> Current plans: `MVP_PLAN.md` and `POST_MVP_MASTER_PLAN.md`. Kept for reasoning only.
+
 # Implementation Tasks — Call Ledger Pivot (v4 — final)
 
 **STATUS: RATIFIED**

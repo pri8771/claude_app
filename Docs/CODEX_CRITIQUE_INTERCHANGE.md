@@ -1,3 +1,8 @@
+> ## ⚠️ HISTORICAL
+>
+> The Claude/Codex debate that produced the Call pivot, which was reverted on 2026-07-28
+> (CR-000a). Retained as a record of the reasoning, not as a plan.
+
 # Async Critique Interchange
 
 **STATUS: CONVERGED — TASK LIST RATIFIED**
