@@ -163,13 +163,13 @@ final class ClarityScoreTests: XCTestCase {
     // MARK: Label buckets
 
     func testLabelBuckets() {
-        XCTAssertEqual(ClarityScore.label(for: 0), "Sketchy")
-        XCTAssertEqual(ClarityScore.label(for: 39), "Sketchy")
-        XCTAssertEqual(ClarityScore.label(for: 40), "Decent")
-        XCTAssertEqual(ClarityScore.label(for: 69), "Decent")
-        XCTAssertEqual(ClarityScore.label(for: 70), "Thorough")
-        XCTAssertEqual(ClarityScore.label(for: 89), "Thorough")
-        XCTAssertEqual(ClarityScore.label(for: 90), "Crystal clear")
-        XCTAssertEqual(ClarityScore.label(for: 100), "Crystal clear")
+        XCTAssertEqual(ClarityScore.label(for: 0), "A starting point")
+        XCTAssertEqual(ClarityScore.label(for: 39), "A starting point")
+        XCTAssertEqual(ClarityScore.label(for: 40), "Some context captured")
+        XCTAssertEqual(ClarityScore.label(for: 69), "Some context captured")
+        XCTAssertEqual(ClarityScore.label(for: 70), "Well explored")
+        XCTAssertEqual(ClarityScore.label(for: 89), "Well explored")
+        XCTAssertEqual(ClarityScore.label(for: 90), "Rich context captured")
+        XCTAssertEqual(ClarityScore.label(for: 100), "Rich context captured")
     }
 }

@@ -74,10 +74,13 @@ enum ClarityScore {
 
     static func label(for score: Int) -> String {
         switch score {
-        case 0...39:   return "Sketchy"
-        case 40...69:  return "Decent"
-        case 70...89:  return "Thorough"
-        default:       return "Crystal clear"
+        case 0...39:   return "A starting point"
+        case 40...69:  return "Some context captured"
+        case 70...89:  return "Well explored"
+        default:       return "Rich context captured"
         }
     }
+
+    /// Neutral explanatory copy for places that show the calculated score.
+    static let invitation = "Extra context is optional. Add detail whenever it would help future you."
 }

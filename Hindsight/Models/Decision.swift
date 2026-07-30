@@ -96,6 +96,16 @@ extension Decision {
         status != .reviewed && dueDate <= Date()
     }
 
+    /// Quick Capture intentionally reuses the existing schema. This shape is
+    /// unambiguous because the detailed wizard requires options and stores
+    /// richer context.
+    var isQuickCapture: Bool {
+        options.isEmpty &&
+        predictions.count == 1 &&
+        notes.isEmpty &&
+        predictions.first?.title == title
+    }
+
     /// The option flagged as chosen, resolved against the stored title.
     var chosenOption: DecisionOption? {
         guard let chosenOptionTitle else { return nil }

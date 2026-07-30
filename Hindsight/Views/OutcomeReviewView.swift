@@ -77,7 +77,7 @@ struct OutcomeReviewView: View {
             Text(decision.title)
                 .font(HindsightTheme.Typography.title2)
                 .foregroundStyle(HindsightTheme.Colors.textPrimary)
-            Text("Grade how this actually played out.")
+            Text("Take a clear, kind look at how this played out.")
                 .font(HindsightTheme.Typography.footnote)
                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
         }
@@ -159,8 +159,8 @@ struct OutcomeReviewView: View {
     @ViewBuilder private var predictionsSection: some View {
         if !decision.predictions.isEmpty {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                HSectionHeader(title: "Grade your predictions",
-                               subtitle: "How did past you do?", systemImage: "scope")
+                HSectionHeader(title: "Revisit your predictions",
+                               subtitle: "Choose the closest match to what happened", systemImage: "scope")
                 ForEach(decision.predictions) { prediction in
                     PredictionVerdictRow(
                         prediction: prediction,
@@ -238,10 +238,11 @@ struct OutcomeReviewView: View {
         // Attempt save; side effects (reminder cancellations, haptic, dismiss) only on success
         if PersistenceService.saveOrReport(context) {
             // Only after successful save, cancel reminders and fire success haptic
-            for prediction in decision.predictions {
+            for prediction in decision.predictions where prediction.status != .pending {
                 notificationManager.cancelReminder(for: prediction)
             }
-            notificationManager.cancelReminder(for: decision)
+            notificationManager.cancelDecisionReminderOnly(for: decision)
+            notificationManager.schedulePendingPredictionReminders(for: decision)
             HapticsManager.shared.outcomeReviewed()
             dismiss()
         } else {

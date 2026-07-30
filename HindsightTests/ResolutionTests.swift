@@ -17,6 +17,10 @@ final class ResolutionTests: XCTestCase {
     private var storeDirectory: URL!
     private var retainedContainers: [ModelContainer] = []
 
+    private final class FailingPersister: Persisting {
+        func save(_ context: ModelContext) throws { throw NSError(domain: "ResolutionTests", code: 1) }
+    }
+
     private static var schema: Schema {
         Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
     }
@@ -29,6 +33,7 @@ final class ResolutionTests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
+        PersistenceService.shared = ContextPersister()
         retainedContainers.removeAll()
         if let storeDirectory {
             try? FileManager.default.removeItem(at: storeDirectory)
@@ -187,5 +192,85 @@ final class ResolutionTests: XCTestCase {
         // Verify: pending stays pending, resolved stays resolved
         XCTAssertEqual(pending.status, .pending, "Pending prediction should remain pending after save")
         XCTAssertEqual(resolved.status, .incorrect, "Resolved prediction should remain resolved after save")
+    }
+
+    func testFastResolutionPersistsOnceAndIgnoresDuplicateAttempt() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(title: "Test decision")
+        let prediction = Prediction(title: "Forecast", probabilityPercent: 75)
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .partial, note: "Some of it happened", in: context), .saved)
+        XCTAssertEqual(prediction.status, .partial)
+        XCTAssertEqual(prediction.actualResult, "Some of it happened")
+        XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .incorrect, note: "", in: context), .alreadyResolved)
+        XCTAssertEqual(prediction.status, .partial)
+    }
+
+    func testFastResolutionClosesQuickCaptureAfterItsOnlyPredictionResolves() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(
+            title: "The launch will go smoothly",
+            notes: "",
+            category: .personal,
+            stakesLevel: .low,
+            status: .awaitingReview
+        )
+        let prediction = Prediction(title: decision.title, probabilityPercent: 75)
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        XCTAssertTrue(decision.isQuickCapture)
+        XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .correct, note: "", in: context), .saved)
+        XCTAssertEqual(decision.status, .reviewed)
+    }
+
+    func testReviewedDecisionRetainsFuturePendingPredictionReminderEligibility() {
+        let now = Date(timeIntervalSince1970: 1_735_689_600)
+        let decision = Decision(title: "Reviewed early", status: .reviewed)
+        let futurePending = Prediction(
+            title: "Future result",
+            probabilityPercent: 75,
+            dueDate: now.addingTimeInterval(86_400),
+            status: .pending
+        )
+        let pastPending = Prediction(
+            title: "Already due",
+            probabilityPercent: 75,
+            dueDate: now.addingTimeInterval(-86_400),
+            status: .pending
+        )
+        let futureResolved = Prediction(
+            title: "Already resolved",
+            probabilityPercent: 75,
+            dueDate: now.addingTimeInterval(86_400),
+            status: .correct
+        )
+        decision.predictions = [futurePending, pastPending, futureResolved]
+
+        let eligible = NotificationManager.pendingPredictionsNeedingStandaloneReminders(
+            for: decision,
+            now: now
+        )
+
+        XCTAssertEqual(eligible.map(\.id), [futurePending.id])
+    }
+
+    func testFastResolutionFailureRestoresPredictionForRetry() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(title: "Test decision")
+        let prediction = Prediction(title: "Forecast", probabilityPercent: 75)
+        prediction.actualResult = "Original note"
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        PersistenceService.shared = FailingPersister()
+        XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .incorrect, note: "New note", in: context), .failed)
+        XCTAssertEqual(prediction.status, .pending)
+        XCTAssertEqual(prediction.actualResult, "Original note")
     }
 }

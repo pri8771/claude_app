@@ -1,14 +1,27 @@
 # Project Status
 
+## Direction update — Social v2 planning
+
+- The product owner approved a move from a local-only decision journal to a networked social
+  prediction platform with personal, private-group, and later public modes.
+- The implementation-ready program is documented in
+  `Docs/SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`: 41 parent tasks plus detailed subtasks,
+  dependencies, acceptance criteria, verification evidence, safety, privacy, accessibility,
+  rollout, and rollback requirements.
+- Repository authority now permits a backend while retaining explicit per-domain privacy and
+  migration consent. No backend provider or third-party runtime dependency is approved; F0.3 is
+  the selection gate.
+- Social v2 implementation has **not started**. Existing Build 1 remains the current local release
+  candidate and its distribution blockers below remain real.
+
 ## Lifecycle status
 
-`mvp_development`
+`verification_pending`
 
 ## Current objective
 
-Reduce first-decision friction while making the long-term value immediately
-understandable through removable demo decisions, useful reviews, and sample-aware
-Insights.
+Complete distribution signing, physical-device accessibility QA, and App Store
+metadata for the Build 1 TestFlight release candidate.
 
 ## Verified
 
@@ -24,17 +37,38 @@ Insights.
   - T5: Persistence boundary—no silent saves, success effects gated (commit 5c366eb)
   - T6: Cold-launch notification deep link consumed in .task (commit 6126f24)
   - Evidence: quality/feature-contracts/phase1-trust-fixes.json, quality/completion-reports/phase1-trust-fixes.json, quality/evidence/phase1-test-run.md
+- **Build 1 MVP is code-complete (2026-07-29):**
+  - Quick Capture is the primary Today action; statement, one-tap explicit confidence, review
+    horizon, and Save are contained in one sheet.
+  - The detailed four-step wizard remains available as the secondary **Add detail** path.
+  - Today opens a fast due-prediction resolution stack directly.
+  - Insights includes a sample-aware 80%+ confidence card using resolved predictions only.
+  - Review, empty, error, and insight copy was reframed to be factual and non-shaming.
+  - Notification content is generic and does not expose journal text on the lock screen.
+  - Pending prediction reminders survive an early full review and reminder rescheduling.
+- **Automated release verification revalidated (2026-07-30):**
+  - 73/73 tests passed on a dedicated iPhone 17 Pro simulator, iOS 26.5; no failures or
+    skips.
+  - Quick Capture, largest-accessibility-text Quick Capture, and the retained detailed-wizard
+    UI smoke tests passed.
+  - Unsigned generic-iOS Release build succeeded.
+  - Final archive code signature, designated requirement, privacy manifest, version `1.0`,
+    build `1`, bundle ID, and encryption declaration validated.
+- **Apple release identity created (2026-07-29):**
+  - App ID: `com.pchordia.hindsight`, team `796XH483R4`.
+  - App Store Connect record: **Hindsight — Decision Journal**, Apple ID `6796111127`,
+    SKU `hindsight-ios-20260729`.
+  - App Store icon matrix is complete and every PNG is opaque.
+- The development-signed Release archive installed successfully on the paired iPhone 16 Pro Max.
 
 ## Verification pending
 
-- Physical-device notification QA (logic reviewed, device test deferred).
-- UI smoke tests (HindsightUITests 15–19 exist but not part of phase 1 gate).
-- VoiceOver audit (phase 6 T21).
-- Cold-launch deep-link manual test on device (logic reviewed, not device-tested).
-- Approved quick-capture field contract and implementation (phase 2 T7).
-- Complete review/reminder/export/delete and relaunch QA (phase 2–3).
-- Insights correctness, sample-size behavior, drill-through, and visual polish (phase 4).
-- Small-phone, keyboard, Dynamic Type layout testing.
+- Launch and complete the physical-device smoke pass after the paired iPhone is unlocked.
+- Manual VoiceOver and largest Dynamic Type pass on Quick Capture, Today resolution, and Insights.
+- Physical-device notification delivery and cold-launch deep-link test.
+- JSON/PDF export, clear-all, and relaunch pass on the release candidate.
+- Distribution-signed IPA export and upload; the current archive is development-signed.
+- App Store privacy answers and hosted privacy-policy/support URLs.
 
 ## Direction change — 2026-07-28
 
@@ -51,16 +85,23 @@ One production bug was reintroduced by the revert and fixed again: `bootResult` 
 
 ## Blockers
 
-- **T1 (App Store Connect record)** — needs the paid developer account; blocks the whole
-  TestFlight release track (T2, T4, T6, T7).
-- **Dev-signed build on device expires ~2026-08-03.** Re-sign before then or the app stops
-  launching.
-- Jira issue creation is blocked by an inherited field configuration (CR-002). **Deferred by
-  decision on 2026-07-29** — the repo is the source of truth; Jira gets populated later.
+- **T2/T6 (distribution export)** — `xcodebuild -exportArchive` reports `No Accounts` and
+  `No profiles for 'com.pchordia.hindsight' were found`. Add the `796XH483R4` account in Xcode
+  Settings > Accounts or create/install an Apple Distribution certificate and App Store profile.
+- **T4 (privacy answers)** — the App Store record exists, but the browser session must be
+  re-authenticated before the “Data Not Collected” answers can be saved.
+- **T5/T7 (public contact)** — a public support email is required before publishing the privacy
+  policy or inviting external testers.
+- **Physical QA** — the build is installed on the paired iPhone 16 Pro Max, but iOS rejected the
+  launch while the phone was locked.
+- Jira issue creation is blocked by an inherited field configuration (CR-002): it requires
+  `Actual`, `Delay Cause`, Components, Fix versions, and other fields at creation. A dedicated
+  HIND configuration exists, but Jira’s admin UI did not persist the requirement changes on
+  2026-07-29. The complete 18-item Build 1/TestFlight backlog is documented in
+  `JIRA_BACKLOG_M1_TESTFLIGHT.md`; do not bypass the block by fabricating lifecycle data.
 
 ## Next action
 
-**M1.1 — Quick Capture sheet.** See `MVP_PLAN.md` (Baseline M1.0) for the full breakdown and
-`PLAN_TRACKING.md` for live status.
-
-Ready to start with no blockers: M1.1, M1.5, M1.6, M1.7, T3, T5.
+Unlock the paired iPhone for the device smoke pass, provide the public support email, and add the
+`796XH483R4` Apple account in Xcode. Then export/upload the existing verified archive, complete
+App Store privacy answers, and invite internal testers.

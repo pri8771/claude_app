@@ -1,0 +1,72 @@
+{
+  "$schema": "https://raw.githubusercontent.com/pri8771/iOS_app_factory_rules/main/schemas/feature-contract.schema.json",
+  "id": "SOCIAL-V2-FOUNDATION",
+  "name": "Networked Social Product Foundation",
+  "status": "planned",
+  "userOutcome": "An existing or new user can deliberately opt into a networked identity and later participate in private group predictions without silent migration, false lock confirmation, cross-environment data leakage, or loss of local history.",
+  "entryPoints": [
+    "Social v2 account upgrade",
+    "Universal prediction composer audience selector",
+    "Private group creation and invitation",
+    "Existing-user migration consent",
+    "Network, sync, privacy, and account recovery states"
+  ],
+  "productionDataSource": "Hybrid authority: local SwiftData for drafts and legacy private journal data until consent; a selected versioned backend for accounts, relationships, groups, social forecasts, server timestamps, resolutions, scores, moderation, and audit. The backend provider is not selected until F0.3.",
+  "states": [
+    "local_only",
+    "authentication_required",
+    "authenticating",
+    "authenticated",
+    "migration_offered",
+    "migration_declined",
+    "migration_in_progress",
+    "migration_failed_recoverable",
+    "offline",
+    "queued",
+    "submitting",
+    "server_confirmed",
+    "server_rejected",
+    "conflicted",
+    "removed_access",
+    "account_deletion_pending"
+  ],
+  "errorBehavior": "Drafts and legacy records remain recoverable after authentication, migration, sync, or network failure. Social records display queued or failed states until server acknowledgement; the app never reports a forecast as locked, a resolution as final, or a score as changed before authoritative persistence. Retry is idempotent and never attaches queued work to a different account.",
+  "duplicateProtectionRequired": true,
+  "persistenceRequired": true,
+  "layoutScenarios": [
+    "Smallest supported iPhone portrait",
+    "iPhone 16 Pro Max portrait",
+    "iPad portrait and landscape where supported",
+    "Keyboard visible in composer",
+    "Largest accessibility Dynamic Type",
+    "VoiceOver",
+    "Dark mode",
+    "Reduce Motion",
+    "Offline and high-latency network"
+  ],
+  "accessibilityRequirements": [
+    "Account, visibility, migration, invite, forecast, lock, error, retry, and recovery state is exposed as text to VoiceOver.",
+    "No status or confidence meaning relies only on color, motion, chart geometry, or haptics.",
+    "Primary capture and response controls have logical focus order and at least 44 by 44 point targets.",
+    "Reduced Motion provides an informationally equivalent static lock and reveal state."
+  ],
+  "prohibitedBehavior": [
+    "Do not upload existing journal content without explicit migration consent.",
+    "Do not claim a social forecast is locked before server acknowledgement.",
+    "Do not use client time as the authoritative social deadline or timestamp.",
+    "Do not authorize access only by hiding client controls; enforce every visibility and role rule server-side.",
+    "Do not log prediction text, private notes, invite tokens, authentication material, precise location, or private group names.",
+    "Do not introduce a backend vendor SDK or third-party runtime dependency before F0.3 and DEC-007 are satisfied.",
+    "Do not mix subjective private-group results into verified public rankings.",
+    "Do not use fake identities, fabricated resolver evidence, or undisclosed production sample data."
+  ],
+  "acceptanceTests": [
+    "The approved backend spike rejects forged or replayed Sign in with Apple identity and unauthorized group access.",
+    "Atomic lock tests reject late, duplicate, stale, removed-member, and cross-account submissions.",
+    "Migration fixture tests prove zero record loss, no pre-consent network upload, interruption recovery, and idempotent retry.",
+    "Environment tests prove development credentials and data cannot access QA or production.",
+    "Telemetry and push payload tests prove prohibited content is absent.",
+    "Typed API contract and generated client fixtures agree on state, error, pagination, and idempotency behavior.",
+    "VoiceOver, largest Dynamic Type, dark mode, Reduce Motion, relaunch, offline, and physical-device evidence exists before the Phase 1 QA promotion."
+  ]
+}

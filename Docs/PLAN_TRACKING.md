@@ -10,6 +10,29 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 **Cause:** required when Actual > Base. One of `change-request` · `underestimate` · `dependency` ·
 `external-blocker` · `rework` · `discovery`
 
+**Jira mapping (2026-07-29):** the complete, lower-agent-ready Build 1/TestFlight backlog is in
+`Docs/JIRA_BACKLOG_M1_TESTFLIGHT.md`. Do not bulk-create HIND tickets until CR-002 is resolved:
+the inherited Jira configuration currently requires life-cycle fields at creation and would force
+fabricated `Actual`/`Delay Cause` values.
+
+## PLANNED — Social v2 networked product
+
+CR-004 accepts the networked social direction. The implementation-ready source is
+`SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`; it contains 41 parent tasks and detailed subtasks
+across the mandatory foundation and four product phases. Estimates and Current/Actual tracking are
+intentionally not fabricated before F0.1 ratifies the scope and F0.3 selects the architecture.
+
+| Program | Parent tasks | Status | Entry gate |
+|---|---:|---|---|
+| F0 — Architecture, design, privacy, migration, delivery | 7 | planned | product approval |
+| P1 — Premium Social MVP | 14 | planned | F0 accepted |
+| P2 — Viral Distribution | 5 | planned | Phase 1 private beta |
+| P3 — Public Network | 9 | planned | safety + event operations |
+| P4 — Advanced Community | 6 | planned | stable public integrity |
+
+The current Build 1/TestFlight work below remains a separate release track. Social implementation
+must not be represented as included in Build 1.
+
 ---
 
 # ACTIVE — Baseline M1.0 (MVP → TestFlight)
@@ -20,29 +43,34 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 
 | ID | Task | Fn | Base | Current | Actual | Status | Cause | Blocked by |
 |---|---|---|---|---|---|---|---|---|
-| M1.1 | Quick Capture sheet | ENG | 3 | 3 | | — | | *ready* |
-| M1.2 | Entry point on Today | ENG | 1 | 1 | | — | | M1.1 |
-| M1.3 | Short-horizon date chips | ENG | 1 | 1 | | — | | M1.1 |
-| M1.4 | First-session short-horizon nudge | DESIGN | 1 | 1 | | — | | M1.3 |
-| M1.5 | Clarity score reframe | DESIGN | 1 | 1 | | — | | *ready* |
-| M1.6 | Resolve ritual card stack | ENG | 3 | 3 | | — | | *ready* |
-| M1.7 | Overconfidence stat | ENG | 2 | 2 | | — | | *ready* |
-| M1.8 | Gentle reveal copy pass | DESIGN | 1 | 1 | | — | | M1.6, M1.7 |
-| M1.9 | MVP test coverage | QA | 3 | 3 | | — | | M1.1–M1.7 |
-| M1.10 | Manual VoiceOver pass | QA | 2 | 2 | | — | | M1.1–M1.7 |
+| M1.1 | Quick Capture sheet | ENG | 3 | 3 | n/t | ✓ | | — |
+| M1.2 | Entry point on Today | ENG | 1 | 1 | n/t | ✓ | | — |
+| M1.3 | Short-horizon date chips | ENG | 1 | 1 | n/t | ✓ | | — |
+| M1.4 | First-session short-horizon nudge | DESIGN | 1 | 1 | n/t | ✓ | | — |
+| M1.5 | Clarity score reframe | DESIGN | 1 | 1 | n/t | ✓ | | — |
+| M1.6 | Resolve ritual card stack | ENG | 3 | 3 | n/t | ✓ | | — |
+| M1.7 | Overconfidence stat | ENG | 2 | 2 | n/t | ✓ | | — |
+| M1.8 | Gentle reveal copy pass | DESIGN | 1 | 1 | n/t | ✓ | | — |
+| M1.9 | MVP test coverage | QA | 3 | 3 | n/t | ✓ | | — |
+| M1.10 | Manual VoiceOver pass | QA | 2 | 2 | | WIP | | unlocked physical device |
 
 ## T — TestFlight release track
 
 | ID | Task | Fn | Base | Current | Actual | Status | Cause | Blocked by |
 |---|---|---|---|---|---|---|---|---|
-| T1 | Bundle ID + App Store Connect record | OPS | 0.5 | 0.5 | | ⏸ | | **user: account access** |
-| T2 | Distribution cert + provisioning | OPS | 0.5 | 0.5 | | — | | T1 |
-| T3 | Release config audit | ENG | 1 | 1 | | — | | *ready* |
-| T4 | Privacy nutrition labels | LEGAL | 0.5 | 0.5 | | — | | T1 |
-| T5 | Privacy policy — write + host | LEGAL | 1 | 1 | | — | | *ready* |
-| T6 | First archive + upload + internal testers | OPS | 1 | 1 | | — | | T2, T3, T4 |
-| T7 | TestFlight beta description + feedback email | MKT | 0.5 | 0.5 | | — | | T1 |
+| T1 | Bundle ID + App Store Connect record | OPS | 0.5 | 0.5 | n/t | ✓ | | — |
+| T2 | Distribution cert + provisioning | OPS | 0.5 | 0.5 | | ⏸ | external-blocker | Xcode account/profile |
+| T3 | Release config audit | ENG | 1 | 1 | n/t | ✓ | | — |
+| T4 | Privacy nutrition labels | LEGAL | 0.5 | 0.5 | | ⏸ | external-blocker | App Store re-authentication |
+| T5 | Privacy policy — write + host | LEGAL | 1 | 1 | | WIP | | public support email |
+| T6 | First archive + upload + internal testers | OPS | 1 | 1 | | WIP | | T2, T4 |
+| T7 | TestFlight beta description + feedback email | MKT | 0.5 | 0.5 | | WIP | | public support email |
 | T8 | External testing: Beta App Review | OPS | 0.5 | 0.5 | | — | | T5, T6 |
+
+`n/t` means the implementation was completed in the integrated 2026-07-29 release session but
+elapsed work time was not instrumented; no synthetic actual was entered. Evidence:
+`/private/tmp/hindsight-social-plan-promotion-green-20260730.xcresult` (73/73 passed) and
+`/private/tmp/Hindsight-1.0-1-final-20260729.xcarchive` (validated Release archive).
 
 ## V — Voice capture (Build 2, after Build 1 ships)
 

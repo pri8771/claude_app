@@ -68,45 +68,55 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     /// Schedules a review reminder for a decision on its `dueDate`, plus a
     /// reminder for each prediction that has its own future due date.
     func scheduleReviewReminder(for decision: Decision) {
-        // Only schedule if reminders are enabled and the date is in the future.
+        // Prediction reminders are evaluated independently because a decision
+        // can be overdue while one of its predictions is still in the future.
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
-        guard decision.dueDate > Date() else { return }
+        let decisionReminderScheduled = decision.dueDate > Date()
+        if decisionReminderScheduled {
+            let content = UNMutableNotificationContent()
+            content.title = "Time to review a decision"
+            content.body = "A decision is ready for review in Hindsight."
+            content.sound = .default
+            content.userInfo = ["decisionID": decision.id.uuidString]
 
-        let content = UNMutableNotificationContent()
-        content.title = "Time to review a decision"
-        content.body = "Past you made a prediction about: \(decision.title)"
-        content.sound = .default
-        content.userInfo = ["decisionID": decision.id.uuidString]
-
-        let components = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute], from: decision.dueDate
-        )
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        let request = UNNotificationRequest(
-            identifier: requestID(for: decision),
-            content: content,
-            trigger: trigger
-        )
-        center.add(request)
+            let components = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute], from: decision.dueDate
+            )
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: requestID(for: decision),
+                content: content,
+                trigger: trigger
+            )
+            center.add(request)
+        }
 
         for prediction in decision.predictions {
-            schedulePredictionReminder(prediction, for: decision)
+            schedulePredictionReminder(
+                prediction,
+                for: decision,
+                decisionReminderCoversSameDate: decisionReminderScheduled
+            )
         }
     }
 
     /// Schedules a reminder for an individual prediction whose `dueDate`
     /// differs from the owning decision's and lies in the future. Tapping it
     /// deep-links back to the owning decision, just like the decision reminder.
-    private func schedulePredictionReminder(_ prediction: Prediction, for decision: Decision) {
+    private func schedulePredictionReminder(
+        _ prediction: Prediction,
+        for decision: Decision,
+        decisionReminderCoversSameDate: Bool = true
+    ) {
         guard prediction.status == .pending else { return }
         guard prediction.dueDate > Date() else { return }
         // Skip predictions that share the decision's due date — the decision
         // reminder already covers that moment.
-        guard prediction.dueDate != decision.dueDate else { return }
+        guard !decisionReminderCoversSameDate || prediction.dueDate != decision.dueDate else { return }
 
         let content = UNMutableNotificationContent()
         content.title = "A prediction is due"
-        content.body = "Time to grade: \(prediction.title)"
+        content.body = "Open Hindsight when you're ready to see how it turned out."
         content.sound = .default
         content.userInfo = ["decisionID": decision.id.uuidString]
 
@@ -130,6 +140,25 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 
+    /// Cancels only the decision-level reminder while preserving any
+    /// still-pending prediction reminders with later due dates.
+    func cancelDecisionReminderOnly(for decision: Decision) {
+        center.removePendingNotificationRequests(withIdentifiers: [requestID(for: decision)])
+    }
+
+    /// Ensures future pending predictions retain standalone reminders after
+    /// their parent decision has already received a full review.
+    func schedulePendingPredictionReminders(for decision: Decision) {
+        guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
+        for prediction in Self.pendingPredictionsNeedingStandaloneReminders(for: decision) {
+            schedulePredictionReminder(
+                prediction,
+                for: decision,
+                decisionReminderCoversSameDate: false
+            )
+        }
+    }
+
     /// Cancels the pending reminder for a single prediction (e.g. once its
     /// outcome has been recorded).
     func cancelReminder(for prediction: Prediction) {
@@ -144,8 +173,21 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     /// Re-schedules reminders for all decisions that still await review.
     func rescheduleAll(for decisions: [Decision]) {
         cancelAll()
-        for decision in decisions where decision.status != .reviewed {
-            scheduleReviewReminder(for: decision)
+        for decision in decisions {
+            if decision.status != .reviewed {
+                scheduleReviewReminder(for: decision)
+            } else {
+                schedulePendingPredictionReminders(for: decision)
+            }
+        }
+    }
+
+    static func pendingPredictionsNeedingStandaloneReminders(
+        for decision: Decision,
+        now: Date = Date()
+    ) -> [Prediction] {
+        decision.predictions.filter {
+            $0.status == .pending && $0.dueDate > now
         }
     }
 

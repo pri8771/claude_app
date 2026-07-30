@@ -20,7 +20,9 @@ Reflective, private, serious but approachable. Screens: Today, Decisions, Captur
 SwiftUI plus SwiftData plus Swift Charts. Models: Decision, DecisionOption, Prediction, OutcomeReview. Notifications optional. Export JSON/PDF.
 
 ## 04. Backend Technical
-No backend by design for v1. Future optional iCloud-only sync. No account required for MVP.
+Build 1 has no backend and requires no account. Social v2 is now an approved networked direction
+with hybrid data authority; its backend/provider remains behind the F0.3 ADR gate. See
+`SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`.
 
 ## 05. Business
 Business model: one-time premium, premium insights, optional sync later. Trust and local-first design are core differentiators.

@@ -5,27 +5,27 @@ Use this pass before sending a TestFlight build.
 ## Build Target
 
 - Scheme: `Hindsight`
-- Bundle ID: `com.hindsight.pchordia.app`
+- Bundle ID: `com.pchordia.hindsight`
 - Minimum iOS: 17.0
-- Signing: automatic, team `YR2QPBY4TR`
+- Signing: automatic, team `796XH483R4`
 
 ## First-Run Pass
 
 1. Install on a physical iPhone from Xcode.
 2. Confirm the app icon appears on the Home Screen.
 3. Launch cold and verify dark launch background, splash, then onboarding.
-4. Complete onboarding with **Start First Decision**.
-5. Create a decision with two options, at least one prediction, and a near review date.
-6. Accept the notification prompt when saving the decision.
-7. Confirm the decision appears on Today and Decisions.
+4. Complete onboarding and open **Quick Capture**.
+5. Enter a prediction, choose one confidence chip and a short review horizon, then save.
+6. Confirm the prediction appears on Today and Decisions.
+7. Open **Add detail** and verify the retained detailed wizard can still save a full decision.
 
 ## Core Loop Pass
 
-1. Open the saved decision.
-2. Choose an option if none is selected.
-3. Tap **Review early** or wait until the review date.
-4. Save an outcome review, including prediction verdicts.
-5. Verify status changes to Reviewed and Insights updates.
+1. Use a due prediction in Today’s **Ready to Revisit** section.
+2. Open the direct **Resolve Prediction** action without entering the full detail screen.
+3. Save Accurate, Partly Accurate, or Inaccurate and verify the next card appears exactly once.
+4. Verify the completed Quick Capture leaves the review queue.
+5. Open Insights and verify the 80%+ card uses resolved predictions only.
 
 ## Data Ownership Pass
 

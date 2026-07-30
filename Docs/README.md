@@ -15,6 +15,7 @@ Last reviewed: 2026-07-29
 | **[PLAN_TRACKING.md](PLAN_TRACKING.md)** | What are the current tasks and their status? *(mutable — live)* |
 | **[MVP_PLAN.md](MVP_PLAN.md)** | How do we get to TestFlight? *(Baseline M1.0 — immutable)* |
 | **[CHANGE_REQUEST_LOG.md](CHANGE_REQUEST_LOG.md)** | What changed, why, and what did it cost? |
+| **[SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md](SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md)** | How do we build the approved networked social product? |
 
 ## Planning and strategy — authoritative
 
@@ -26,6 +27,7 @@ Last reviewed: 2026-07-29
 | [CHANGE_REQUEST_LOG.md](CHANGE_REQUEST_LOG.md) | Every deviation from a baseline | Yes |
 | [LONG_TERM_PLAN.md](LONG_TERM_PLAN.md) | Product spine, horizons, the local-vs-social fork, ICP | Yes |
 | [PRODUCT_BRAINSTORM.md](PRODUCT_BRAINSTORM.md) | Friction, gamification, social; MVP rationale | Yes |
+| [SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md](SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md) | Approved social direction: 41 implementation-ready foundation/product tasks across four phases | Yes, until frozen as a baseline |
 
 **The measurement rule:** baseline estimates are never edited. Divergence goes in the CR log with a
 delay cause. A plan that gets quietly rewritten teaches nothing.

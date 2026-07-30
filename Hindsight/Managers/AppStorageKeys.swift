@@ -20,4 +20,6 @@ enum AppStorageKeys {
     static let hasCompletedOnboarding = "hasCompletedOnboarding"
     /// Whether haptic feedback is enabled.
     static let hapticsEnabled = "hapticsEnabled"
+    /// Whether the one-time quick-capture short-horizon suggestion was dismissed or completed.
+    static let didCompleteQuickCaptureNudge = "didCompleteQuickCaptureNudge"
 }

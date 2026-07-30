@@ -1,0 +1,64 @@
+{
+  "$schema": "https://raw.githubusercontent.com/pri8771/iOS_app_factory_rules/main/schemas/feature-contract.schema.json",
+  "id": "BUILD1-TESTFLIGHT",
+  "name": "Quick Capture, Fast Resolution, Confidence Insight, and TestFlight Release",
+  "status": "verification_pending",
+  "userOutcome": "A user can record a prediction from Today in one sheet, explicitly choose confidence and a review horizon, resolve due predictions directly, and see a sample-aware comparison between 80%+ confidence and actual outcomes. The app can be built and archived for TestFlight without exposing journal content or test-only behavior.",
+  "entryPoints": [
+    "Today Quick Capture primary action",
+    "Today Ready to Revisit / Resolve Predictions action",
+    "Decision detail Resolve Predictions action",
+    "Insights Your 80%+ Calls card",
+    "Add detail legacy decision wizard",
+    "Settings export, reminders, demo data, and clear-all"
+  ],
+  "productionDataSource": "Local SwiftData Decision and Prediction records; UserDefaults preferences; local UserNotifications reminders. No backend, account, analytics, advertising, or third-party SDK.",
+  "states": [
+    "empty",
+    "capturing",
+    "validation_required",
+    "save_failed_retryable",
+    "saved",
+    "due",
+    "resolving",
+    "resolved",
+    "insufficient_calibration_sample",
+    "calibration_available"
+  ],
+  "errorBehavior": "Quick Capture and resolution remain visible after a persistence failure, retain user-entered text, roll back unsaved model changes, expose retry/cancel behavior, and emit no success haptic or notification cancellation until persistence succeeds.",
+  "duplicateProtectionRequired": true,
+  "persistenceRequired": true,
+  "layoutScenarios": [
+    "iPhone portrait, including iPhone 16 Pro Max",
+    "iPad portrait and landscape through adaptive SwiftUI layout",
+    "Keyboard visible during Quick Capture",
+    "Largest accessibility Dynamic Type",
+    "Dark mode"
+  ],
+  "accessibilityRequirements": [
+    "Quick Capture statement, confidence choices, review horizon, validation, and Save have useful VoiceOver labels and logical order.",
+    "Confidence and review choices have at least 44x44 point targets and expose selected state.",
+    "Fast resolution verdicts announce the action and that the next due prediction will appear.",
+    "Insight copy remains understandable without relying on icon, color, or chart interpretation.",
+    "No required control is hidden behind keyboard or clipped at largest Dynamic Type."
+  ],
+  "prohibitedBehavior": [
+    "Do not preselect or infer a Quick Capture confidence value.",
+    "Do not save blank statements, invalid dates, duplicate decisions, or orphaned predictions.",
+    "Do not preselect a prediction verdict or count pending predictions in calibration.",
+    "Do not dismiss or show success before persistence succeeds.",
+    "Do not expose decision or prediction text in notification content.",
+    "Do not allow -uiTestReset to alter a Release build.",
+    "Do not bundle preview fixtures or automatically seed demo data in Release.",
+    "Do not claim calibration from fewer than three resolved predictions in the selected band."
+  ],
+  "acceptanceTests": [
+    "QuickCaptureTests: blank statement, explicit confidence, date boundaries, and one-prediction model construction",
+    "ResolutionTests: no preselected verdict, duplicate protection, rollback/retry, quick-capture closeout, and pending-reminder eligibility",
+    "StatisticsTests: zero/small sample, overconfidence, underconfidence, well-calibrated, partial outcomes, and 80%+ filtering",
+    "HindsightCaptureFlowUITests: Quick Capture primary path, Quick Capture at accessibility XXXL, and retained detailed-wizard path",
+    "Release build succeeds with CODE_SIGNING_ALLOWED=NO",
+    "Release archive validates bundle/version/build/privacy/encryption metadata and code signature",
+    "Manual physical-device Quick Capture, Resolve, notification/deep-link, export/delete/relaunch, VoiceOver, and largest Dynamic Type pass"
+  ]
+}

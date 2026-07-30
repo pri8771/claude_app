@@ -70,10 +70,16 @@ struct HindsightApp: App {
         Appearance.configure()
     }
 
-    /// True when launched by the `HindsightUITests` target.
+    /// A Debug-only UI-test seam. In Release this is compiled as a constant
+    /// `false`, so launch arguments can never opt a distributable build into
+    /// its in-memory store or test defaults.
+    #if DEBUG
     private static var isUITesting: Bool {
         ProcessInfo.processInfo.arguments.contains("-uiTestReset")
     }
+    #else
+    private static let isUITesting = false
+    #endif
 
     var body: some Scene {
         WindowGroup {

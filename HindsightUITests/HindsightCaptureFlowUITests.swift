@@ -2,9 +2,8 @@
 //  HindsightCaptureFlowUITests.swift
 //  HindsightUITests
 //
-//  A basic end-to-end smoke test for the actual capture flow: launch a
-//  freshly reset app, create a new decision through all four wizard steps,
-//  save it, then open its outcome review ("review later") and save that too.
+//  End-to-end smoke coverage for the primary Quick Capture path and the
+//  retained detailed-decision path.
 //
 //  The app is launched with "-uiTestReset", which HindsightApp.swift uses to
 //  swap in an in-memory SwiftData store, pre-complete onboarding, and turn
@@ -21,23 +20,103 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    private func launchApp() -> XCUIApplication {
+    private func launchApp(additionalArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTestReset"]
+        app.launchArguments = ["-uiTestReset"] + additionalArguments
         app.launch()
         return app
     }
 
-    func testCaptureNewDecisionThenReviewIt() throws {
+    private func waitForEnabled(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "enabled == true"),
+            object: element
+        )
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    func testQuickCaptureCreatesOneVisiblePrediction() throws {
+        let app = launchApp()
+        let statement = "UI test: the launch will stay on schedule"
+
+        let quickCaptureButton = app.buttons["Quick Capture"].firstMatch
+        XCTAssertTrue(quickCaptureButton.waitForExistence(timeout: 10),
+                      "Today's primary Quick Capture action should appear after launch")
+        quickCaptureButton.tap()
+
+        let statementField = app.textFields["Quick capture statement"]
+        XCTAssertTrue(statementField.waitForExistence(timeout: 5))
+        statementField.tap()
+        statementField.typeText(statement)
+
+        let keyboardDoneButton = app.buttons["quickCapture.keyboardDone"]
+        XCTAssertTrue(keyboardDoneButton.waitForExistence(timeout: 5))
+        keyboardDoneButton.tap()
+
+        let confidenceButton = app.buttons["quickCapture.confidence.75"]
+        XCTAssertTrue(confidenceButton.waitForExistence(timeout: 5))
+        confidenceButton.tap()
+
+        let tomorrowButton = app.buttons["Tomorrow"]
+        XCTAssertTrue(tomorrowButton.waitForExistence(timeout: 5))
+        tomorrowButton.tap()
+
+        let saveButton = app.buttons["Save Prediction"]
+        XCTAssertTrue(waitForEnabled(saveButton),
+                      "Save should become enabled after statement, confidence, and horizon are selected")
+        saveButton.tap()
+
+        XCTAssertTrue(app.staticTexts[statement].waitForExistence(timeout: 5),
+                      "The saved prediction should appear on Today")
+    }
+
+    func testQuickCaptureCompletesAtLargestAccessibilityTextSize() throws {
+        let app = launchApp(additionalArguments: [
+            "-UIPreferredContentSizeCategoryName",
+            "UICTContentSizeCategoryAccessibilityXXXL"
+        ])
+
+        let quickCaptureButton = app.buttons["Quick Capture"].firstMatch
+        XCTAssertTrue(quickCaptureButton.waitForExistence(timeout: 10))
+        quickCaptureButton.tap()
+
+        let statementField = app.textFields["Quick capture statement"]
+        XCTAssertTrue(statementField.waitForExistence(timeout: 5))
+        statementField.tap()
+        statementField.typeText("UI test: large text remains usable")
+
+        let keyboardDoneButton = app.buttons["quickCapture.keyboardDone"]
+        XCTAssertTrue(keyboardDoneButton.waitForExistence(timeout: 5))
+        keyboardDoneButton.tap()
+
+        let confidenceButton = app.buttons["quickCapture.confidence.75"]
+        XCTAssertTrue(confidenceButton.waitForExistence(timeout: 5))
+        if !confidenceButton.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(confidenceButton.isHittable)
+        confidenceButton.tap()
+
+        let tomorrowButton = app.buttons["Tomorrow"]
+        XCTAssertTrue(tomorrowButton.waitForExistence(timeout: 5))
+        if !tomorrowButton.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(tomorrowButton.isHittable)
+        tomorrowButton.tap()
+
+        let saveButton = app.buttons["Save Prediction"]
+        XCTAssertTrue(saveButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(saveButton.isHittable)
+        XCTAssertTrue(waitForEnabled(saveButton))
+    }
+
+    func testDetailedDecisionFlowRemainsAvailable() throws {
         let app = launchApp()
 
         let decisionTitle = "UI test: switch to a 4-day week"
 
         // MARK: Launch past the splash screen to Today's empty state.
-        let newDecisionButton = app.buttons["New Decision"]
-        XCTAssertTrue(newDecisionButton.waitForExistence(timeout: 10),
-                      "Today's empty-state 'New Decision' button should appear once the splash screen dismisses")
-        newDecisionButton.tap()
+        let addDetailButton = app.buttons["Add detail"].firstMatch
+        XCTAssertTrue(addDetailButton.waitForExistence(timeout: 10),
+                      "The detailed wizard should remain available as a secondary action")
+        addDetailButton.tap()
 
         // MARK: Step 1 — Basics
         let titleField = app.textFields["newDecision.title"]

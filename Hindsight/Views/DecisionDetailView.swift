@@ -21,6 +21,7 @@ struct DecisionDetailView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
 
     @State private var showOutcomeReview = false
+    @State private var showDuePredictionStack = false
     @State private var showDeleteConfirm = false
     @State private var expandedOptionID: UUID?
     @State private var saveError: String?
@@ -69,6 +70,9 @@ struct DecisionDetailView: View {
         .sheet(isPresented: $showOutcomeReview) {
             OutcomeReviewView(decision: decision)
         }
+        .sheet(isPresented: $showDuePredictionStack) {
+            DuePredictionResolveStackView()
+        }
         .confirmationDialog("Delete this decision?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { deleteDecision() }
             Button("Cancel", role: .cancel) {}
@@ -113,7 +117,7 @@ struct DecisionDetailView: View {
                     progress: Double(decision.clarityScore) / 100,
                     lineWidth: 8, size: 76,
                     tint: HindsightTheme.Colors.amber,
-                    label: "\(decision.clarityScore)", caption: "clarity"
+                    label: "\(decision.clarityScore)", caption: "context"
                 )
             }
 
@@ -254,14 +258,17 @@ struct DecisionDetailView: View {
                     VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
                         HStack(spacing: 8) {
                             Image(systemName: "bell.badge.fill").foregroundStyle(HindsightTheme.Colors.accent)
-                            Text("Reality has arrived")
+                            Text("Ready for a look back")
                                 .font(HindsightTheme.Typography.headline)
                                 .foregroundStyle(HindsightTheme.Colors.textPrimary)
                         }
-                        Text("Your review date has passed. Look back and grade how this decision actually played out.")
+                        Text("Your review date has passed. Start with the predictions you recorded, or add a fuller reflection.")
                             .font(HindsightTheme.Typography.footnote)
                             .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                        HButton(title: "Review Now", icon: "square.and.pencil") { showOutcomeReview = true }
+                        if hasDuePendingPredictions {
+                            HButton(title: "Resolve Predictions", icon: "scope") { showDuePredictionStack = true }
+                        }
+                        HButton(title: "Write Full Review", icon: "square.and.pencil", style: .secondary) { showOutcomeReview = true }
                     }
                 }
             } else {
@@ -286,6 +293,10 @@ struct DecisionDetailView: View {
                 }
             }
         }
+    }
+
+    private var hasDuePendingPredictions: Bool {
+        decision.predictions.contains { $0.status == .pending && $0.dueDate <= Date() }
     }
 
     // MARK: Actions

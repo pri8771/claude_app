@@ -41,13 +41,13 @@ struct ReviewDateStep: View {
                             label: "\(draft.clarityScore)", caption: "/ 100"
                         )
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Clarity Score")
+                            Text("Context captured")
                                 .font(HindsightTheme.Typography.headline)
                                 .foregroundStyle(HindsightTheme.Colors.textPrimary)
                             Text(ClarityScore.label(for: draft.clarityScore))
                                 .font(HindsightTheme.Typography.subheadline)
                                 .foregroundStyle(HindsightTheme.Colors.amber)
-                            Text("How thoroughly you thought this through.")
+                            Text(ClarityScore.invitation)
                                 .font(HindsightTheme.Typography.caption)
                                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
                         }

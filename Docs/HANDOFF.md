@@ -22,7 +22,8 @@ xcodebuild build \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-There is currently no XCTest target.
+Automated unit, integration, and UI-smoke targets exist. The 2026-07-29 release run passed 72/72;
+physical-device accessibility/notification/export checks and final distribution signing remain.
 
 ## Important constraints
 
@@ -31,6 +32,9 @@ There is currently no XCTest target.
 - Preserve existing uncommitted notification and outcome-review changes.
 - Do not implement quick capture until minimum required fields are approved.
 - Do not present low-sample Insights as established personal patterns.
+- Social v2 is accepted but not implemented. Existing local records remain private by default;
+  server-backed work must follow `SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`, complete the F0
+  gates, and never claim a lock before server acknowledgement.
 
 ## Known issues
 

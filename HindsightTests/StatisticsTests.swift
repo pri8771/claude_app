@@ -119,6 +119,71 @@ final class StatisticsTests: XCTestCase {
         XCTAssertEqual(Statistics.predictionAccuracy([decision]), 0.5, accuracy: 0.0001)
     }
 
+    // MARK: Calibration insight
+
+    func testCalibrationInsightKeepsResolvingBelowMinimumSample() {
+        let decision = makeDecision()
+        addPrediction(to: decision, probability: 90, status: .incorrect)
+        addPrediction(to: decision, probability: 90, status: .incorrect)
+        addPrediction(to: decision, probability: 10, status: .pending)
+
+        let insight = Statistics.calibrationInsight([decision])
+        XCTAssertEqual(insight.resolvedCount, 2)
+        XCTAssertEqual(insight.assessment, .keepResolving)
+        XCTAssertEqual(insight.averageStatedConfidence, 0.9, accuracy: 0.0001)
+        XCTAssertEqual(insight.hitRate, 0, accuracy: 0.0001)
+    }
+
+    func testCalibrationInsightDetectsOverconfidenceUsingOnlyResolvedPredictions() {
+        let decision = makeDecision()
+        addPrediction(to: decision, probability: 90, status: .incorrect)
+        addPrediction(to: decision, probability: 90, status: .partial)
+        addPrediction(to: decision, probability: 90, status: .incorrect)
+        addPrediction(to: decision, probability: 0, status: .pending)
+
+        let insight = Statistics.calibrationInsight([decision])
+        XCTAssertEqual(insight.resolvedCount, 3)
+        XCTAssertEqual(insight.assessment, .overconfident)
+        XCTAssertEqual(insight.averageStatedConfidence, 0.9, accuracy: 0.0001)
+        XCTAssertEqual(insight.hitRate, 1.0 / 6.0, accuracy: 0.0001)
+    }
+
+    func testCalibrationInsightDetectsUnderconfidenceAndWellCalibrated() {
+        let underconfident = makeDecision()
+        for _ in 0..<3 { addPrediction(to: underconfident, probability: 20, status: .correct) }
+        XCTAssertEqual(Statistics.calibrationInsight([underconfident]).assessment, .underconfident)
+
+        let calibrated = makeDecision()
+        addPrediction(to: calibrated, probability: 70, status: .correct)
+        addPrediction(to: calibrated, probability: 70, status: .correct)
+        addPrediction(to: calibrated, probability: 70, status: .incorrect)
+        XCTAssertEqual(Statistics.calibrationInsight([calibrated]).assessment, .wellCalibrated)
+    }
+
+    func testCalibrationInsightHasNoClaimForZeroResolvedPredictions() {
+        let decision = makeDecision()
+        addPrediction(to: decision, probability: 100, status: .pending)
+        let insight = Statistics.calibrationInsight([decision])
+        XCTAssertEqual(insight.resolvedCount, 0)
+        XCTAssertEqual(insight.assessment, .keepResolving)
+        XCTAssertEqual(insight.gap, 0)
+    }
+
+    func testCalibrationInsightCanFocusOnHighConfidencePredictions() {
+        let decision = makeDecision()
+        addPrediction(to: decision, probability: 85, status: .correct)
+        addPrediction(to: decision, probability: 90, status: .incorrect)
+        addPrediction(to: decision, probability: 95, status: .incorrect)
+        addPrediction(to: decision, probability: 75, status: .correct)
+
+        let insight = Statistics.calibrationInsight([decision], confidenceRange: 80...100)
+
+        XCTAssertEqual(insight.resolvedCount, 3)
+        XCTAssertEqual(insight.averageStatedConfidence, 0.9, accuracy: 0.0001)
+        XCTAssertEqual(insight.hitRate, 1.0 / 3.0, accuracy: 0.0001)
+        XCTAssertEqual(insight.assessment, .overconfident)
+    }
+
     func testPredictionStatusCountsIncludesEveryStatusEvenAtZero() {
         let decision = makeDecision()
         addPrediction(to: decision, probability: 50, status: .correct)
@@ -238,9 +303,9 @@ final class StatisticsTests: XCTestCase {
         XCTAssertTrue(patterns.contains { $0.title == "Career decisions go unreviewed" })
     }
 
-    // MARK: Patterns — confidence calibration drill-through
+    // MARK: Patterns — confidence calibration is owned by its dedicated card
 
-    func testPatternsDetectsOverconfidence() {
+    func testPatternsDoesNotDuplicateDedicatedCalibrationInsight() {
         let a = makeDecision(category: .personal, stakes: .medium)
         attachReview(to: a)
         addPrediction(to: a, probability: 80, status: .correct)
@@ -250,38 +315,11 @@ final class StatisticsTests: XCTestCase {
         addPrediction(to: b, probability: 80, status: .incorrect)
         addPrediction(to: b, probability: 80, status: .correct)
 
-        // avgStated = 0.8, actual = (1.0 + 0.5 + 0.0 + 1.0)/4 = 0.625, gap = 0.175 >= 0.15
         let patterns = Statistics.patterns([a, b])
-        XCTAssertTrue(patterns.contains { $0.title == "You tend to be overconfident" })
-    }
-
-    func testPatternsDetectsUnderselling() {
-        let a = makeDecision(category: .personal, stakes: .medium)
-        attachReview(to: a)
-        addPrediction(to: a, probability: 30, status: .correct)
-        addPrediction(to: a, probability: 30, status: .correct)
-        let b = makeDecision(category: .personal, stakes: .medium)
-        attachReview(to: b)
-        addPrediction(to: b, probability: 30, status: .correct)
-        addPrediction(to: b, probability: 30, status: .correct)
-
-        // avgStated = 0.3, actual = 1.0, gap = -0.7 <= -0.15
-        let patterns = Statistics.patterns([a, b])
-        XCTAssertTrue(patterns.contains { $0.title == "You sell yourself short" })
-    }
-
-    func testPatternsDetectsGoodCalibration() {
-        let a = makeDecision(category: .personal, stakes: .medium)
-        attachReview(to: a)
-        addPrediction(to: a, probability: 70, status: .correct)
-        addPrediction(to: a, probability: 70, status: .correct)
-        let b = makeDecision(category: .personal, stakes: .medium)
-        attachReview(to: b)
-        addPrediction(to: b, probability: 70, status: .incorrect)
-
-        // avgStated = 0.7, actual = (1.0 + 1.0 + 0.0)/3 = 0.667, gap ~= 0.033, within +-0.15
-        let patterns = Statistics.patterns([a, b])
-        XCTAssertTrue(patterns.contains { $0.title == "Your gut is well-calibrated" })
+        XCTAssertFalse(patterns.contains {
+            $0.title.localizedCaseInsensitiveContains("confident") ||
+            $0.title.localizedCaseInsensitiveContains("calibrated")
+        })
     }
 
     // MARK: Patterns — irreversible regret drill-through

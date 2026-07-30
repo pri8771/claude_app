@@ -35,6 +35,23 @@ struct StatusCount: Identifiable {
     let count: Int
 }
 
+struct CalibrationInsight: Equatable {
+    enum Assessment: Equatable {
+        case keepResolving
+        case overconfident
+        case underconfident
+        case wellCalibrated
+    }
+
+    static let minimumSampleSize = 3
+
+    let resolvedCount: Int
+    let averageStatedConfidence: Double
+    let hitRate: Double
+    let gap: Double
+    let assessment: Assessment
+}
+
 enum Statistics {
 
     // MARK: Headline numbers
@@ -86,6 +103,38 @@ enum Statistics {
         return PredictionStatus.allCases.map { status in
             StatusCount(status: status, count: predictions.filter { $0.status == status }.count)
         }
+    }
+
+    /// Calibration is derived only from resolved predictions. Partial outcomes
+    /// retain their existing 0.5 score so insights match prediction accuracy.
+    static func calibrationInsight(
+        _ decisions: [Decision],
+        confidenceRange: ClosedRange<Int>? = nil
+    ) -> CalibrationInsight {
+        let resolved = decisions
+            .flatMap { $0.predictions }
+            .filter { prediction in
+                prediction.status != .pending &&
+                (confidenceRange?.contains(prediction.probabilityPercent) ?? true)
+            }
+        let count = resolved.count
+        guard count > 0 else {
+            return CalibrationInsight(resolvedCount: 0, averageStatedConfidence: 0, hitRate: 0, gap: 0, assessment: .keepResolving)
+        }
+        let stated = Double(resolved.reduce(0) { $0 + $1.probabilityPercent }) / Double(count) / 100
+        let hitRate = resolved.reduce(0.0) { $0 + $1.status.score } / Double(count)
+        let gap = stated - hitRate
+        let assessment: CalibrationInsight.Assessment
+        if count < CalibrationInsight.minimumSampleSize {
+            assessment = .keepResolving
+        } else if gap >= 0.15 {
+            assessment = .overconfident
+        } else if gap <= -0.15 {
+            assessment = .underconfident
+        } else {
+            assessment = .wellCalibrated
+        }
+        return CalibrationInsight(resolvedCount: count, averageStatedConfidence: stated, hitRate: hitRate, gap: gap, assessment: assessment)
     }
 
     // MARK: Charts
@@ -158,33 +207,6 @@ enum Statistics {
                 title: "\(worst.0.rawValue) decisions go unreviewed",
                 detail: "Only \(Int(reviewRatio(worst) * 100))% of your \(worst.0.rawValue.lowercased()) decisions get a look back. Close the loop to learn faster."
             ))
-        }
-
-        // Confidence calibration.
-        let resolved = decisions.flatMap { $0.predictions }.filter { $0.status != .pending }
-        if resolved.count >= 3 {
-            let avgStated = Double(resolved.reduce(0) { $0 + $1.probabilityPercent }) / Double(resolved.count) / 100
-            let actual = predictionAccuracy(decisions)
-            let gap = avgStated - actual
-            if gap >= 0.15 {
-                patterns.append(Pattern(
-                    icon: "gauge.with.dots.needle.33percent",
-                    title: "You tend to be overconfident",
-                    detail: "You predicted \(Int(avgStated * 100))% on average but were right \(Int(actual * 100))% of the time."
-                ))
-            } else if gap <= -0.15 {
-                patterns.append(Pattern(
-                    icon: "gauge.with.dots.needle.67percent",
-                    title: "You sell yourself short",
-                    detail: "You were right \(Int(actual * 100))% of the time but only predicted \(Int(avgStated * 100))% confidence."
-                ))
-            } else {
-                patterns.append(Pattern(
-                    icon: "checkmark.seal.fill",
-                    title: "Your gut is well-calibrated",
-                    detail: "Your stated confidence (\(Int(avgStated * 100))%) closely tracks reality (\(Int(actual * 100))%). Trust it."
-                ))
-            }
         }
 
         // Reversible vs irreversible regret.

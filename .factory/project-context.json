@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/pri8771/iOS_app_factory_rules/main/schemas/project-context.schema.json",
   "projectName": "Hindsight",
   "projectType": "existing",
-  "lifecycleStatus": "mvp_development",
+  "lifecycleStatus": "verification_pending",
   "platforms": [
     "ios"
   ],
@@ -15,8 +15,8 @@
   "registeredAt": "2026-07-23",
   "existingCodeBaselineRequired": true,
   "constraints": {
-    "localFirst": true,
-    "backendAllowed": false,
+    "localFirst": false,
+    "backendAllowed": true,
     "thirdPartyDependenciesAllowed": false
   },
   "agentEntryPoints": {

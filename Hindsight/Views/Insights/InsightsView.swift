@@ -30,6 +30,7 @@ struct InsightsView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
                             headlineStats
+                            calibrationSection
                             patternsSection
                             categoryChart
                             qualityChart
@@ -43,6 +44,67 @@ struct InsightsView: View {
                 }
             }
             .navigationTitle("Insights")
+        }
+    }
+
+    // MARK: Calibration
+
+    private var calibrationSection: some View {
+        let insight = Statistics.calibrationInsight(decisions, confidenceRange: 80...100)
+        return VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HSectionHeader(
+                title: "Your 80%+ Calls",
+                subtitle: "What happened when you felt highly confident",
+                systemImage: "gauge.with.dots.needle.33percent"
+            )
+            HCard {
+                switch insight.assessment {
+                case .keepResolving:
+                    let remaining = max(0, CalibrationInsight.minimumSampleSize - insight.resolvedCount)
+                    Text("Resolve \(remaining) more 80%+ prediction\(remaining == 1 ? "" : "s") to compare your strongest convictions with what happened.")
+                        .font(HindsightTheme.Typography.footnote)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                case .overconfident, .underconfident, .wellCalibrated:
+                    calibrationContent(insight)
+                }
+            }
+        }
+    }
+
+    private func calibrationContent(_ insight: CalibrationInsight) -> some View {
+        let stated = Int((insight.averageStatedConfidence * 100).rounded())
+        let hitRate = Int((insight.hitRate * 100).rounded())
+        let copy: (String, String, String)
+        switch insight.assessment {
+        case .overconfident:
+            copy = (
+                "At 80%+ confidence, outcomes landed \(hitRate)% of the time",
+                "You averaged \(stated)% confidence across \(insight.resolvedCount) resolved predictions. That's a useful signal to leave a little more room for surprise—not a grade.",
+                "arrow.down.right"
+            )
+        case .underconfident:
+            copy = (
+                "Your strongest convictions have outperformed so far",
+                "You averaged \(stated)% confidence and outcomes landed \(hitRate)% of the time across \(insight.resolvedCount) resolved predictions.",
+                "arrow.up.right"
+            )
+        case .wellCalibrated:
+            copy = (
+                "Your 80%+ confidence is tracking outcomes closely",
+                "You averaged \(stated)% confidence and outcomes landed \(hitRate)% of the time across \(insight.resolvedCount) resolved predictions.",
+                "equal"
+            )
+        case .keepResolving:
+            fatalError("Handled by calibrationSection")
+        }
+        return HStack(alignment: .top, spacing: HindsightTheme.Spacing.md) {
+            Image(systemName: copy.2)
+                .foregroundStyle(HindsightTheme.Colors.accent)
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(copy.0).font(HindsightTheme.Typography.headline).foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text(copy.1).font(HindsightTheme.Typography.footnote).foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
         }
     }
 

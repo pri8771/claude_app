@@ -1,5 +1,10 @@
 # Hindsight: Long-Term Plan
 
+> **Direction update — 2026-07-30:** Path B (networked social product) is now accepted. The
+> detailed, implementation-ready replacement roadmap is
+> `SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`. This document remains useful strategy/history; its
+> local-vs-social fork is no longer an open decision.
+
 **Status:** Strategy document — opinionated, with open questions named as open.
 **Date:** 2026-07-28
 

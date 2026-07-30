@@ -18,6 +18,7 @@
 		BB0BBF582CC05B6D7AE94CF4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
 		E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */; };
 		FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */; };
+		7AC7D1E89D3C4BA1A2F80001 /* QuickCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC7D1E89D3C4BA1A2F80002 /* QuickCaptureTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 		A100000000000000000000E1 /* Hindsight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hindsight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		514370623BA20CD8BBD293C1 /* HindsightCaptureFlowUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HindsightCaptureFlowUITests.swift; sourceTree = "<group>"; };
 		9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClarityScoreTests.swift; sourceTree = "<group>"; };
+		7AC7D1E89D3C4BA1A2F80002 /* QuickCaptureTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = QuickCaptureTests.swift; sourceTree = "<group>"; };
 		B19F1AF8C34823F3A3BAAC2B /* HindsightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HindsightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4E8A2B3D19E5F4A2B6C8D9 /* StoreBootstrapTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StoreBootstrapTests.swift; sourceTree = "<group>"; };
 		DECE77A14054492EB7BF267D /* DemoDataSafetyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DemoDataSafetyTests.swift; sourceTree = "<group>"; };
@@ -57,6 +59,7 @@
 		A100000000000000000000B1 /* Hindsight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				A10000000000000000000110 /* Exceptions for "Hindsight" folder in "Hindsight" target */,
 			);
 			explicitFileTypes = {
 			};
@@ -66,6 +69,16 @@
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A10000000000000000000110 /* Exceptions for "Hindsight" folder in "Hindsight" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Preview Content/Preview Assets.xcassets",
+			);
+			target = A100000000000000000000F1 /* Hindsight */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3966A1F5197295D7BCA77B07 /* Frameworks */ = {
@@ -143,6 +156,7 @@
 		DBB7883A37A8BE1EC3347B71 /* HindsightTests */ = {
 			isa = PBXGroup;
 			children = (
+				7AC7D1E89D3C4BA1A2F80002 /* QuickCaptureTests.swift */,
 				9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */,
 				3D36420E708F180AF0DFAE1B /* ModelPersistenceTests.swift */,
 				D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */,
@@ -284,6 +298,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7AC7D1E89D3C4BA1A2F80001 /* QuickCaptureTests.swift in Sources */,
 				FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */,
 				55B57788EE4E4E95B5BB595A /* DemoDataSafetyTests.swift in Sources */,
 				2C0E641FD6AD79789A78C9A0 /* ModelPersistenceTests.swift in Sources */,
@@ -334,7 +349,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -343,7 +358,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pchordia.hindsight.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -358,7 +373,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -367,7 +382,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pchordia.hindsight.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -381,7 +396,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -390,7 +405,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pchordia.hindsight.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -406,7 +421,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -415,7 +430,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pchordia.hindsight.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -551,7 +566,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Hindsight/Preview Content\"";
-				DEVELOPMENT_TEAM = YR2QPBY4TR;
+				DEVELOPMENT_TEAM = 796XH483R4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Hindsight-Info.plist";
@@ -566,7 +581,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pchordia.hindsight;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -581,9 +596,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Hindsight/Preview Content\"";
-				DEVELOPMENT_TEAM = YR2QPBY4TR;
-				ENABLE_PREVIEWS = YES;
+				DEVELOPMENT_TEAM = 796XH483R4;
+				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Hindsight-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -597,7 +611,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hindsight.pchordia.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pchordia.hindsight;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

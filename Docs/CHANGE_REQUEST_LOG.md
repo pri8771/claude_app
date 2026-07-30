@@ -33,7 +33,9 @@ Nothing in the baseline is ever edited. This log is how the plan legally changes
 
 ## Open
 
-*(none — CR-002 is deferred, not open)*
+| CR | Title | Status | Owner / next step |
+|---|---|---|---|
+| CR-003 | Central rule request: implementation-ready task lists | proposed *(informal)* | Priyansh to add it to `pri8771/iOS_app_factory_rules` |
 
 ---
 
@@ -46,6 +48,7 @@ Nothing in the baseline is ever edited. This log is how the plan legally changes
 | CR-000c | Baseline task count 78 → 92 | accepted | `underestimate` |
 | CR-001 | MVP had no baselined task list | accepted | `discovery` |
 | CR-002 | Jira field config blocks issue creation | deferred | `discovery` |
+| CR-004 | Adopt networked Social v2 product direction | accepted | `change-request` |
 
 ---
 
@@ -55,8 +58,8 @@ Nothing in the baseline is ever edited. This log is how the plan legally changes
 
 | Metric | Value |
 |---|---|
-| CRs raised | 2 |
-| CRs accepted | 1 |
+| CRs raised | 4 |
+| CRs accepted | 2 |
 | CRs rejected | 0 |
 | CRs deferred | 1 |
 | Total estimated delay | 0.5 days |
@@ -66,7 +69,7 @@ Nothing in the baseline is ever edited. This log is how the plan legally changes
 **Delay attribution so far:** `discovery` 100% (1 of 1 measurable). Both post-baseline CRs were
 found by checking rather than by being surprised mid-execution — CR-001 by asking "how do we reach
 the MVP", CR-002 by test-creating one issue before creating 117. Cheap to find, cheap to fix.
-Baseline prediction **P3** (≥10 CRs before E4) is tracking at 2.
+Baseline prediction **P3** (≥10 CRs before E4) is tracking at 4.
 
 ---
 
@@ -176,3 +179,49 @@ every issue start life with a fabricated actual and a fabricated cause, corrupti
 measurement this project exists to produce. This is the same error the app guards against by
 refusing to default a confidence value the user never gave. **Never make a field required at a
 point in the lifecycle where its true value cannot be known.**
+
+### CR-003 — Central rule request: implementation-ready task lists
+
+- **Raised:** 2026-07-29 by Codex at Priyansh's request
+- **Status:** proposed *(informal; not applied to the central rules repository)*
+- **Tasks affected:** process only — future task lists generated under `iOS_app_factory_rules`
+- **What changes:** request that the central standard require every implementation task list to be
+  execution-ready for a lower-capability agent. At minimum, each task should state: a user story;
+  why/outcome; exact scope and non-scope; concrete implementation approach and integration points;
+  dependencies; edge cases/risks; testable acceptance criteria; verification/release evidence; and
+  explicit completion-report expectations.
+- **Why:** a short title plus estimate is insufficient delegation context. It causes agents to
+  rediscover product intent, make inconsistent assumptions, and report work done without an
+  auditable definition of done.
+- **Estimated delay:** 0 days to Hindsight *(documentation/process request only)*
+- **Actual delay:** n/a — not yet accepted or applied centrally
+- **Delay cause:** `discovery`
+- **Lesson:** task-list detail is part of implementation quality, not administrative decoration.
+  **Future plans must give delegated agents the information needed to execute safely without
+  rereading the entire repository or inventing missing requirements.**
+- **External follow-up:** Priyansh will add this request later to
+  `pri8771/iOS_app_factory_rules`; do not treat this local log entry as a change to that repository.
+
+### CR-004 — Adopt networked Social v2 product direction
+
+- **Raised:** 2026-07-30 by Codex at Priyansh's direction
+- **Status:** accepted
+- **Tasks affected:** supersedes the unstarted E4 social approach and creates the new F0/P1/P2/P3/P4
+  Social v2 program; does not rewrite the frozen M1.0 or post-MVP Baseline v1.0 estimates
+- **What changes:** Hindsight is no longer constrained to a local-only private journal. The
+  approved direction adds accounts, cloud-backed social records, friends, private groups, common
+  prediction lists, server-authoritative locks and resolutions, fair group/public leaderboards,
+  Receipts, iMessage, universal links, curated global/local events, moderation, anti-cheat, teams,
+  leagues, tournaments, creator events, and advanced analytics. The complete implementation-ready
+  replacement roadmap is `SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`.
+- **Why:** Shared forecasts on common questions create a much stronger return and distribution loop
+  than an isolated journal. Friends already debate future outcomes; locking those calls, resolving
+  them fairly, and comparing calibration creates repeatable social value and visible proof of the
+  product.
+- **Estimated delay:** 0 days to the current Build 1/TestFlight candidate; Social v2 is a new
+  program whose estimates must be baselined after F0.1/F0.3 decisions
+- **Actual delay:** n/a — planning change only
+- **Delay cause:** `change-request`
+- **Lesson:** a social feature is an architecture and operations change, not a UI add-on. Identity,
+  migration consent, authorization, event integrity, resolution, scoring, moderation, safety,
+  environments, observability, and release controls must be planned before group screens.

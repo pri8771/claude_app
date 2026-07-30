@@ -18,7 +18,9 @@ struct TodayView: View {
     @Query(sort: \Decision.createdAt, order: .reverse) private var decisions: [Decision]
     @AppStorage(AppStorageKeys.userName) private var userName = "there"
 
+    @State private var showQuickCapture = false
     @State private var showNewDecision = false
+    @State private var showDuePredictionStack = false
     @State private var selectedDecision: Decision?
 
     var body: some View {
@@ -32,13 +34,24 @@ struct TodayView: View {
                         statsStrip
 
                         if decisions.isEmpty {
-                            HEmptyState(
-                                icon: "brain.head.profile",
-                                title: "Start your first decision",
-                                message: "Capture a choice you're weighing, record what you predict, and let future you grade it.",
-                                actionTitle: "New Decision",
-                                action: { showNewDecision = true }
-                            )
+                            VStack(spacing: HindsightTheme.Spacing.sm) {
+                                HEmptyState(
+                                    icon: "brain.head.profile",
+                                    title: "Capture a prediction",
+                                    message: "Record a thought now and revisit it when reality has more to say.",
+                                    actionTitle: "Quick Capture",
+                                    action: { showQuickCapture = true }
+                                )
+                                Button {
+                                    showQuickCapture = false
+                                    showNewDecision = true
+                                } label: {
+                                    Label("Add detail", systemImage: "list.bullet.rectangle")
+                                        .font(HindsightTheme.Typography.subheadline)
+                                }
+                                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                                .accessibilityHint("Open the full decision wizard")
+                            }
                             .padding(.top, HindsightTheme.Spacing.xl)
                         } else {
                             needsReviewSection
@@ -62,10 +75,27 @@ struct TodayView: View {
                 floatingAddButton
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }
+            .toolbar {
+                ToolbarItem(placement: .principal) { EmptyView() }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showQuickCapture = false
+                        showNewDecision = true
+                    } label: {
+                        Label("Add detail", systemImage: "list.bullet.rectangle")
+                    }
+                    .accessibilityHint("Open the full decision wizard")
+                }
+            }
             .navigationDestination(item: $selectedDecision) { DecisionDetailView(decision: $0) }
+            .sheet(isPresented: $showQuickCapture) {
+                QuickCaptureSheet()
+            }
             .sheet(isPresented: $showNewDecision) {
                 NewDecisionWizard()
+            }
+            .sheet(isPresented: $showDuePredictionStack) {
+                DuePredictionResolveStackView()
             }
         }
     }
@@ -100,11 +130,24 @@ struct TodayView: View {
     }
 
     @ViewBuilder private var needsReviewSection: some View {
-        let items = decisions.filter { $0.needsReview }
+        let items = decisions.filter { decision in
+            decision.needsReview || decision.predictions.contains {
+                $0.status == .pending && $0.dueDate <= Date()
+            }
+        }
         if !items.isEmpty {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                HSectionHeader(title: "Needs Review", subtitle: "Reality has arrived — grade your past self",
+                HSectionHeader(title: "Ready to Revisit", subtitle: "A quick look back closes the loop",
                                systemImage: "exclamationmark.circle.fill", tint: HindsightTheme.Colors.accent)
+                if duePendingPredictionCount > 0 {
+                    HButton(
+                        title: "Resolve \(duePendingPredictionCount) Prediction\(duePendingPredictionCount == 1 ? "" : "s")",
+                        icon: "scope"
+                    ) {
+                        showDuePredictionStack = true
+                    }
+                    .accessibilityHint("Opens the fast prediction review stack")
+                }
                 ForEach(items) { decision in
                     Button { selectedDecision = decision } label: {
                         DecisionCardView(decision: decision, emphasiseReview: true)
@@ -153,7 +196,7 @@ struct TodayView: View {
     private var floatingAddButton: some View {
         Button {
             HapticsManager.shared.play(.medium)
-            showNewDecision = true
+            showQuickCapture = true
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 24, weight: .bold))
@@ -164,12 +207,21 @@ struct TodayView: View {
                 .hindsightShadow(HindsightTheme.Shadows.glow)
         }
         .padding(HindsightTheme.Spacing.lg)
+        .accessibilityLabel("Quick Capture")
+        .accessibilityHint("Capture a prediction in one sheet")
     }
 
     // MARK: Helpers
 
     private var pendingReviewCount: Int {
-        decisions.filter { $0.status != .reviewed }.count
+        decisions.filter { $0.needsReview }.count
+    }
+
+    private var duePendingPredictionCount: Int {
+        decisions
+            .flatMap { $0.predictions }
+            .filter { $0.status == .pending && $0.dueDate <= Date() }
+            .count
     }
 
     private var greeting: String {
