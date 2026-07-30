@@ -29,8 +29,14 @@ patterns=(
 
 found=0
 for pattern in "${patterns[@]}"; do
-  if rg -n --glob '*.swift' --glob 'Package.swift' "$pattern" "$ROOT"; then
-    found=1
+  if command -v rg >/dev/null 2>&1; then
+    if rg -n --glob '*.swift' --glob 'Package.swift' "$pattern" "$ROOT"; then
+      found=1
+    fi
+  else
+    if grep -RInE --include='*.swift' --include='Package.swift' -- "$pattern" "$ROOT"; then
+      found=1
+    fi
   fi
 done
 

@@ -35,6 +35,34 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
     }
 
+    private func select(
+        _ element: XCUIElement,
+        in scrollView: XCUIElement,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let selected = NSPredicate(format: "value == %@", "Selected")
+
+        for attempt in 0..<4 {
+            if element.waitForExistence(timeout: 5), element.isHittable {
+                element.tap()
+                let selectionExpectation = XCTNSPredicateExpectation(
+                    predicate: selected,
+                    object: element
+                )
+                if XCTWaiter.wait(for: [selectionExpectation], timeout: 2) == .completed {
+                    return
+                }
+            }
+
+            if attempt < 3 {
+                scrollView.swipeUp()
+            }
+        }
+
+        XCTFail("Expected \(element) to become selected after scrolling into view", file: file, line: line)
+    }
+
     func testQuickCaptureCreatesOneVisiblePrediction() throws {
         let app = launchApp()
         let statement = "UI test: the launch will stay on schedule"
@@ -89,17 +117,14 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         XCTAssertTrue(keyboardDoneButton.waitForExistence(timeout: 5))
         keyboardDoneButton.tap()
 
+        let captureScrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(captureScrollView.waitForExistence(timeout: 5))
+
         let confidenceButton = app.buttons["quickCapture.confidence.75"]
-        XCTAssertTrue(confidenceButton.waitForExistence(timeout: 5))
-        if !confidenceButton.isHittable { app.scrollViews.firstMatch.swipeUp() }
-        XCTAssertTrue(confidenceButton.isHittable)
-        confidenceButton.tap()
+        select(confidenceButton, in: captureScrollView)
 
         let tomorrowButton = app.buttons["Tomorrow"]
-        XCTAssertTrue(tomorrowButton.waitForExistence(timeout: 5))
-        if !tomorrowButton.isHittable { app.scrollViews.firstMatch.swipeUp() }
-        XCTAssertTrue(tomorrowButton.isHittable)
-        tomorrowButton.tap()
+        select(tomorrowButton, in: captureScrollView)
 
         let saveButton = app.buttons["Save Prediction"]
         XCTAssertTrue(saveButton.waitForExistence(timeout: 5))
