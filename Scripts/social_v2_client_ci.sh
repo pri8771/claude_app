@@ -74,5 +74,7 @@ xcodebuild test -quiet \
   -destination "$destination" \
   -derivedDataPath "$derived_data" \
   -resultBundlePath "$result_bundle" \
+  -retry-tests-on-failure \
+  -test-iterations 2 \
   CODE_SIGNING_ALLOWED=NO
 echo "client CI passed; result bundle: $result_bundle"

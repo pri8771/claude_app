@@ -63,6 +63,26 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         XCTFail("Expected \(element) to become selected after scrolling into view", file: file, line: line)
     }
 
+    private func enterText(
+        _ text: String,
+        into element: XCUIElement,
+        in app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        guard element.waitForExistence(timeout: 5) else {
+            XCTFail("Expected text input to exist before entering text", file: file, line: line)
+            return
+        }
+
+        element.tap()
+        guard app.keyboards.firstMatch.waitForExistence(timeout: 5) else {
+            XCTFail("Expected the keyboard to appear before entering text", file: file, line: line)
+            return
+        }
+        element.typeText(text)
+    }
+
     func testQuickCaptureCreatesOneVisiblePrediction() throws {
         let app = launchApp()
         let statement = "UI test: the launch will stay on schedule"
@@ -145,30 +165,26 @@ final class HindsightCaptureFlowUITests: XCTestCase {
 
         // MARK: Step 1 — Basics
         let titleField = app.textFields["newDecision.title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5))
-        titleField.tap()
-        titleField.typeText(decisionTitle)
+        enterText(decisionTitle, into: titleField, in: app)
 
         let nextButton = app.buttons["Next"]
-        XCTAssertTrue(nextButton.isEnabled, "Next should be enabled once the title is non-empty")
+        XCTAssertTrue(
+            waitForEnabled(nextButton),
+            "Next should be enabled once the title is non-empty"
+        )
         nextButton.tap()
 
         // MARK: Step 2 — Options (two are pre-added; both need a title)
         let option0 = app.textFields["newDecision.option.title.0"]
         let option1 = app.textFields["newDecision.option.title.1"]
-        XCTAssertTrue(option0.waitForExistence(timeout: 5))
-        option0.tap()
-        option0.typeText("Negotiate a 4-day week")
-        option1.tap()
-        option1.typeText("Keep the current schedule")
+        enterText("Negotiate a 4-day week", into: option0, in: app)
+        enterText("Keep the current schedule", into: option1, in: app)
 
         app.buttons["Next"].tap()
 
         // MARK: Step 3 — Predictions (one is pre-added)
         let predictionField = app.textViews["newDecision.prediction.statement.0"]
-        XCTAssertTrue(predictionField.waitForExistence(timeout: 5))
-        predictionField.tap()
-        predictionField.typeText("I'll still feel just as productive")
+        enterText("I'll still feel just as productive", into: predictionField, in: app)
 
         app.buttons["Next"].tap()
 
@@ -191,9 +207,7 @@ final class HindsightCaptureFlowUITests: XCTestCase {
 
         // MARK: Outcome review — fill the one required field and save.
         let whatHappenedField = app.textViews["outcomeReview.whatHappened"]
-        XCTAssertTrue(whatHappenedField.waitForExistence(timeout: 5))
-        whatHappenedField.tap()
-        whatHappenedField.typeText("Negotiated it, energy levels went up.")
+        enterText("Negotiated it, energy levels went up.", into: whatHappenedField, in: app)
 
         app.buttons["Save Review"].tap()
 
