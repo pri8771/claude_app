@@ -19,6 +19,8 @@
 - Automated unit, integration, and UI-smoke targets now exist; the 2026-07-30 dedicated-simulator
   integrated foundation regression passed 80/80 tests, including seven default-off Social v2
   rollout-policy tests and Quick Capture at the largest accessibility text size.
+  Hosted foundation run `30591583112` passed the complete shared scheme plus syntax, whitespace,
+  contract, privacy, credential, and dynamic-simulator gates.
   Physical notification/deep-link, manual VoiceOver, manual largest-Dynamic-Type review of
   resolution and Insights, export/delete/relaunch, and distribution signing remain
   `verification_pending`.
@@ -54,6 +56,8 @@ Foundation contract checks additionally include:
 - run the local client CI command against an explicit simulator destination and retain the
   `.xcresult` summary; the integrated 2026-07-30 run passed 80/80 with no failures or skips at
   `/private/tmp/hindsight-social-foundation-wave2-20260730.xcresult`;
+- require the same shared scheme and repository gates on hosted pushes/PRs to `dev` and `qa`;
+  GitHub Actions run `30591583112` is the first green hosted evidence;
 - treat Figma/prototype review, product-owner approval, legal review, hosted-provider behavior,
   APNs, backup restore, and cross-project isolation as checks not run until their real evidence
   exists.

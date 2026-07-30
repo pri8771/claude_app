@@ -27,5 +27,5 @@
 
 ## Remaining gates
 
-- `verification_pending`: trusted signed/remote configuration integration after F0.3/F0.4/F0.5 approval; real environment/account isolation evidence; green hosted CI; contract compatibility with a selected backend; migration/rollback game day; physical-device and QA promotion evidence.
+- `verification_pending`: trusted signed/remote configuration integration after F0.3/F0.4/F0.5 approval; real environment/account isolation evidence; contract compatibility with a selected backend; migration/rollback game day; physical-device and QA promotion evidence. The repository-level hosted foundation workflow passed in run `30591583112`.
 - No Social v2 UI, networking, persistence, secrets, SDKs, or runtime flag-loading path was added.

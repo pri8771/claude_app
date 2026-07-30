@@ -95,7 +95,10 @@ separate Build 1 TestFlight release requirements.
   - The typed iOS rollout policy is all-off by default and fails closed on dependency,
     environment, account, contract-version, and app-build mismatches.
   - Seven focused rollout tests and the complete 80/80 iOS suite passed with no failures or skips.
-  - A least-privilege GitHub Actions workflow is defined; its first hosted run is pending push.
+  - Least-privilege GitHub Actions run
+    [30591583112](https://github.com/pri8771/hindsight/actions/runs/30591583112) passed all
+    syntax/whitespace, contract, privacy, credential, dynamic simulator, and complete shared
+    Xcode-scheme gates at commit `6990e60`.
   - Evidence: `quality/evidence/social-v2-foundation-wave2-2026-07-30.md`.
 
 ## Verification pending
@@ -109,8 +112,6 @@ separate Build 1 TestFlight release requirements.
 - Joint engineering/privacy/safety/legal review of the draft domain, data-retention, moderation,
   age, deletion/export, and migration decisions.
 - Backend development and QA projects/accounts remain unprovisioned until ADR acceptance.
-- The Social v2 hosted workflow definition has not yet produced a GitHub run; its first pushed run
-  must be inspected before it counts as hosted CI evidence.
 - Launch and complete the physical-device smoke pass after the paired iPhone is unlocked.
 - Manual VoiceOver and largest Dynamic Type pass on Quick Capture, Today resolution, and Insights.
 - Physical-device notification delivery and cold-launch deep-link test.

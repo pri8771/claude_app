@@ -77,9 +77,11 @@ iPhone 17 Pro simulator / iOS 26.5
 ```
 
 The dynamic resolver emitted a valid ID-based destination without a hardcoded model or UUID.
-`.github/workflows/social-v2-foundation.yml` is locally syntax-validated and defines read-only,
-range-aware contract/privacy/client gates for `dev` and `qa`; it is not hosted evidence until a
-pushed GitHub run succeeds.
+`.github/workflows/social-v2-foundation.yml` defines read-only, range-aware
+contract/privacy/client gates for `dev` and `qa`. Hosted run
+[30591583112](https://github.com/pri8771/hindsight/actions/runs/30591583112) passed those gates and
+the complete shared Xcode scheme at commit `6990e60`. The hosted no-network gate also exercised
+its dependency-free `grep` fallback because the runner did not provide `rg`.
 
 ## Remaining gates
 
@@ -88,7 +90,7 @@ pushed GitHub run succeeds.
 - Apple-auth and Supabase-hosted proof, accepted ADR-008, and isolated provider projects.
 - External OpenAPI lint/generated client and live-backend fixture execution.
 - Privacy/safety/legal approvals, runtime telemetry/APNs enforcement, and deletion/export proof.
-- Real environment manifests/secrets, green hosted CI, dashboards/budget alerts, and QA
+- Real environment manifests/secrets, dashboards/budget alerts, and QA
   backup/restore/rollback game day.
 
 Phase 1 remains queued until those governing gates are accepted.

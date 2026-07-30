@@ -9,9 +9,10 @@ prompts later outcome review, and helps users improve judgment.
 
 Build 1 is code-complete and the 2026-07-30 integrated foundation regression passed 80/80 tests.
 The Social v2 networked direction is accepted as a program, but only its mandatory F0
-planning/contracts, local integrity/delivery controls, and a default-off client rollout boundary
-have begun. No Social v2 user-facing feature, cloud backend, account, user-data upload, runtime
-flag loader, or third-party runtime dependency exists.
+planning/contracts, local integrity/delivery controls, default-off client rollout boundary, and
+hosted repository CI have begun. Hosted foundation run `30591583112` is green. No Social v2
+user-facing feature, cloud backend, account, user-data upload, runtime flag loader, or third-party
+runtime dependency exists.
 
 ## Build and run
 
@@ -25,7 +26,8 @@ xcodebuild build \
 ```
 
 Automated unit, integration, and UI-smoke targets exist. The latest 2026-07-30 foundation
-regression passed 80/80 on an iPhone 17 Pro simulator;
+regression passed 80/80 on an iPhone 17 Pro simulator; GitHub Actions run `30591583112` also
+passed the complete shared scheme and all repository foundation gates;
 physical-device accessibility/notification/export checks and final distribution signing remain.
 
 ## Important constraints

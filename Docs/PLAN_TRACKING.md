@@ -42,7 +42,7 @@ must not be represented as included in Build 1.
 | F0.4 | review required | domain/OpenAPI contract + local structural validator + 18 expectation fixtures; external lint/generated client/live execution remain |
 | F0.5 | review required | policy/checklist + machine payload allowlist + 13 privacy fixtures; owner/counsel/runtime review remains |
 | F0.6 | review required | migration/sync contract; implementation and fixture evidence remain |
-| F0.7 | in progress | environment/client/contract/privacy gates, hosted workflow definition and default-off rollout policy verified locally; hosted run/cloud/rollback game day remain |
+| F0.7 | in progress | environment/client/contract/privacy gates and default-off rollout policy pass locally; hosted foundation run 30591583112 is green; cloud isolation/observability/rollback game day remain |
 
 See `SOCIAL_V2_EXECUTION_TRACKER.md` for the full 41-task sequence, evidence gates, and
 lower-model dispatch contract.

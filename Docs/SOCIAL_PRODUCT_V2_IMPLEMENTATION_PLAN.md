@@ -68,9 +68,10 @@ F0 execution has started, but Phase 1 feature implementation remains gated:
 - F0.6 has the migration/offline contract but still requires accepted upstream contracts and
   fixture-store implementation/relaunch/rollback evidence.
 - F0.7 now has environment validation, a local/client CI path, a read-only hosted workflow
-  definition, a default-off typed iOS rollout policy, and promotion/rollback controls. Cloud
-  projects, credentials, a successful hosted run, and the recovery game day remain blocked on
-  accepted architecture and owner-provided access.
+  definition, a default-off typed iOS rollout policy, and promotion/rollback controls. Hosted
+  foundation run `30591583112` passed every repository gate and the complete shared Xcode scheme.
+  Cloud projects, credentials, observability, isolation proof, and the recovery game day remain
+  blocked on accepted architecture and owner-provided access.
 
 Live sequencing and evidence are tracked in `SOCIAL_V2_EXECUTION_TRACKER.md`. Draft artifacts do
 not satisfy the phase entry gate by themselves.
