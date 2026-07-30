@@ -38,11 +38,11 @@ must not be represented as included in Build 1.
 |---|---|---|
 | F0.1 | in progress | `SOCIAL_V2_PRODUCT_CONTRACT.md`; owner approval + five sessions remain |
 | F0.2 | in progress | `CLAUDE_DESIGN_PROMPT.md`; Figma prototype/research/sign-off remain |
-| F0.3 | in progress | evaluation + proposed ADR-008; local PostgreSQL integrity slice passed; hosted/auth/realtime/APNs/restore/isolation proof remains |
-| F0.4 | review required | domain contract + draft OpenAPI; ADR/policy review and full lint remain |
-| F0.5 | review required | draft privacy/safety policy + legal/store checklist; owner/counsel review remains |
+| F0.3 | in progress | proposed ADR-008; local RLS/concurrency/outbox/reconciliation/dev-QA/restore parity passed; Apple auth and hosted provider proof remain |
+| F0.4 | review required | domain/OpenAPI contract + local structural validator + 18 expectation fixtures; external lint/generated client/live execution remain |
+| F0.5 | review required | policy/checklist + machine payload allowlist + 13 privacy fixtures; owner/counsel/runtime review remains |
 | F0.6 | review required | migration/sync contract; implementation and fixture evidence remain |
-| F0.7 | in progress | local environment validator, client CI and runbook verified; cloud accounts, hosted CI and rollback game day remain gated |
+| F0.7 | in progress | environment/client/contract/privacy gates, hosted workflow definition and default-off rollout policy verified locally; hosted run/cloud/rollback game day remain |
 
 See `SOCIAL_V2_EXECUTION_TRACKER.md` for the full 41-task sequence, evidence gates, and
 lower-model dispatch contract.

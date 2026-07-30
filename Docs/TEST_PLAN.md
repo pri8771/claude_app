@@ -17,7 +17,8 @@
 - Notification delivery and authorization transitions require physical-device QA.
 - Subjective capture friction and Insights usefulness require uncoached human review.
 - Automated unit, integration, and UI-smoke targets now exist; the 2026-07-30 dedicated-simulator
-  regression passed 73/73 tests, including Quick Capture at the largest accessibility text size.
+  integrated foundation regression passed 80/80 tests, including seven default-off Social v2
+  rollout-policy tests and Quick Capture at the largest accessibility text size.
   Physical notification/deep-link, manual VoiceOver, manual largest-Dynamic-Type review of
   resolution and Insights, export/delete/relaunch, and distribution signing remain
   `verification_pending`.
@@ -42,12 +43,17 @@ Foundation contract checks additionally include:
 
 - parse and structurally validate `Contracts/social-v1.openapi.yaml`, then run full OpenAPI lint
   and generated-client compatibility after F0.7 approves a pinned toolchain;
-- run the disposable PostgreSQL negative/concurrency/immutability spike using synthetic data;
+- run the disposable PostgreSQL RLS/negative/concurrency/immutability/outbox/reconciliation/
+  isolation/restore spike using synthetic data;
+- validate all write-operation idempotency/security/schema requirements and the 18 synthetic
+  contract expectations without misrepresenting declarations as live-backend results;
+- reject content-bearing telemetry/push fields through the machine-readable allowlist and all 13
+  deterministic privacy fixtures;
 - validate non-secret environment manifests and reject placeholder, mixed-environment, non-HTTPS,
   secret-bearing, or branch/environment-mismatched promotion inputs;
 - run the local client CI command against an explicit simulator destination and retain the
-  `.xcresult` summary; the 2026-07-30 run passed 73/73 with no failures or skips at
-  `/private/tmp/hindsight-social-v2-foundation-20260730.xcresult`;
+  `.xcresult` summary; the integrated 2026-07-30 run passed 80/80 with no failures or skips at
+  `/private/tmp/hindsight-social-foundation-wave2-20260730.xcresult`;
 - treat Figma/prototype review, product-owner approval, legal review, hosted-provider behavior,
   APNs, backup restore, and cross-project isolation as checks not run until their real evidence
   exists.

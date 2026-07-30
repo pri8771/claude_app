@@ -1,0 +1,3 @@
+{
+  "type": "operational_telemetry", "expect_error": "FORBIDDEN_FIELD", "payload": {"environment":"qa","telemetry_schema_version":"1.0.0","build_version":"205","api_contract_version":"1.0.0","schema_version":"1.0.0","event_class":"social_operation_completed","result_class":"accepted","correlation_id":"cor_01HX7K3N9Q2V8M4A","group_name":"Family Forecasts"}
+}

@@ -84,18 +84,33 @@ separate Build 1 TestFlight release requirements.
   - The content/privacy audit found no networking or tracking APIs in the current client.
   - The full existing iOS scheme passed 73/73 tests on the dedicated iPhone 17 Pro simulator.
   - Evidence: `quality/evidence/social-v2-foundation-execution-2026-07-30.md`.
+- **Social v2 foundation execution wave 2 verified locally (2026-07-30):**
+  - Expanded disposable PostgreSQL proof passed database RLS, true two-session forecast
+    concurrency, durable generic outbox retry, missed-event reconciliation, separate synthetic
+    development/QA databases, and logical backup/restore checksum equality.
+  - Dependency-free contract CI validates OpenAPI security/idempotency/schema invariants and 18
+    synthetic expectation declarations; it does not claim a live service executed them.
+  - A closed content-free payload policy passed three allowed and rejected ten forbidden
+    telemetry/APNs-shaped fixtures, including free-form APNs thread identifiers.
+  - The typed iOS rollout policy is all-off by default and fails closed on dependency,
+    environment, account, contract-version, and app-build mismatches.
+  - Seven focused rollout tests and the complete 80/80 iOS suite passed with no failures or skips.
+  - A least-privilege GitHub Actions workflow is defined; its first hosted run is pending push.
+  - Evidence: `quality/evidence/social-v2-foundation-wave2-2026-07-30.md`.
 
 ## Verification pending
 
 - Product-owner ratification of the F0.1 scope, metrics, thresholds, and open decisions.
 - Claude Design/Figma prototype plus five real uncoached sessions; no research result is currently
   claimed.
-- Remaining F0.3 hosted proof covering Apple-token validation, Supabase RLS/realtime, APNs
-  recovery, backup/export, dev/QA isolation, and true multi-session deadline/load testing before
-  ADR-008 can be accepted. The local PostgreSQL core passed.
+- Remaining F0.3 hosted proof covering Apple-token validation, Supabase RLS/realtime, actual APNs
+  recovery, hosted backup/export and project isolation, plus hosted load/deadline behavior before
+  ADR-008 can be accepted. The stronger local PostgreSQL parity proof passed.
 - Joint engineering/privacy/safety/legal review of the draft domain, data-retention, moderation,
   age, deletion/export, and migration decisions.
 - Backend development and QA projects/accounts remain unprovisioned until ADR acceptance.
+- The Social v2 hosted workflow definition has not yet produced a GitHub run; its first pushed run
+  must be inspected before it counts as hosted CI evidence.
 - Launch and complete the physical-device smoke pass after the paired iPhone is unlocked.
 - Manual VoiceOver and largest Dynamic Type pass on Quick Capture, Today resolution, and Insights.
 - Physical-device notification delivery and cold-launch deep-link test.
@@ -138,6 +153,6 @@ One production bug was reintroduced by the revert and fixed again: `bootResult` 
 Send `CLAUDE_DESIGN_PROMPT.md` to Claude Design, review the F0.1 contract and owner decisions, and
 extend the passed local ADR-008 slice into the hosted Apple-auth/RLS/realtime/APNs/isolation/
 restore proof. If those pass, accept or revise the ADR, provision isolated development and QA
-backend projects, and complete F0.7 before any Phase 1 feature code. In parallel, unlock the
-paired iPhone, provide the support email, and add the Apple account in Xcode to finish the separate
-Build 1 TestFlight track.
+backend projects, run the hosted workflow and complete the F0.7 rollback game day before any Phase
+1 feature code. In parallel, unlock the paired iPhone, provide the support email, and add the Apple
+account in Xcode to finish the separate Build 1 TestFlight track.

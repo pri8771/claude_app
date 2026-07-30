@@ -1,0 +1,17 @@
+{
+  "type": "operational_telemetry",
+  "payload": {
+    "environment": "development",
+    "telemetry_schema_version": "1.0.0",
+    "build_version": "205",
+    "api_contract_version": "1.0.0",
+    "schema_version": "1.0.0",
+    "event_class": "social_operation_rejected",
+    "result_class": "rejected",
+    "error_class": "authorization_denied",
+    "correlation_id": "cor_01HX7K3N9Q2V8M4A",
+    "resource_id": "res_01HX7K3N9Q2V8M4A",
+    "authorized_role_class": "member",
+    "latency_bucket": "500ms_1999ms"
+  }
+}

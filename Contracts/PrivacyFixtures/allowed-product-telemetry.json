@@ -1,0 +1,18 @@
+{
+  "type": "product_telemetry",
+  "payload": {
+    "environment": "qa",
+    "telemetry_schema_version": "1.0.0",
+    "build_version": "205",
+    "api_contract_version": "1.0.0",
+    "schema_version": "1.0.0",
+    "event_class": "social_action_requested",
+    "result_class": "queued",
+    "error_class": "none",
+    "route_id": "route_social_event",
+    "correlation_id": "cor_01HX7K3N9Q2V8M4A",
+    "operation_id": "op_01HX7K3N9Q2V8M4A",
+    "duration_bucket": "100ms_499ms",
+    "retry_count": 0
+  }
+}

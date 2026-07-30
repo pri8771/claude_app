@@ -1,0 +1,33 @@
+{
+  "policy_version": "1.0.0",
+  "status": "verification_pending",
+  "purpose": "Closed, content-free payload allowlist for Social v2 synthetic validation fixtures. It neither authorizes collection nor delivers telemetry or APNs.",
+  "environments": ["development", "qa", "production"],
+  "opaque_id_pattern": "^(?:[a-z][a-z0-9_]*_)?[A-Za-z0-9][A-Za-z0-9_-]{11,63}$",
+  "max_string_length": 128,
+  "telemetry": {
+    "required_common_fields": ["environment", "telemetry_schema_version", "build_version", "api_contract_version", "schema_version", "event_class", "result_class", "correlation_id"],
+    "optional_common_fields": ["error_class", "route_id", "operation_id", "resource_id", "duration_bucket", "retry_count"],
+    "product_fields": [],
+    "operational_fields": ["authorized_role_class", "latency_bucket"],
+    "event_classes": ["social_screen_presented", "social_action_requested", "social_operation_completed", "social_operation_rejected"],
+    "result_classes": ["accepted", "rejected", "failed", "queued"],
+    "error_classes": ["none", "authorization_denied", "network_unavailable", "server_rejected", "timeout", "update_required"],
+    "route_ids": ["route_social_home", "route_social_group", "route_social_event", "route_social_settings"],
+    "duration_buckets": ["lt_100ms", "100ms_499ms", "500ms_1999ms", "ge_2000ms"],
+    "latency_buckets": ["lt_100ms", "100ms_499ms", "500ms_1999ms", "ge_2000ms"],
+    "authorized_role_classes": ["member", "moderator", "resolver", "support_case_bound"],
+    "max_retry_count": 9
+  },
+  "push": {
+    "required_fields": ["environment", "push_schema_version", "build_version", "notification_class", "route_id", "aps"],
+    "notification_classes": ["social_generic_update", "social_action_required"],
+    "route_ids": ["route_social_home", "route_social_group", "route_social_event", "route_social_settings"],
+    "allowed_aps_fields": ["alert", "badge", "sound", "content-available", "category", "thread-id"],
+    "allowed_alert_fields": ["loc-key"],
+    "localization_keys": ["SOCIAL_V2_GENERIC_UPDATE", "SOCIAL_V2_ACTION_REQUIRED"],
+    "categories": ["SOCIAL_V2_GENERIC"],
+    "sounds": ["default"],
+    "max_badge": 9999
+  }
+}

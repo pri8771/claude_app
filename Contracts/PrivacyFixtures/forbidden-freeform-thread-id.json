@@ -1,0 +1,17 @@
+{
+  "type": "apns_push",
+  "expect_error": "INVALID_OPAQUE_ID",
+  "payload": {
+    "environment": "qa",
+    "push_schema_version": "1.0.0",
+    "build_version": "205",
+    "notification_class": "social_generic_update",
+    "route_id": "route_social_home",
+    "aps": {
+      "alert": {
+        "loc-key": "SOCIAL_V2_GENERIC_UPDATE"
+      },
+      "thread-id": "Family Forecasts"
+    }
+  }
+}

@@ -13,6 +13,7 @@
   ],
   "productionDataSource": "Hybrid authority: local SwiftData for drafts and legacy private journal data until consent; a selected versioned backend for accounts, relationships, groups, social forecasts, server timestamps, resolutions, scores, moderation, and audit. The backend provider is not selected until F0.3.",
   "states": [
+    "rollout_disabled",
     "local_only",
     "authentication_required",
     "authenticating",
@@ -57,6 +58,7 @@
     "Do not authorize access only by hiding client controls; enforce every visibility and role rule server-side.",
     "Do not log prediction text, private notes, invite tokens, authentication material, precise location, or private group names.",
     "Do not introduce a backend vendor SDK or third-party runtime dependency before F0.3 and DEC-007 are satisfied.",
+    "Do not enable Social v2 from UserDefaults, process arguments, an environment/account mismatch, an unsupported contract/build, or an invalid feature dependency graph.",
     "Do not mix subjective private-group results into verified public rankings.",
     "Do not use fake identities, fabricated resolver evidence, or undisclosed production sample data."
   ],
@@ -67,6 +69,7 @@
     "Environment tests prove development credentials and data cannot access QA or production.",
     "Telemetry and push payload tests prove prohibited content is absent.",
     "Typed API contract and generated client fixtures agree on state, error, pagination, and idempotency behavior.",
+    "Every Social v2 client flag is disabled by default and fails closed when its environment, account, contract, build, or dependency precondition does not match.",
     "VoiceOver, largest Dynamic Type, dark mode, Reduce Motion, relaunch, offline, and physical-device evidence exists before the Phase 1 QA promotion."
   ]
 }

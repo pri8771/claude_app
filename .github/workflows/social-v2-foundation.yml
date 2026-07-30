@@ -1,0 +1,115 @@
+name: Social v2 foundation
+
+on:
+  pull_request:
+    branches: [dev, qa]
+  push:
+    branches: [dev, qa]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: social-v2-foundation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-test:
+    name: Validate Social v2 client foundation
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      # Official GitHub action major tag: its commit SHA cannot be verified locally.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate JSON syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            jq -e . "$file" >/dev/null
+          done < <(git ls-files -z -- '*.json')
+
+      - name: Validate workflow YAML syntax
+        run: ruby -e 'require "yaml"; YAML.load_file(ARGV.fetch(0))' .github/workflows/social-v2-foundation.yml
+
+      - name: Validate shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            bash -n "$file"
+          done < <(git ls-files -z -- '*.sh')
+
+      - name: Validate Ruby syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            ruby -c "$file"
+          done < <(git ls-files -z -- '*.rb')
+
+      - name: Check whitespace errors
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          zero='0000000000000000000000000000000000000000'
+          if [[ "$EVENT_NAME" == "pull_request" && -n "$PR_BASE_SHA" ]]; then
+            git diff --check "$PR_BASE_SHA...HEAD"
+          elif [[ -n "$PUSH_BEFORE_SHA" && "$PUSH_BEFORE_SHA" != "$zero" ]]; then
+            git diff --check "$PUSH_BEFORE_SHA...HEAD"
+          else
+            git show --check --format=fuller HEAD
+          fi
+
+      - name: Run Social v2 contract gate
+        run: bash Scripts/social_v2_contract_ci.sh
+
+      - name: Run Social v2 privacy payload gate
+        run: bash Scripts/social_v2_privacy_ci.sh
+
+      - name: Run current privacy and no-network audit
+        run: bash Scripts/privacy_no_network_audit.sh Hindsight
+
+      - name: Scan for credential-like material
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='(-----BEGIN (RSA |EC |OPENSSH |)?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"''][^"'"'']{12,})'
+          if matches="$(git grep -nEI "$pattern" -- . ':!Config/SocialV2/environment-manifest.example.json' || true)"; then
+            if [[ -n "$matches" ]]; then
+              printf '%s\n' "$matches" >&2
+              echo 'error: credential-like material detected; review before merging' >&2
+              exit 1
+            fi
+          fi
+
+      - name: Resolve available iPhone simulator
+        id: simulator
+        shell: bash
+        run: echo "destination=$(bash Scripts/resolve_social_ci_destination.sh)" >> "$GITHUB_OUTPUT"
+
+      - name: Run Hindsight unit, integration, and UI-smoke scheme
+        run: >-
+          bash Scripts/social_v2_client_ci.sh
+          --destination "${{ steps.simulator.outputs.destination }}"
+          --derived-data "$RUNNER_TEMP/hindsight-social-v2-derived-data"
+          --result-bundle "$RUNNER_TEMP/hindsight-social-v2-tests.xcresult"
+          --branch "${{ github.ref_name }}"
+
+      # Official GitHub action major tag: its commit SHA cannot be verified locally.
+      - name: Upload failed Xcode result bundle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hindsight-social-v2-xcresult-${{ github.run_id }}
+          path: ${{ runner.temp }}/hindsight-social-v2-tests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7

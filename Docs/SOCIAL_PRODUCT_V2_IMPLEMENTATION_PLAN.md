@@ -55,16 +55,22 @@ F0 execution has started, but Phase 1 feature implementation remains gated:
   review, and research evidence remain.
 - F0.3 has a current backend comparison and a conditional ADR recommending managed Postgres
   behind a vendor-neutral versioned API. The recommendation is not accepted until the disposable
-  spike passes. The local PostgreSQL slice now proves membership authorization, server-time
-  deadline enforcement, idempotent single-lock creation, atomic audit creation, immutability, and
-  append-only ledger primitives. Apple authentication, hosted authorization/realtime/APNs,
-  restore/export, environment isolation, and multi-session load remain.
-- F0.4–F0.6 have draft domain/OpenAPI, privacy/safety/legal, and migration/offline contracts.
-  These require joint product, engineering, privacy, safety, and legal review before production
-  implementation.
-- F0.7 vendor-neutral delivery manifests, local validation/CI commands, and promotion/rollback
-  controls may be implemented now. Cloud projects, credentials, and production dependencies
-  remain blocked on accepted architecture and owner-provided access.
+  hosted proof passes. The local PostgreSQL parity slice now proves RLS reads, membership
+  authorization, server-time deadline enforcement, idempotency, true concurrent single-lock
+  creation, immutable ledgers, durable outbox/reconciliation behavior, separate synthetic dev/QA
+  databases, and logical backup/restore checksums. Apple authentication, Supabase-hosted
+  RLS/realtime, actual APNs, hosted isolation, and hosted load/restore remain.
+- F0.4 now has a dependency-free structural OpenAPI validator and 18 synthetic expectation
+  fixtures in addition to the draft domain/OpenAPI contract. External lint, generated-client
+  compatibility, accepted policy values, and live-backend fixture execution remain.
+- F0.5 now has a closed machine-readable telemetry/push allowlist with 13 deterministic privacy
+  fixtures. Privacy/safety/legal approval and runtime/provider enforcement remain.
+- F0.6 has the migration/offline contract but still requires accepted upstream contracts and
+  fixture-store implementation/relaunch/rollback evidence.
+- F0.7 now has environment validation, a local/client CI path, a read-only hosted workflow
+  definition, a default-off typed iOS rollout policy, and promotion/rollback controls. Cloud
+  projects, credentials, a successful hosted run, and the recovery game day remain blocked on
+  accepted architecture and owner-provided access.
 
 Live sequencing and evidence are tracked in `SOCIAL_V2_EXECUTION_TRACKER.md`. Draft artifacts do
 not satisfy the phase entry gate by themselves.

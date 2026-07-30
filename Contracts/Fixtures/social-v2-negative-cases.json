@@ -1,0 +1,22 @@
+{
+  "fixture_version": "social.v1",
+  "synthetic_only": true,
+  "cases": [
+    { "case_id": "negative-01-outsider-read", "request": { "method": "GET", "path": "/groups/group_synthetic_001" }, "expected": { "outcome": "rejected", "reason": "NOT_FOUND" } },
+    { "case_id": "negative-02-removed-member-forecast", "request": { "method": "PUT", "path": "/events/event_synthetic_001/forecasts/me", "idempotency_key": "fixture-key-002" }, "expected": { "outcome": "rejected", "reason": "MEMBERSHIP_INACTIVE" } },
+    { "case_id": "negative-03-concurrent-forecast", "request": { "method": "PUT", "path": "/events/event_synthetic_001/forecasts/me", "idempotency_key": "fixture-key-003" }, "expected": { "outcome": "rejected", "reason": "FORECAST_EXISTS" } },
+    { "case_id": "negative-04-deadline", "request": { "method": "PUT", "path": "/events/event_synthetic_001/forecasts/me", "idempotency_key": "fixture-key-004" }, "expected": { "outcome": "rejected", "reason": "FORECAST_DEADLINE_PASSED" } },
+    { "case_id": "negative-05-idempotency-reuse", "request": { "method": "PUT", "path": "/events/event_synthetic_001/forecasts/me", "idempotency_key": "fixture-key-005" }, "expected": { "outcome": "rejected", "reason": "IDEMPOTENCY_KEY_REUSED" } },
+    { "case_id": "negative-06-stale-etag", "request": { "method": "PATCH", "path": "/events/event_synthetic_001", "idempotency_key": "fixture-key-006" }, "expected": { "outcome": "rejected", "reason": "CONFLICT_VERSION" } },
+    { "case_id": "negative-07-edit-after-open", "request": { "method": "PATCH", "path": "/events/event_synthetic_001", "idempotency_key": "fixture-key-007" }, "expected": { "outcome": "rejected", "reason": "EVENT_NOT_OPEN" } },
+    { "case_id": "negative-08-blind-peer-read", "request": { "method": "GET", "path": "/events/event_synthetic_001/forecasts" }, "expected": { "outcome": "rejected", "reason": "FORBIDDEN" } },
+    { "case_id": "negative-09-invalid-invite", "request": { "method": "POST", "path": "/invites/synthetic/redeem", "idempotency_key": "fixture-key-009" }, "expected": { "outcome": "rejected", "reason": "INVITE_INVALID" } },
+    { "case_id": "negative-10-owner-continuity", "request": { "method": "POST", "path": "/groups/group_synthetic_001/memberships/me/leave", "idempotency_key": "fixture-key-010" }, "expected": { "outcome": "rejected", "reason": "POLICY_NOT_CONFIGURED" } },
+    { "case_id": "negative-11-resolution-without-evidence", "request": { "method": "POST", "path": "/events/event_synthetic_001/resolution", "idempotency_key": "fixture-key-011" }, "expected": { "outcome": "rejected", "reason": "VALIDATION_FAILED" } },
+    { "case_id": "negative-12-overwrite-resolution-score", "request": { "method": "PATCH", "path": "/events/event_synthetic_001/resolution", "idempotency_key": "fixture-key-012" }, "expected": { "outcome": "rejected", "reason": "append_only_reject" } },
+    { "case_id": "negative-13-direct-score-route", "request": { "method": "POST", "path": "/scores" }, "expected": { "outcome": "rejected", "reason": "NOT_FOUND" } },
+    { "case_id": "negative-14-realtime-gap", "request": { "method": "RECONCILE", "path": "/groups/group_synthetic_001/events" }, "expected": { "outcome": "rejected", "reason": "converges_by_version_cursor" } },
+    { "case_id": "negative-15-tombstone-cursor", "request": { "method": "GET", "path": "/groups/group_synthetic_001/events" }, "expected": { "outcome": "rejected", "reason": "NOT_FOUND" } },
+    { "case_id": "negative-16-cross-environment", "request": { "method": "GET", "path": "/groups/group_synthetic_001" }, "expected": { "outcome": "rejected", "reason": "UNAUTHENTICATED" } }
+  ]
+}

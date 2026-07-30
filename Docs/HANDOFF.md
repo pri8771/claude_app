@@ -7,10 +7,11 @@ prompts later outcome review, and helps users improve judgment.
 
 ## Current state
 
-Build 1 is code-complete and the 2026-07-30 regression run passed 73/73 tests. The Social v2
-networked direction is accepted as a program, but only its mandatory F0 planning/contracts, local
-delivery controls, and a disposable PostgreSQL integrity slice have begun. No Social v2 app
-feature code, cloud backend, account, user-data upload, or third-party runtime dependency exists.
+Build 1 is code-complete and the 2026-07-30 integrated foundation regression passed 80/80 tests.
+The Social v2 networked direction is accepted as a program, but only its mandatory F0
+planning/contracts, local integrity/delivery controls, and a default-off client rollout boundary
+have begun. No Social v2 user-facing feature, cloud backend, account, user-data upload, runtime
+flag loader, or third-party runtime dependency exists.
 
 ## Build and run
 
@@ -23,8 +24,8 @@ xcodebuild build \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Automated unit, integration, and UI-smoke targets exist. The 2026-07-30 foundation regression
-passed 73/73 on an iPhone 17 Pro simulator;
+Automated unit, integration, and UI-smoke targets exist. The latest 2026-07-30 foundation
+regression passed 80/80 on an iPhone 17 Pro simulator;
 physical-device accessibility/notification/export checks and final distribution signing remain.
 
 ## Important constraints
@@ -48,5 +49,6 @@ See `docs/BUGS.md` and `docs/RISKS.md`.
 ## Next recommended task
 
 Send `CLAUDE_DESIGN_PROMPT.md` to Claude Design, review the F0.1/F0.4–F0.6 owner decisions, and
-extend the passed local PostgreSQL slice into the hosted F0.3 auth/RLS/realtime/APNs/isolation/
-restore proof. Accept or revise ADR-008 before provisioning isolated development and QA services.
+extend the passed local PostgreSQL parity slice into the hosted F0.3 Apple-auth/Supabase
+RLS/realtime/APNs/isolation/restore proof. Accept or revise ADR-008 before provisioning isolated
+development and QA services or adding a runtime flag loader.

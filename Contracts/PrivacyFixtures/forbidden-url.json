@@ -1,0 +1,3 @@
+{
+  "type": "apns_push", "expect_error": "RAW_URL", "payload": {"environment":"qa","push_schema_version":"1.0.0","build_version":"205","notification_class":"social_generic_update","route_id":"https://example.test/private","aps":{"alert":{"loc-key":"SOCIAL_V2_GENERIC_UPDATE"}}}
+}

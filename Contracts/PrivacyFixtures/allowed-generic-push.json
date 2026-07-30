@@ -1,0 +1,15 @@
+{
+  "type": "apns_push",
+  "payload": {
+    "environment": "production",
+    "push_schema_version": "1.0.0",
+    "build_version": "205",
+    "notification_class": "social_generic_update",
+    "route_id": "route_social_event",
+    "aps": {
+      "alert": { "loc-key": "SOCIAL_V2_GENERIC_UPDATE" },
+      "sound": "default",
+      "category": "SOCIAL_V2_GENERIC"
+    }
+  }
+}

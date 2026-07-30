@@ -18,6 +18,7 @@
 		BB0BBF582CC05B6D7AE94CF4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 036FF59B35EDBD9D983C21D1 /* Foundation.framework */; };
 		E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */; };
 		FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */; };
+		F07000000000000000000002 /* SocialV2RolloutPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F07000000000000000000001 /* SocialV2RolloutPolicyTests.swift */; };
 		7AC7D1E89D3C4BA1A2F80001 /* QuickCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC7D1E89D3C4BA1A2F80002 /* QuickCaptureTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +54,7 @@
 		DECE77A14054492EB7BF267D /* DemoDataSafetyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DemoDataSafetyTests.swift; sourceTree = "<group>"; };
 		9E8B7C6D5A4F3E2D1C0B9A8F /* PersistenceBoundaryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PersistenceBoundaryTests.swift; sourceTree = "<group>"; };
 		D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SampleDataTests.swift; sourceTree = "<group>"; };
+		F07000000000000000000001 /* SocialV2RolloutPolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SocialV2RolloutPolicyTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -165,6 +167,7 @@
 				9E8B7C6D5A4F3E2D1C0B9A8F /* PersistenceBoundaryTests.swift */,
 				1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */,
 				A8A13FF6-D8AF-44 /* ResolutionTests.swift */,
+				F07000000000000000000001 /* SocialV2RolloutPolicyTests.swift */,
 			);
 			name = HindsightTests;
 			path = HindsightTests;
@@ -307,6 +310,7 @@
 				7F3A9C1B2D8E4F5A6B7C9D0E /* PersistenceBoundaryTests.swift in Sources */,
 				E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */,
 				2BE28C68-6411-44 /* ResolutionTests.swift in Sources */,
+				F07000000000000000000002 /* SocialV2RolloutPolicyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

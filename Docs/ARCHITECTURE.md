@@ -40,7 +40,9 @@ isolation are required regardless of vendor.
 The current vendor-neutral semantic contract is
 `Docs/SOCIAL_V2_DOMAIN_API_CONTRACT.md`; its machine-readable draft is
 `Contracts/social-v1.openapi.yaml`. Neither permits clients to write integrity-sensitive tables
-directly.
+directly. `SocialV2RolloutPolicy` is the current client-side foundation boundary: all flags are
+off by default, decisions are bound to environment/account/contract/build, invalid dependencies
+fail closed, and there is deliberately no runtime configuration loader or Social v2 UI yet.
 
 ## Current architecture
 
@@ -74,6 +76,8 @@ Capture UI -> DecisionDraft validation -> SwiftData decision graph
 - Social v2 permits a backend but no provider or third-party runtime dependency is approved yet.
 - A managed Postgres/Supabase approach is proposed for a disposable spike only. No production
   account, credential, iOS SDK, or external user data is approved.
+- Local F0 tooling uses Ruby/JSON/YAML, shell, and disposable PostgreSQL only; it is not shipped
+  in the application target.
 
 ## Known architectural risks
 

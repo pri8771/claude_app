@@ -1,0 +1,8 @@
+{
+  "fixture_version": "social.v1",
+  "synthetic_only": true,
+  "cases": [
+    { "case_id": "positive-01-authenticated-group-read", "request": { "method": "GET", "path": "/groups/group_synthetic_001" }, "expected": { "outcome": "accepted", "reason": "authorized_read" } },
+    { "case_id": "positive-02-idempotent-forecast-retry", "request": { "method": "PUT", "path": "/events/event_synthetic_001/forecasts/me", "idempotency_key": "fixture-key-001" }, "expected": { "outcome": "accepted", "reason": "same_canonical_request_returns_original" } }
+  ]
+}
