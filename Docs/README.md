@@ -3,7 +3,7 @@
 **The repo is the source of truth.** Notion mirrors it; Jira will be populated later. Where they
 disagree, the repo wins.
 
-Last reviewed: 2026-07-29
+Last reviewed: 2026-07-30
 
 ---
 
@@ -16,6 +16,8 @@ Last reviewed: 2026-07-29
 | **[MVP_PLAN.md](MVP_PLAN.md)** | How do we get to TestFlight? *(Baseline M1.0 — immutable)* |
 | **[CHANGE_REQUEST_LOG.md](CHANGE_REQUEST_LOG.md)** | What changed, why, and what did it cost? |
 | **[SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md](SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md)** | How do we build the approved networked social product? |
+| **[SOCIAL_V2_EXECUTION_TRACKER.md](SOCIAL_V2_EXECUTION_TRACKER.md)** | What Social v2 work is active, gated, or queued? |
+| **[CLAUDE_DESIGN_PROMPT.md](CLAUDE_DESIGN_PROMPT.md)** | What exactly should Claude Design produce? |
 
 ## Planning and strategy — authoritative
 
@@ -28,6 +30,13 @@ Last reviewed: 2026-07-29
 | [LONG_TERM_PLAN.md](LONG_TERM_PLAN.md) | Product spine, horizons, the local-vs-social fork, ICP | Yes |
 | [PRODUCT_BRAINSTORM.md](PRODUCT_BRAINSTORM.md) | Friction, gamification, social; MVP rationale | Yes |
 | [SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md](SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md) | Approved social direction: 41 implementation-ready foundation/product tasks across four phases | Yes, until frozen as a baseline |
+| [SOCIAL_V2_EXECUTION_TRACKER.md](SOCIAL_V2_EXECUTION_TRACKER.md) | Live dependency/evidence state for all 41 Social v2 tasks | Yes |
+| [SOCIAL_V2_PRODUCT_CONTRACT.md](SOCIAL_V2_PRODUCT_CONTRACT.md) | F0.1 private-group MVP actors, loop, metrics, thresholds, research and open decisions | Yes, until approved |
+| [SOCIAL_V2_BACKEND_EVALUATION.md](SOCIAL_V2_BACKEND_EVALUATION.md) · [ADR-008-SOCIAL-BACKEND.md](ADR-008-SOCIAL-BACKEND.md) | F0.3 current provider evidence and conditional architecture decision | Yes, until spike acceptance |
+| [SOCIAL_V2_DOMAIN_API_CONTRACT.md](SOCIAL_V2_DOMAIN_API_CONTRACT.md) | F0.4 entities, state machines, authorization, errors and realtime reconciliation | Yes, until accepted |
+| [SOCIAL_V2_PRIVACY_SAFETY_POLICY.md](SOCIAL_V2_PRIVACY_SAFETY_POLICY.md) · [SOCIAL_V2_LEGAL_STORE_CHECKLIST.md](SOCIAL_V2_LEGAL_STORE_CHECKLIST.md) | F0.5 draft trust policy and release approvals | Yes, until qualified review |
+| [SOCIAL_V2_MIGRATION_SYNC_PLAN.md](SOCIAL_V2_MIGRATION_SYNC_PLAN.md) | F0.6 explicit-consent migration, offline/outbox, recovery and fixture-test contract | Yes, until accepted |
+| [SOCIAL_V2_DELIVERY_RUNBOOK.md](SOCIAL_V2_DELIVERY_RUNBOOK.md) | F0.7 environment isolation, CI, secrets, promotion, telemetry and rollback controls | Yes, until provider provisioning |
 
 **The measurement rule:** baseline estimates are never edited. Divergence goes in the CR log with a
 delay cause. A plan that gets quietly rewritten teaches nothing.
@@ -37,6 +46,7 @@ delay cause. A plan that gets quietly rewritten teaches nothing.
 | Doc | Scope |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | SwiftUI/SwiftData structure |
+| [../Contracts/README.md](../Contracts/README.md) | Social v1 API contract entry point and validation limits |
 | [FEATURES.md](FEATURES.md) | Feature inventory |
 | [TEST_PLAN.md](TEST_PLAN.md) · [BUGS.md](BUGS.md) · [RISKS.md](RISKS.md) | Quality |
 | [DECISIONS.md](DECISIONS.md) · [ASSUMPTIONS.md](ASSUMPTIONS.md) | Rationale |
@@ -81,7 +91,7 @@ the receipt-sharing implementation on the archive branch (`E4.5` plans to port i
 | Ref | What |
 |---|---|
 | `dev` | Current work |
-| `qa` | Behind `dev` — needs updating before next release |
+| `qa` | Last promoted verified baseline; intentionally does not receive incomplete F0 work |
 | `archive/call-pivot-complete` | The reverted pivot, fully working, 228 tests |
 | `baseline-m1.0` | MVP plan frozen 2026-07-28 |
 | `baseline-v1.0` | Post-MVP plan frozen 2026-07-28 |

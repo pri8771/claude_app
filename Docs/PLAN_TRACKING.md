@@ -15,16 +15,17 @@ complete. If `Current` differs from `Base`, there must be a matching CR in
 the inherited Jira configuration currently requires life-cycle fields at creation and would force
 fabricated `Actual`/`Delay Cause` values.
 
-## PLANNED — Social v2 networked product
+## ACTIVE — Social v2 networked product
 
 CR-004 accepts the networked social direction. The implementation-ready source is
 `SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md`; it contains 41 parent tasks and detailed subtasks
-across the mandatory foundation and four product phases. Estimates and Current/Actual tracking are
-intentionally not fabricated before F0.1 ratifies the scope and F0.3 selects the architecture.
+across the mandatory foundation and four product phases. Foundation execution began 2026-07-30.
+Estimates and Current/Actual tracking remain intentionally unfilled until F0.1 ratifies scope and
+F0.3 accepts an architecture; no synthetic duration is recorded.
 
 | Program | Parent tasks | Status | Entry gate |
 |---|---:|---|---|
-| F0 — Architecture, design, privacy, migration, delivery | 7 | planned | product approval |
+| F0 — Architecture, design, privacy, migration, delivery | 7 | in progress | product approval |
 | P1 — Premium Social MVP | 14 | planned | F0 accepted |
 | P2 — Viral Distribution | 5 | planned | Phase 1 private beta |
 | P3 — Public Network | 9 | planned | safety + event operations |
@@ -32,6 +33,19 @@ intentionally not fabricated before F0.1 ratifies the scope and F0.3 selects the
 
 The current Build 1/TestFlight work below remains a separate release track. Social implementation
 must not be represented as included in Build 1.
+
+| F0 task | Live status | Current artifact / remaining gate |
+|---|---|---|
+| F0.1 | in progress | `SOCIAL_V2_PRODUCT_CONTRACT.md`; owner approval + five sessions remain |
+| F0.2 | in progress | `CLAUDE_DESIGN_PROMPT.md`; Figma prototype/research/sign-off remain |
+| F0.3 | in progress | evaluation + proposed ADR-008; local PostgreSQL integrity slice passed; hosted/auth/realtime/APNs/restore/isolation proof remains |
+| F0.4 | review required | domain contract + draft OpenAPI; ADR/policy review and full lint remain |
+| F0.5 | review required | draft privacy/safety policy + legal/store checklist; owner/counsel review remains |
+| F0.6 | review required | migration/sync contract; implementation and fixture evidence remain |
+| F0.7 | in progress | local environment validator, client CI and runbook verified; cloud accounts, hosted CI and rollback game day remain gated |
+
+See `SOCIAL_V2_EXECUTION_TRACKER.md` for the full 41-task sequence, evidence gates, and
+lower-model dispatch contract.
 
 ---
 

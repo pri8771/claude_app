@@ -1,6 +1,6 @@
 # Hindsight Social Product v2 — Implementation-Ready Master Plan
 
-**Status:** proposed baseline; planning complete, implementation not started
+**Status:** accepted planning baseline; mandatory foundation execution in progress
 **Decision date:** 2026-07-30
 **Source of truth:** this document, until individual items are created in Jira
 **Audience:** product, design, iOS, backend, QA, safety, growth, and implementation agents
@@ -42,6 +42,32 @@ Product rules + prototype
 No implementation agent should begin a phase until its entry gate is met. “Code complete” is not
 “done”: every task requires the named automated checks, manual evidence, documentation update, and
 rollback notes.
+
+### Live foundation execution — 2026-07-30
+
+F0 execution has started, but Phase 1 feature implementation remains gated:
+
+- F0.1 has a draft product contract, actor/permission matrix, private analytics-event dictionary,
+  measurable hypothesis, decision thresholds, and five-session research script. Product-owner
+  approval and actual uncoached sessions remain.
+- F0.2 has a copy/paste Claude Design brief with the required premium IA, screen/state inventory,
+  component system, accessibility contract, and prototype tests. The Figma prototype, design
+  review, and research evidence remain.
+- F0.3 has a current backend comparison and a conditional ADR recommending managed Postgres
+  behind a vendor-neutral versioned API. The recommendation is not accepted until the disposable
+  spike passes. The local PostgreSQL slice now proves membership authorization, server-time
+  deadline enforcement, idempotent single-lock creation, atomic audit creation, immutability, and
+  append-only ledger primitives. Apple authentication, hosted authorization/realtime/APNs,
+  restore/export, environment isolation, and multi-session load remain.
+- F0.4–F0.6 have draft domain/OpenAPI, privacy/safety/legal, and migration/offline contracts.
+  These require joint product, engineering, privacy, safety, and legal review before production
+  implementation.
+- F0.7 vendor-neutral delivery manifests, local validation/CI commands, and promotion/rollback
+  controls may be implemented now. Cloud projects, credentials, and production dependencies
+  remain blocked on accepted architecture and owner-provided access.
+
+Live sequencing and evidence are tracked in `SOCIAL_V2_EXECUTION_TRACKER.md`. Draft artifacts do
+not satisfy the phase entry gate by themselves.
 
 ## 2. Product and integrity rules
 

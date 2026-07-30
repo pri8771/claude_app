@@ -1,0 +1,52 @@
+{
+  "$schema": "https://example.invalid/hindsight/social-v2-environment-manifest/v1",
+  "manifest_version": "1.0.0",
+  "environment_id": "REPLACE_WITH_development_OR_qa_OR_production",
+  "git_ref": "REPLACE_WITH_dev_OR_qa_OR_refs/tags/vX.Y.Z",
+  "backend": {
+    "project_id": "REPLACE_WITH_PROVIDER_PROJECT_ID",
+    "region": "REPLACE_WITH_APPROVED_REGION",
+    "api_base_url": "https://REPLACE_WITH_API_HOST",
+    "auth_issuer_url": "https://REPLACE_WITH_AUTH_HOST",
+    "realtime_host": "https://REPLACE_WITH_REALTIME_HOST",
+    "database_schema_version": "REPLACE_WITH_SCHEMA_VERSION",
+    "api_contract_version": "REPLACE_WITH_API_VERSION",
+    "scoring_version": "REPLACE_WITH_SCORING_VERSION"
+  },
+  "ios": {
+    "bundle_id": "REPLACE_WITH_BUNDLE_ID",
+    "app_id": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
+    "associated_domains": [
+      "applinks:REPLACE_WITH_ASSOCIATED_DOMAIN"
+    ],
+    "apns_topic": "REPLACE_WITH_APNS_TOPIC"
+  },
+  "storage": {
+    "bucket_id": "REPLACE_WITH_STORAGE_BUCKET_ID",
+    "host": "https://REPLACE_WITH_STORAGE_HOST"
+  },
+  "domains": {
+    "web_host": "https://REPLACE_WITH_WEB_HOST",
+    "universal_link_host": "https://REPLACE_WITH_UNIVERSAL_LINK_HOST"
+  },
+  "feature_flags": {
+    "configuration_version": "REPLACE_WITH_FLAG_CONFIGURATION_VERSION",
+    "social_read_enabled": false,
+    "social_write_enabled": false,
+    "private_sync_opt_in_enabled": false,
+    "migration_start_enabled": false,
+    "background_sync_enabled": false
+  },
+  "observability": {
+    "telemetry_schema_version": "REPLACE_WITH_TELEMETRY_SCHEMA_VERSION",
+    "slo_policy_version": "REPLACE_WITH_SLO_POLICY_VERSION",
+    "alert_policy_version": "REPLACE_WITH_ALERT_POLICY_VERSION",
+    "content_logging_permitted": false
+  },
+  "promotion": {
+    "client_build_number": "REPLACE_WITH_BUILD_NUMBER",
+    "backend_release_id": "REPLACE_WITH_BACKEND_RELEASE_ID",
+    "migration_plan_version": "REPLACE_WITH_MIGRATION_PLAN_VERSION",
+    "approval_record": "REPLACE_WITH_IMMUTABLE_APPROVAL_REFERENCE"
+  }
+}

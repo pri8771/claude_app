@@ -11,8 +11,12 @@
 - Repository authority now permits a backend while retaining explicit per-domain privacy and
   migration consent. No backend provider or third-party runtime dependency is approved; F0.3 is
   the selection gate.
-- Social v2 implementation has **not started**. Existing Build 1 remains the current local release
-  candidate and its distribution blockers below remain real.
+- Mandatory Social v2 foundation execution began on 2026-07-30. Draft product, design-handoff,
+  backend, domain/API, privacy/safety/legal, migration/sync, and execution-tracking artifacts now
+  exist. Phase 1 product code, backend accounts, external users, and third-party runtime
+  dependencies have **not** started.
+- Existing Build 1 remains the current local release candidate and its distribution blockers
+  below remain real.
 
 ## Lifecycle status
 
@@ -20,8 +24,8 @@
 
 ## Current objective
 
-Complete distribution signing, physical-device accessibility QA, and App Store
-metadata for the Build 1 TestFlight release candidate.
+Complete and review the Social v2 F0 contracts and proof-of-fitness spike without weakening the
+separate Build 1 TestFlight release requirements.
 
 ## Verified
 
@@ -60,9 +64,38 @@ metadata for the Build 1 TestFlight release candidate.
     SKU `hindsight-ios-20260729`.
   - App Store icon matrix is complete and every PNG is opaque.
 - The development-signed Release archive installed successfully on the paired iPhone 16 Pro Max.
+- **Social v2 foundation artifacts drafted (2026-07-30):**
+  - Product contract with actors, permissions, metrics, thresholds, event dictionary, and
+    prototype research script.
+  - Copy/paste Claude Design brief covering the premium IA, component/state system, trust rules,
+    accessibility, and Figma handoff.
+  - Current backend evaluation plus proposed ADR-008: managed Postgres/Supabase behind a
+    vendor-neutral versioned API, with no iOS SDK approved.
+- Corrected local PostgreSQL spike passes authorization, server-time, idempotency,
+    forecast-plus-audit atomicity, immutable ledger, late/outsider/removed-member rejection, and
+    guarded cleanup against synthetic data.
+  - Vendor-neutral domain/state-machine contract and draft OpenAPI 3.1 Phase 1 surface.
+  - Draft privacy/safety/legal and explicit local-data migration/offline recovery contracts.
+- Detailed 41-task execution tracker and lower-model dispatch protocol.
+- **Social v2 local foundation verification passed (2026-07-30):**
+  - OpenAPI YAML parsed and all 204 internal references resolved.
+  - Shell scripts passed syntax validation; the example environment manifest was correctly
+    rejected because placeholders are forbidden.
+  - The content/privacy audit found no networking or tracking APIs in the current client.
+  - The full existing iOS scheme passed 73/73 tests on the dedicated iPhone 17 Pro simulator.
+  - Evidence: `quality/evidence/social-v2-foundation-execution-2026-07-30.md`.
 
 ## Verification pending
 
+- Product-owner ratification of the F0.1 scope, metrics, thresholds, and open decisions.
+- Claude Design/Figma prototype plus five real uncoached sessions; no research result is currently
+  claimed.
+- Remaining F0.3 hosted proof covering Apple-token validation, Supabase RLS/realtime, APNs
+  recovery, backup/export, dev/QA isolation, and true multi-session deadline/load testing before
+  ADR-008 can be accepted. The local PostgreSQL core passed.
+- Joint engineering/privacy/safety/legal review of the draft domain, data-retention, moderation,
+  age, deletion/export, and migration decisions.
+- Backend development and QA projects/accounts remain unprovisioned until ADR acceptance.
 - Launch and complete the physical-device smoke pass after the paired iPhone is unlocked.
 - Manual VoiceOver and largest Dynamic Type pass on Quick Capture, Today resolution, and Insights.
 - Physical-device notification delivery and cold-launch deep-link test.
@@ -102,6 +135,9 @@ One production bug was reintroduced by the revert and fixed again: `bootResult` 
 
 ## Next action
 
-Unlock the paired iPhone for the device smoke pass, provide the public support email, and add the
-`796XH483R4` Apple account in Xcode. Then export/upload the existing verified archive, complete
-App Store privacy answers, and invite internal testers.
+Send `CLAUDE_DESIGN_PROMPT.md` to Claude Design, review the F0.1 contract and owner decisions, and
+extend the passed local ADR-008 slice into the hosted Apple-auth/RLS/realtime/APNs/isolation/
+restore proof. If those pass, accept or revise the ADR, provision isolated development and QA
+backend projects, and complete F0.7 before any Phase 1 feature code. In parallel, unlock the
+paired iPhone, provide the support email, and add the Apple account in Xcode to finish the separate
+Build 1 TestFlight track.

@@ -29,9 +29,18 @@ Authority is per domain:
 - Device cache: read models and an idempotent outbox; never authoritative for a social lock,
   resolution, membership, or score.
 
-The backend vendor is intentionally unresolved until task F0.3 completes a comparative spike and
-ADR. API schemas, server authorization, UTC deadlines, idempotency, auditability, offline recovery,
-and environment isolation are required regardless of vendor.
+ADR-008 now proposes Supabase-hosted Postgres behind a thin Hindsight-owned versioned API, with
+native Sign in with Apple on iOS and no approved vendor SDK. The decision remains conditional:
+the F0.3 disposable spike must prove authentication replay defenses, negative authorization,
+atomic immutable locking, realtime/APNs recovery, backup/export, and environment isolation.
+Until that evidence exists, the backend vendor remains unaccepted. API schemas, server
+authorization, UTC deadlines, idempotency, auditability, offline recovery, and environment
+isolation are required regardless of vendor.
+
+The current vendor-neutral semantic contract is
+`Docs/SOCIAL_V2_DOMAIN_API_CONTRACT.md`; its machine-readable draft is
+`Contracts/social-v1.openapi.yaml`. Neither permits clients to write integrity-sensitive tables
+directly.
 
 ## Current architecture
 
@@ -63,6 +72,8 @@ Capture UI -> DecisionDraft validation -> SwiftData decision graph
 - The current Build 1 binary has no backend, account, analytics SDK, or third-party runtime
   dependency.
 - Social v2 permits a backend but no provider or third-party runtime dependency is approved yet.
+- A managed Postgres/Supabase approach is proposed for a disposable spike only. No production
+  account, credential, iOS SDK, or external user data is approved.
 
 ## Known architectural risks
 

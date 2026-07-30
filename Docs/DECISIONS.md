@@ -71,3 +71,23 @@
   exit strategy, and native/protocol boundary.
 - **Consequences:** Planning may evaluate vendors and use throwaway spikes, but production feature
   code must not introduce an unapproved SDK or credential.
+
+## DEC-008 — Conditional managed-Postgres backend direction
+
+- **Status:** proposed; not accepted until the F0.3 proof-of-fitness spike passes
+- **Date:** 2026-07-30
+- **Context:** The weighted comparison in `SOCIAL_V2_BACKEND_EVALUATION.md` favors relational
+  authorization and transactions for groups, immutable forecast locks, resolution ledgers,
+  scoring, moderation, and leaderboards. A fully custom service provides maximum control but
+  transfers operations and security ownership too early; Firebase increases relational and
+  aggregation complexity; CloudKit does not satisfy the independent public-network authority.
+- **Proposed decision:** Use Supabase-hosted Postgres in isolated projects, behind a thin
+  vendor-neutral Hindsight API and transactional server functions. iOS uses native
+  `AuthenticationServices`; no Supabase iOS SDK or generic direct-table mutation is approved.
+- **Acceptance gate:** Prove Apple-token validation/replay rejection, outsider/removed/blocked
+  authorization, one atomic server-UTC forecast lock and audit event under concurrency, immutable
+  resolution/score ledgers, private realtime/APNs recovery, backup/export, and dev/QA isolation
+  with synthetic data.
+- **Consequences:** Until the spike passes, this remains an evaluation target rather than a
+  dependency or infrastructure commitment. Failure reopens the decision; it never permits a
+  client-authoritative fallback.

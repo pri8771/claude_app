@@ -37,3 +37,17 @@ Before any Social v2 phase reaches `qa`, add task-specific coverage from
   routes;
 - telemetry/push/share payload leakage tests;
 - moderation, anti-cheat, environment isolation, backup/restore, load, and rollback drills.
+
+Foundation contract checks additionally include:
+
+- parse and structurally validate `Contracts/social-v1.openapi.yaml`, then run full OpenAPI lint
+  and generated-client compatibility after F0.7 approves a pinned toolchain;
+- run the disposable PostgreSQL negative/concurrency/immutability spike using synthetic data;
+- validate non-secret environment manifests and reject placeholder, mixed-environment, non-HTTPS,
+  secret-bearing, or branch/environment-mismatched promotion inputs;
+- run the local client CI command against an explicit simulator destination and retain the
+  `.xcresult` summary; the 2026-07-30 run passed 73/73 with no failures or skips at
+  `/private/tmp/hindsight-social-v2-foundation-20260730.xcresult`;
+- treat Figma/prototype review, product-owner approval, legal review, hosted-provider behavior,
+  APNs, backup restore, and cross-project isolation as checks not run until their real evidence
+  exists.

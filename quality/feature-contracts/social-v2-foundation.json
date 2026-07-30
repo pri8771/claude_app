@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/pri8771/iOS_app_factory_rules/main/schemas/feature-contract.schema.json",
   "id": "SOCIAL-V2-FOUNDATION",
   "name": "Networked Social Product Foundation",
-  "status": "planned",
+  "status": "in_progress",
   "userOutcome": "An existing or new user can deliberately opt into a networked identity and later participate in private group predictions without silent migration, false lock confirmation, cross-environment data leakage, or loss of local history.",
   "entryPoints": [
     "Social v2 account upgrade",

@@ -1,0 +1,298 @@
+openapi: 3.1.0
+info:
+  title: Hindsight Social API
+  version: 0.1.0-draft
+  description: |
+    Proposed vendor-neutral Phase 1 contract. It is not implementation approval. Server time,
+    authorization, forecast locks, resolution, and scores are authoritative; realtime is only a
+    reconciliation hint. Policy-dependent behavior remains gated by F0.3, F0.5, and F0.7.
+servers:
+  - url: https://api.example.invalid/social/v1
+    description: Placeholder only; no production endpoint is selected.
+security:
+  - bearerAuth: []
+paths:
+  /session:
+    get:
+      operationId: getSession
+      summary: Read the authenticated account's safe session/profile envelope.
+      responses:
+        '200': { description: Authenticated session, content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /profiles/me:
+    get:
+      operationId: getMyProfile
+      responses:
+        '200': { description: Safe current profile, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    patch:
+      operationId: updateMyProfile
+      parameters: [ { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProfilePatch' } } } }
+      responses:
+        '200': { description: Updated profile, headers: { X-Request-ID: { $ref: '#/components/headers/RequestId' }, X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /groups:
+    get:
+      operationId: listGroups
+      parameters: [ { $ref: '#/components/parameters/Limit' }, { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200': { description: Active groups in stable updated-descending order, content: { application/json: { schema: { $ref: '#/components/schemas/GroupList' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      operationId: createGroup
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/GroupCreate' } } } }
+      responses:
+        '201': { description: Group created, headers: { X-Request-ID: { $ref: '#/components/headers/RequestId' }, X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Group' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /groups/{groupId}:
+    parameters: [ { $ref: '#/components/parameters/GroupId' } ]
+    get:
+      operationId: getGroup
+      responses:
+        '200': { description: Eligible group representation, content: { application/json: { schema: { $ref: '#/components/schemas/Group' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /groups/{groupId}/memberships:
+    parameters: [ { $ref: '#/components/parameters/GroupId' } ]
+    get:
+      operationId: listMemberships
+      parameters: [ { $ref: '#/components/parameters/Limit' }, { $ref: '#/components/parameters/Cursor' } ]
+      responses:
+        '200': { description: Authorized membership list, content: { application/json: { schema: { $ref: '#/components/schemas/MembershipList' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /groups/{groupId}/memberships/me/leave:
+    parameters: [ { $ref: '#/components/parameters/GroupId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+    post:
+      operationId: leaveGroup
+      responses:
+        '200': { description: Membership marked left and future access revoked, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Membership' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /groups/{groupId}/invites:
+    parameters: [ { $ref: '#/components/parameters/GroupId' } ]
+    post:
+      operationId: createInvite
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/InviteCreate' } } } }
+      responses:
+        '201': { description: Invite; opaque token is returned only here, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/InviteCreated' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /invites/{inviteToken}/preview:
+    parameters: [ { name: inviteToken, in: path, required: true, schema: { type: string, minLength: 16, maxLength: 512 }, description: Opaque secret; must not be logged or persisted in analytics. } ]
+    get:
+      security: []
+      operationId: previewInvite
+      responses:
+        '200': { description: Deliberately limited, policy-approved preview, content: { application/json: { schema: { $ref: '#/components/schemas/InvitePreview' } } } }
+        '404': { $ref: '#/components/responses/InviteInvalid' }
+  /invites/{inviteToken}/redeem:
+    parameters: [ { name: inviteToken, in: path, required: true, schema: { type: string, minLength: 16, maxLength: 512 } }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+    post:
+      operationId: redeemInvite
+      responses:
+        '200': { description: Existing idempotent redemption, content: { application/json: { schema: { $ref: '#/components/schemas/Membership' } } } }
+        '201': { description: Membership created, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Membership' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/InviteInvalid' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /groups/{groupId}/events:
+    parameters: [ { $ref: '#/components/parameters/GroupId' } ]
+    get:
+      operationId: listEvents
+      parameters: [ { $ref: '#/components/parameters/Limit' }, { $ref: '#/components/parameters/Cursor' }, { name: state, in: query, schema: { $ref: '#/components/schemas/EventState' } } ]
+      responses:
+        '200': { description: Authorized events, content: { application/json: { schema: { $ref: '#/components/schemas/EventList' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      operationId: createEventDraft
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EventCreate' } } } }
+      responses:
+        '201': { description: Draft event, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/PredictionEvent' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /events/{eventId}:
+    parameters: [ { $ref: '#/components/parameters/EventId' } ]
+    get:
+      operationId: getEvent
+      responses:
+        '200': { description: Event; blind-vote redaction is server applied, content: { application/json: { schema: { $ref: '#/components/schemas/PredictionEvent' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: updateEventDraft
+      parameters: [ { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EventPatch' } } } }
+      responses:
+        '200': { description: Updated draft, content: { application/json: { schema: { $ref: '#/components/schemas/PredictionEvent' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /events/{eventId}/open:
+    parameters: [ { $ref: '#/components/parameters/EventId' }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+    post:
+      operationId: openEvent
+      responses:
+        '200': { description: Frozen/open event, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/PredictionEvent' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /events/{eventId}/forecasts/me:
+    parameters: [ { $ref: '#/components/parameters/EventId' } ]
+    get:
+      operationId: getMyForecast
+      responses:
+        '200': { description: Actor's forecast if locked, content: { application/json: { schema: { $ref: '#/components/schemas/Forecast' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      operationId: lockMyForecast
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForecastSubmit' } } } }
+      responses:
+        '200': { description: Same-key accepted forecast, content: { application/json: { schema: { $ref: '#/components/schemas/Forecast' } } } }
+        '201': { description: Server-confirmed immutable lock, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Forecast' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /events/{eventId}/resolution:
+    parameters: [ { $ref: '#/components/parameters/EventId' } ]
+    get:
+      operationId: getResolution
+      responses:
+        '200': { description: Authorized resolution/history summary, content: { application/json: { schema: { $ref: '#/components/schemas/Resolution' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      operationId: proposeOrRecordResolution
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ResolutionCreate' } } } }
+      responses:
+        '201': { description: Appended proposal or resolution per approved policy, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Resolution' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /events/{eventId}/leaderboard:
+    parameters: [ { $ref: '#/components/parameters/EventId' } ]
+    get:
+      operationId: getEventLeaderboard
+      responses:
+        '200': { description: Private group score view; formula and eligibility are policy-gated, content: { application/json: { schema: { $ref: '#/components/schemas/Leaderboard' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/PolicyNotConfigured' }
+  /receipts:
+    post:
+      operationId: createReceipt
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReceiptCreate' } } } }
+      responses:
+        '201': { description: Private/redacted receipt primitive, headers: { X-Audit-Event-ID: { $ref: '#/components/headers/AuditId' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Receipt' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Validation' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: opaque-session }
+  parameters:
+    GroupId: { name: groupId, in: path, required: true, schema: { $ref: '#/components/schemas/Identifier' } }
+    EventId: { name: eventId, in: path, required: true, schema: { $ref: '#/components/schemas/Identifier' } }
+    Limit: { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+    Cursor: { name: cursor, in: query, schema: { type: string, maxLength: 2048 }, description: Opaque continuation cursor; never parse. }
+    IfMatch: { name: If-Match, in: header, required: true, schema: { type: string, pattern: '^"[1-9][0-9]*"$' }, description: Record version for optimistic concurrency. }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 128 }, description: Opaque key unique per actor/operation; same key must carry same canonical request. }
+  headers:
+    RequestId: { schema: { type: string }, description: Safe support correlation ID. }
+    AuditId: { schema: { $ref: '#/components/schemas/Identifier' }, description: Append-only audit event ID. }
+  responses:
+    Unauthenticated: { description: Missing or invalid session, content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { code: UNAUTHENTICATED, message: Sign in is required., request_id: req_opaque, retryable: false } } } }
+    Forbidden: { description: Authenticated but not permitted; details intentionally minimized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Missing, tombstoned, or intentionally undiscoverable, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    InviteInvalid: { description: Generic invalid/expired/revoked invite; never discloses group, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Validation: { description: Safe validation failure, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: State, deadline, version, or idempotency conflict, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    PolicyNotConfigured: { description: Required product/safety policy is not accepted, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    RateLimited: { description: Rate limit, headers: { Retry-After: { schema: { type: integer, minimum: 1 } } }, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  schemas:
+    Identifier: { type: string, minLength: 1, maxLength: 128, description: Opaque UUID or ULID. }
+    Timestamp: { type: string, format: date-time, description: Server-issued RFC 3339 UTC instant. }
+    Envelope:
+      type: object
+      required: [schema_version, version, created_at_utc, updated_at_utc]
+      properties:
+        schema_version: { type: string, const: social.v1 }
+        version: { type: integer, minimum: 1 }
+        created_at_utc: { $ref: '#/components/schemas/Timestamp' }
+        updated_at_utc: { $ref: '#/components/schemas/Timestamp' }
+        deleted_at_utc: { anyOf: [ { $ref: '#/components/schemas/Timestamp' }, { type: 'null' } ] }
+    Session:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [user_id, profile], properties: { user_id: { $ref: '#/components/schemas/Identifier' }, profile: { $ref: '#/components/schemas/Profile' } } } ]
+    Profile:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [user_id, display_name], properties: { user_id: { $ref: '#/components/schemas/Identifier' }, display_name: { type: string, minLength: 1, maxLength: 80 }, avatar_ref: { type: [string, 'null'], maxLength: 512 } } } ]
+    ProfilePatch: { type: object, additionalProperties: false, properties: { display_name: { type: string, minLength: 1, maxLength: 80 }, avatar_ref: { type: [string, 'null'], maxLength: 512 } } }
+    Group:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [id, name, visibility, my_membership], properties: { id: { $ref: '#/components/schemas/Identifier' }, name: { type: string, minLength: 1, maxLength: 120 }, visibility: { type: string, enum: [private] }, my_membership: { $ref: '#/components/schemas/Membership' } } } ]
+    GroupCreate: { type: object, additionalProperties: false, required: [name], properties: { name: { type: string, minLength: 1, maxLength: 120 } } }
+    Membership:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [id, group_id, user_id, role, state], properties: { id: { $ref: '#/components/schemas/Identifier' }, group_id: { $ref: '#/components/schemas/Identifier' }, user_id: { $ref: '#/components/schemas/Identifier' }, role: { type: string, enum: [member, admin, resolver] }, state: { type: string, enum: [pending, active, left, removed, banned, tombstoned] } } } ]
+    InviteCreate: { type: object, additionalProperties: false, properties: { expires_at_utc: { $ref: '#/components/schemas/Timestamp' }, max_uses: { type: integer, minimum: 1, maximum: 100 } } }
+    InviteCreated:
+      type: object
+      required: [invite_id, invite_token, state]
+      properties: { invite_id: { $ref: '#/components/schemas/Identifier' }, invite_token: { type: string, writeOnly: true, minLength: 16 }, state: { const: active }, expires_at_utc: { $ref: '#/components/schemas/Timestamp' } }
+    InvitePreview: { type: object, required: [schema_version, status], properties: { schema_version: { const: social.v1 }, status: { type: string, enum: [valid] }, preview_label: { type: string, maxLength: 120, description: Policy-approved minimal preview only. } } }
+    EventState: { type: string, enum: [draft, open, locked, resolving, resolved, disputed, corrected, voided, archived, deleted] }
+    OutcomeOption: { type: object, required: [id, label, ordinal], properties: { id: { $ref: '#/components/schemas/Identifier' }, label: { type: string, minLength: 1, maxLength: 160 }, ordinal: { type: integer, minimum: 0 } } }
+    ResolutionRule: { type: object, required: [rule_type, display_text], properties: { rule_type: { type: string, enum: [objective_evidence_required] }, display_text: { type: string, minLength: 1, maxLength: 1000 } } }
+    PredictionEvent:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [id, group_id, state, prompt, outcome_options, deadline_at_utc, blind_vote, resolution_rule], properties: { id: { $ref: '#/components/schemas/Identifier' }, group_id: { $ref: '#/components/schemas/Identifier' }, state: { $ref: '#/components/schemas/EventState' }, prompt: { type: string, minLength: 1, maxLength: 1000 }, outcome_options: { type: array, minItems: 2, maxItems: 10, items: { $ref: '#/components/schemas/OutcomeOption' } }, deadline_at_utc: { $ref: '#/components/schemas/Timestamp' }, locked_at_utc: { anyOf: [ { $ref: '#/components/schemas/Timestamp' }, { type: 'null' } ] }, blind_vote: { type: boolean }, resolution_rule: { $ref: '#/components/schemas/ResolutionRule' } } } ]
+    EventCreate: { type: object, additionalProperties: false, required: [prompt, outcome_options, deadline_at_utc, blind_vote, resolution_rule], properties: { prompt: { type: string, minLength: 1, maxLength: 1000 }, outcome_options: { type: array, minItems: 2, maxItems: 10, items: { type: object, additionalProperties: false, required: [label], properties: { label: { type: string, minLength: 1, maxLength: 160 } } } }, deadline_at_utc: { $ref: '#/components/schemas/Timestamp' }, blind_vote: { type: boolean }, resolution_rule: { $ref: '#/components/schemas/ResolutionRule' } } }
+    EventPatch: { type: object, additionalProperties: false, properties: { prompt: { type: string, minLength: 1, maxLength: 1000 }, outcome_options: { type: array, minItems: 2, maxItems: 10, items: { type: object, required: [label], properties: { label: { type: string, minLength: 1, maxLength: 160 } } } }, deadline_at_utc: { $ref: '#/components/schemas/Timestamp' }, blind_vote: { type: boolean }, resolution_rule: { $ref: '#/components/schemas/ResolutionRule' } } }
+    ForecastSubmit: { type: object, additionalProperties: false, required: [outcome_option_id, confidence], properties: { outcome_option_id: { $ref: '#/components/schemas/Identifier' }, confidence: { type: number, minimum: 0, maximum: 1, description: Probability for selected outcome; exact UX discretization is client policy. } } }
+    Forecast:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [id, event_id, author_id, outcome_option_id, confidence, state, locked_at_utc], properties: { id: { $ref: '#/components/schemas/Identifier' }, event_id: { $ref: '#/components/schemas/Identifier' }, author_id: { $ref: '#/components/schemas/Identifier' }, outcome_option_id: { $ref: '#/components/schemas/Identifier' }, confidence: { type: number, minimum: 0, maximum: 1 }, state: { type: string, enum: [locked, superseded, tombstoned] }, locked_at_utc: { $ref: '#/components/schemas/Timestamp' } } } ]
+    Evidence: { type: object, required: [evidence_class, reference], properties: { evidence_class: { type: string, enum: [authoritative_source, official_record, other_tbd] }, reference: { type: string, minLength: 1, maxLength: 2048, description: Sensitive; excluded from product analytics. } } }
+    ResolutionCreate: { type: object, additionalProperties: false, required: [outcome_option_id, evidence], properties: { outcome_option_id: { $ref: '#/components/schemas/Identifier' }, evidence: { type: array, minItems: 1, maxItems: 10, items: { $ref: '#/components/schemas/Evidence' } } } }
+    Resolution:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [id, event_id, state], properties: { id: { $ref: '#/components/schemas/Identifier' }, event_id: { $ref: '#/components/schemas/Identifier' }, state: { type: string, enum: [proposed, resolved, disputed, corrected, voided, tombstoned] }, outcome_option_id: { anyOf: [ { $ref: '#/components/schemas/Identifier' }, { type: 'null' } ] }, evidence: { type: array, items: { $ref: '#/components/schemas/Evidence' } }, scoring_rule_version: { type: [string, 'null'], description: Placeholder until Product/Data approve scoring. } } } ]
+    Leaderboard:
+      type: object
+      required: [schema_version, event_id, scoring_status, entries]
+      properties: { schema_version: { const: social.v1 }, event_id: { $ref: '#/components/schemas/Identifier' }, scoring_status: { type: string, enum: [pending_policy, pending_resolution, calculated, voided] }, scoring_rule_version: { type: [string, 'null'] }, sample_qualification: { type: [string, 'null'] }, entries: { type: array, items: { type: object, required: [user_id, eligibility], properties: { user_id: { $ref: '#/components/schemas/Identifier' }, eligibility: { type: string, enum: [eligible, emerging, unranked] }, score: { type: [number, 'null'] } } } } }
+    ReceiptCreate: { type: object, additionalProperties: false, required: [event_id, template, redaction_level], properties: { event_id: { $ref: '#/components/schemas/Identifier' }, template: { type: string, enum: [private_result, redacted_share] }, redaction_level: { type: string, enum: [strict] } } }
+    Receipt:
+      allOf: [ { $ref: '#/components/schemas/Envelope' }, { type: object, required: [id, event_id, state, redaction_level], properties: { id: { $ref: '#/components/schemas/Identifier' }, event_id: { $ref: '#/components/schemas/Identifier' }, state: { type: string, enum: [private, active_unlisted, revoked, expired] }, redaction_level: { const: strict }, expires_at_utc: { anyOf: [ { $ref: '#/components/schemas/Timestamp' }, { type: 'null' } ] } } } ]
+    PageMeta: { type: object, required: [next_cursor], properties: { next_cursor: { type: [string, 'null'], maxLength: 2048 }, as_of_utc: { $ref: '#/components/schemas/Timestamp' } } }
+    GroupList: { type: object, required: [items, page], properties: { items: { type: array, items: { $ref: '#/components/schemas/Group' } }, page: { $ref: '#/components/schemas/PageMeta' } } }
+    MembershipList: { type: object, required: [items, page], properties: { items: { type: array, items: { $ref: '#/components/schemas/Membership' } }, page: { $ref: '#/components/schemas/PageMeta' } } }
+    EventList: { type: object, required: [items, page], properties: { items: { type: array, items: { $ref: '#/components/schemas/PredictionEvent' } }, page: { $ref: '#/components/schemas/PageMeta' } } }
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, request_id, retryable]
+      properties:
+        code: { type: string, enum: [UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, VALIDATION_FAILED, EVENT_NOT_OPEN, FORECAST_DEADLINE_PASSED, FORECAST_EXISTS, CONFLICT_VERSION, IDEMPOTENCY_KEY_REUSED, INVITE_INVALID, MEMBERSHIP_INACTIVE, BLOCK_RESTRICTED, POLICY_NOT_CONFIGURED, RATE_LIMITED, TEMPORARY_UNAVAILABLE, INTERNAL_ERROR] }
+        message: { type: string, maxLength: 500 }
+        request_id: { type: string, maxLength: 128 }
+        retryable: { type: boolean }
+        retry_after_seconds: { type: integer, minimum: 1 }
+        field_errors: { type: array, items: { type: object, required: [field, code], properties: { field: { type: string, maxLength: 128 }, code: { type: string, maxLength: 128 } } } }
