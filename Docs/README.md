@@ -18,6 +18,7 @@ Last reviewed: 2026-07-30
 | **[SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md](SOCIAL_PRODUCT_V2_IMPLEMENTATION_PLAN.md)** | How do we build the approved networked social product? |
 | **[SOCIAL_V2_EXECUTION_TRACKER.md](SOCIAL_V2_EXECUTION_TRACKER.md)** | What Social v2 work is active, gated, or queued? |
 | **[CLAUDE_DESIGN_PROMPT.md](CLAUDE_DESIGN_PROMPT.md)** | What exactly should Claude Design produce? |
+| **[MARKETING_LANDING_PAGE_TASKS.md](MARKETING_LANDING_PAGE_TASKS.md)** | How do we design and publish the Build 1 landing page, icon, screenshots, and waitlist? |
 
 ## Planning and strategy — authoritative
 
@@ -53,6 +54,7 @@ delay cause. A plan that gets quietly rewritten teaches nothing.
 | [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) · [LOCAL_DEVICE_TESTING.md](LOCAL_DEVICE_TESTING.md) | Release |
 | [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) · [HANDOFF.md](HANDOFF.md) | Overview |
 | [AppIconAndLaunchScreen.md](AppIconAndLaunchScreen.md) | Assets |
+| [MARKETING_LANDING_PAGE_TASKS.md](MARKETING_LANDING_PAGE_TASKS.md) | Build 1 public landing page and waitlist; explicitly excludes Social v2 claims |
 
 ## Tooling — parked
 

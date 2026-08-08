@@ -54,3 +54,12 @@ Send `CLAUDE_DESIGN_PROMPT.md` to Claude Design, review the F0.1/F0.4–F0.6 own
 extend the passed local PostgreSQL parity slice into the hosted F0.3 Apple-auth/Supabase
 RLS/realtime/APNs/isolation/restore proof. Accept or revise ADR-008 before provisioning isolated
 development and QA services or adding a runtime flag loader.
+
+## Build 1 marketing-page handoff
+
+The separate portfolio-website brief is tracked in
+`MARKETING_LANDING_PAGE_TASKS.md`. It requests three complete Build 1 landing
+pages and three icon candidates, real synthetic-data screenshots, and a
+Hindsight-specific HubSpot waitlist. Do not confuse this with
+`CLAUDE_DESIGN_PROMPT.md`, which belongs to Social v2 product research. The
+marketing page must pass a Social v2 claim-leak review before publication.

@@ -36,6 +36,7 @@ struct HindsightApp: App {
             defaults.set(true, forKey: AppStorageKeys.hapticsEnabled)
             defaults.set(true, forKey: AppStorageKeys.hasLaunchedBefore)
             defaults.set(true, forKey: AppStorageKeys.didRequestNotifications)
+            defaults.removeObject(forKey: AppStorageKeys.quickCaptureDraft)
         }
 
         // Built locally and handed to `_bootResult`'s initial value below.

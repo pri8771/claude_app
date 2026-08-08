@@ -101,9 +101,9 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         XCTAssertTrue(keyboardDoneButton.waitForExistence(timeout: 5))
         keyboardDoneButton.tap()
 
-        let confidenceButton = app.buttons["quickCapture.confidence.75"]
-        XCTAssertTrue(confidenceButton.waitForExistence(timeout: 5))
-        confidenceButton.tap()
+        let confidenceSlider = app.sliders["quickCapture.confidenceSlider"]
+        XCTAssertTrue(confidenceSlider.waitForExistence(timeout: 5))
+        confidenceSlider.adjust(toNormalizedSliderPosition: 0.75)
 
         let tomorrowButton = app.buttons["Tomorrow"]
         XCTAssertTrue(tomorrowButton.waitForExistence(timeout: 5))
@@ -140,8 +140,13 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         let captureScrollView = app.scrollViews.firstMatch
         XCTAssertTrue(captureScrollView.waitForExistence(timeout: 5))
 
-        let confidenceButton = app.buttons["quickCapture.confidence.75"]
-        select(confidenceButton, in: captureScrollView)
+        let confidenceSlider = app.sliders["quickCapture.confidenceSlider"]
+        XCTAssertTrue(confidenceSlider.waitForExistence(timeout: 5))
+        if !confidenceSlider.isHittable {
+            captureScrollView.swipeUp()
+        }
+        XCTAssertTrue(confidenceSlider.isHittable)
+        confidenceSlider.adjust(toNormalizedSliderPosition: 0.75)
 
         let tomorrowButton = app.buttons["Tomorrow"]
         select(tomorrowButton, in: captureScrollView)

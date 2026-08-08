@@ -43,6 +43,61 @@ final class QuickCaptureTests: XCTestCase {
         XCTAssertEqual(decision.predictions[0].dueDate, decision.dueDate)
     }
 
+    func testQuickCaptureAcceptsFullConfidenceRangeWithoutInferringAValue() throws {
+        let now = Date(timeIntervalSince1970: 1_735_689_600)
+        let calendar = Calendar(identifier: .gregorian)
+
+        for confidence in [0, 50, 100] {
+            let draft = QuickCaptureDraft(snapshot: nil)
+            draft.statement = "A range test"
+            draft.confidence = confidence
+            draft.selectedHorizon = .tomorrow
+
+            let decision = try XCTUnwrap(draft.makeDecision(now: now, calendar: calendar))
+            XCTAssertEqual(decision.predictions.first?.probabilityPercent, confidence)
+        }
+    }
+
+    func testQuickCaptureStoresOptionalReasoningWithoutChangingItsClassification() throws {
+        let draft = QuickCaptureDraft(snapshot: nil)
+        draft.statement = "The launch will be calm"
+        draft.reasoning = "  The checklist is complete.  "
+        draft.confidence = 50
+        draft.selectedHorizon = .tomorrow
+
+        let decision = try XCTUnwrap(draft.makeDecision(now: Date(timeIntervalSince1970: 0)))
+        XCTAssertEqual(decision.notes, "The checklist is complete.")
+        XCTAssertTrue(decision.isQuickCapture)
+    }
+
+    func testQuickCaptureDraftRoundTripPreservesAllUserOwnedFields() throws {
+        let suiteName = "QuickCaptureTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let customDate = Date(timeIntervalSince1970: 1_735_776_000)
+        let snapshot = QuickCaptureDraftSnapshot(
+            statement: "Will the plan hold?",
+            reasoning: "The team has slack.",
+            confidence: 0,
+            horizon: QuickCaptureHorizon.custom.rawValue,
+            customDate: customDate
+        )
+        QuickCaptureDraftStore.save(snapshot, defaults: defaults)
+
+        let restored = try XCTUnwrap(QuickCaptureDraftStore.load(defaults: defaults))
+        XCTAssertEqual(restored, snapshot)
+        let draft = QuickCaptureDraft(snapshot: restored)
+        XCTAssertEqual(draft.statement, snapshot.statement)
+        XCTAssertEqual(draft.reasoning, snapshot.reasoning)
+        XCTAssertEqual(draft.confidence, 0)
+        XCTAssertEqual(draft.selectedHorizon, .custom)
+        XCTAssertEqual(draft.customDate, customDate)
+
+        QuickCaptureDraftStore.clear(defaults: defaults)
+        XCTAssertNil(QuickCaptureDraftStore.load(defaults: defaults))
+    }
+
     func testReviewHorizonsResolveToFutureDatesAtMonthAndWeekBoundaries() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!

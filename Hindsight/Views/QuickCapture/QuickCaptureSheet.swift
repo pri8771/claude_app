@@ -12,15 +12,43 @@ import Observation
 @Observable
 final class QuickCaptureDraft {
     var statement = ""
+    var reasoning = ""
     var confidence: Int?
     var selectedHorizon: QuickCaptureHorizon?
     var customDate = QuickCaptureHorizon.tomorrow.date(from: Date(), calendar: .current)
+
+    init(snapshot: QuickCaptureDraftSnapshot? = nil) {
+        guard let snapshot else { return }
+        statement = snapshot.statement
+        reasoning = snapshot.reasoning
+        confidence = snapshot.confidence
+        selectedHorizon = snapshot.horizon.flatMap(QuickCaptureHorizon.init(rawValue:))
+        customDate = snapshot.customDate
+    }
 
     var trimmedStatement: String {
         statement.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var isStatementValid: Bool { !trimmedStatement.isEmpty }
+
+    var trimmedReasoning: String {
+        reasoning.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var hasContent: Bool {
+        !trimmedStatement.isEmpty || !trimmedReasoning.isEmpty || confidence != nil || selectedHorizon != nil
+    }
+
+    var snapshot: QuickCaptureDraftSnapshot {
+        QuickCaptureDraftSnapshot(
+            statement: statement,
+            reasoning: reasoning,
+            confidence: confidence,
+            horizon: selectedHorizon?.rawValue,
+            customDate: customDate
+        )
+    }
 
     func dueDate(now: Date = Date(), calendar: Calendar = .current) -> Date? {
         switch selectedHorizon {
@@ -39,14 +67,38 @@ final class QuickCaptureDraft {
             let dueDate = dueDate(now: now, calendar: calendar),
             isStatementValid
         else { return nil }
-        let score = ClarityScore.score(title: trimmedStatement, notes: "", optionCount: 0,
+        let score = ClarityScore.score(title: trimmedStatement, notes: trimmedReasoning, optionCount: 0,
                                        optionsWithTradeoffs: 0, predictionCount: 1, hasReviewDate: true)
-        let decision = Decision(title: trimmedStatement, notes: "", category: .personal,
+        let decision = Decision(title: trimmedStatement, notes: trimmedReasoning, category: .personal,
                                 stakesLevel: .low, status: .awaitingReview, isReversible: true,
                                 clarityScore: score, createdAt: now, decidedAt: now, dueDate: dueDate)
         decision.predictions = [Prediction(title: trimmedStatement, probabilityPercent: confidence,
                                             dueDate: dueDate, status: .pending)]
         return decision
+    }
+}
+
+struct QuickCaptureDraftSnapshot: Codable, Equatable {
+    let statement: String
+    let reasoning: String
+    let confidence: Int?
+    let horizon: String?
+    let customDate: Date
+}
+
+enum QuickCaptureDraftStore {
+    static func load(defaults: UserDefaults = .standard) -> QuickCaptureDraftSnapshot? {
+        guard let data = defaults.data(forKey: AppStorageKeys.quickCaptureDraft) else { return nil }
+        return try? JSONDecoder().decode(QuickCaptureDraftSnapshot.self, from: data)
+    }
+
+    static func save(_ snapshot: QuickCaptureDraftSnapshot, defaults: UserDefaults = .standard) {
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        defaults.set(data, forKey: AppStorageKeys.quickCaptureDraft)
+    }
+
+    static func clear(defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: AppStorageKeys.quickCaptureDraft)
     }
 }
 
@@ -81,17 +133,22 @@ enum QuickCaptureHorizon: String, CaseIterable, Identifiable {
     }
 }
 
+private enum QuickCaptureFocus: Hashable {
+    case statement
+    case reasoning
+}
+
 struct QuickCaptureSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var notificationManager: NotificationManager
     @AppStorage(AppStorageKeys.didCompleteQuickCaptureNudge) private var didCompleteNudge = false
 
-    @State private var draft = QuickCaptureDraft()
+    @State private var draft = QuickCaptureDraft(snapshot: QuickCaptureDraftStore.load())
     @State private var saveError: String?
     @State private var isSaving = false
-    @FocusState private var isStatementFocused: Bool
-    private let confidenceOptions = [55, 65, 75, 85, 95]
+    @State private var showDiscardConfirmation = false
+    @FocusState private var focusedField: QuickCaptureFocus?
 
     var body: some View {
         NavigationStack {
@@ -101,6 +158,7 @@ struct QuickCaptureSheet: View {
                     VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
                         if !didCompleteNudge { shortHorizonNudge }
                         statementSection
+                        reasoningSection
                         confidenceSection
                         reviewDateSection
                         HCard {
@@ -117,7 +175,7 @@ struct QuickCaptureSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { cancel() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
@@ -126,7 +184,7 @@ struct QuickCaptureSheet: View {
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") { isStatementFocused = false }
+                    Button("Done") { focusedField = nil }
                         .accessibilityIdentifier("quickCapture.keyboardDone")
                 }
             }
@@ -145,8 +203,27 @@ struct QuickCaptureSheet: View {
             } message: {
                 Text(saveError ?? "Your capture is still here. Please try again.")
             }
+            .confirmationDialog("Keep this draft?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+                Button("Keep Draft") {
+                    persistDraft()
+                    dismiss()
+                }
+                Button("Discard", role: .destructive) {
+                    QuickCaptureDraftStore.clear()
+                    dismiss()
+                }
+                Button("Keep Editing", role: .cancel) {}
+            } message: {
+                Text("Your prediction is not saved yet. You can keep it for later or discard it.")
+            }
         }
-        .onAppear { isStatementFocused = true }
+        .interactiveDismissDisabled(draft.hasContent || isSaving)
+        .onAppear { focusedField = .statement }
+        .onChange(of: draft.statement) { _, _ in persistDraft() }
+        .onChange(of: draft.reasoning) { _, _ in persistDraft() }
+        .onChange(of: draft.confidence) { _, _ in persistDraft() }
+        .onChange(of: draft.selectedHorizon) { _, _ in persistDraft() }
+        .onChange(of: draft.customDate) { _, _ in persistDraft() }
     }
 
     private var shortHorizonNudge: some View {
@@ -176,7 +253,7 @@ struct QuickCaptureSheet: View {
             TextField("For example, I’ll enjoy this job in six months", text: $draft.statement, axis: .vertical)
                 .lineLimit(3...6)
                 .textInputAutocapitalization(.sentences)
-                .focused($isStatementFocused)
+                .focused($focusedField, equals: .statement)
                 .padding(HindsightTheme.Spacing.md)
                 .background(HindsightTheme.Colors.card)
                 .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
@@ -187,6 +264,21 @@ struct QuickCaptureSheet: View {
                     .foregroundStyle(HindsightTheme.Colors.accent)
                     .accessibilityLabel("A prediction is required before saving")
             }
+        }
+    }
+
+    private var reasoningSection: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            Text("Why? (optional)")
+                .font(HindsightTheme.Typography.title2)
+            TextField("What makes you think so?", text: $draft.reasoning, axis: .vertical)
+                .lineLimit(2...5)
+                .textInputAutocapitalization(.sentences)
+                .focused($focusedField, equals: .reasoning)
+                .padding(HindsightTheme.Spacing.md)
+                .background(HindsightTheme.Colors.card)
+                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                .accessibilityIdentifier("Quick capture reasoning")
         }
     }
 
@@ -201,37 +293,34 @@ struct QuickCaptureSheet: View {
                         .monospacedDigit()
                 }
             }
-            LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 72), spacing: HindsightTheme.Spacing.xs)],
-                spacing: HindsightTheme.Spacing.xs
-            ) {
-                ForEach(confidenceOptions, id: \.self) { confidence in
-                    Button {
-                        draft.confidence = confidence
-                        HapticsManager.shared.selectionChanged()
-                    } label: {
-                        Text("\(confidence)%")
-                            .font(HindsightTheme.Typography.subheadline)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                            .background(
-                                draft.confidence == confidence
-                                    ? HindsightTheme.Colors.accent
-                                    : HindsightTheme.Colors.card
-                            )
-                            .foregroundStyle(
-                                draft.confidence == confidence
-                                    ? Color.white
-                                    : HindsightTheme.Colors.textPrimary
-                            )
-                            .clipShape(Capsule())
+            Slider(
+                value: Binding(
+                    // The thumb rests at neutral 50% until the user interacts; the model stays
+                    // nil, so this is never treated as an inferred confidence selection.
+                    get: { Double(draft.confidence ?? 50) },
+                    set: { value in
+                        let selectedValue = Int(value.rounded())
+                        if draft.confidence != selectedValue {
+                            draft.confidence = selectedValue
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(confidence) percent confidence")
-                    .accessibilityValue(draft.confidence == confidence ? "Selected" : "Not selected")
-                    .accessibilityIdentifier("quickCapture.confidence.\(confidence)")
+                ),
+                in: 0...100,
+                step: 1,
+                label: { Text("Confidence") },
+                minimumValueLabel: { Text("0%") },
+                maximumValueLabel: { Text("100%") },
+                onEditingChanged: { isEditing in
+                    if !isEditing, draft.confidence != nil {
+                        HapticsManager.shared.selectionChanged()
+                    }
                 }
-            }
-            Text("Choose the closest fit. There is no assumed answer.")
+            )
+            .tint(HindsightTheme.Colors.accent)
+            .accessibilityValue(draft.confidence.map { "\($0) percent" } ?? "Not selected")
+            .accessibilityHint("Adjust from 0 to 100 percent. A confidence is required before saving.")
+            .accessibilityIdentifier("quickCapture.confidenceSlider")
+            Text("Move the slider to choose from 0% to 100%. There is no assumed answer.")
                 .font(HindsightTheme.Typography.caption)
                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
         }
@@ -296,6 +385,7 @@ struct QuickCaptureSheet: View {
         isSaving = true
         context.insert(decision)
         if PersistenceService.saveOrReport(context) {
+            QuickCaptureDraftStore.clear()
             didCompleteNudge = true
             Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
             HapticsManager.shared.decisionSealed()
@@ -305,6 +395,22 @@ struct QuickCaptureSheet: View {
             context.delete(decision)
             isSaving = false
             saveError = "Your capture is still here. Please try again."
+        }
+    }
+
+    private func persistDraft() {
+        if draft.hasContent {
+            QuickCaptureDraftStore.save(draft.snapshot)
+        } else {
+            QuickCaptureDraftStore.clear()
+        }
+    }
+
+    private func cancel() {
+        if draft.hasContent {
+            showDiscardConfirmation = true
+        } else {
+            dismiss()
         }
     }
 }

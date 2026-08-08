@@ -228,6 +228,25 @@ final class ResolutionTests: XCTestCase {
         XCTAssertEqual(decision.status, .reviewed)
     }
 
+    func testFastResolutionClosesQuickCaptureWithOptionalReasoning() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(
+            title: "The launch will go smoothly",
+            notes: "The checklist is complete.",
+            category: .personal,
+            stakesLevel: .low,
+            status: .awaitingReview
+        )
+        let prediction = Prediction(title: decision.title, probabilityPercent: 50)
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        XCTAssertTrue(decision.isQuickCapture)
+        XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .correct, note: "", in: context), .saved)
+        XCTAssertEqual(decision.status, .reviewed)
+    }
+
     func testReviewedDecisionRetainsFuturePendingPredictionReminderEligibility() {
         let now = Date(timeIntervalSince1970: 1_735_689_600)
         let decision = Decision(title: "Reviewed early", status: .reviewed)

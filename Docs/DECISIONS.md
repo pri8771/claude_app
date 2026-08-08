@@ -91,3 +91,11 @@
 - **Consequences:** Until the spike passes, this remains an evaluation target rather than a
   dependency or infrastructure commitment. Failure reopens the decision; it never permits a
   client-authoritative fallback.
+
+## DEC-009 — Future Postcards v3 reflection-first personal baseline
+
+- **Status:** accepted
+- **Date:** 2026-08-08
+- **Context:** The approved `Hindsight - Future Postcards - Production Candidate v3 - Guided Start - Complete Clickable` design and its v3 specification establish a guided-start, reflection-first experience. Existing Social v2 planning remains valuable but would be premature as the first implementation target if it replaces the personal habit loop.
+- **Decision:** Implement the Future Postcards v3 personal core first: one local prediction statement, intentional 0–100 confidence, optional Why, future return date, atomic local seal, durable draft, later resolution/reflection, and central sample-aware analytics. Personal records remain local SwiftData-authoritative in this slice. Social capabilities are additive—not a replacement for private reflection—and must remain feature-flagged off/fail-closed until their separately approved account, authority, safety, and backend gates are met.
+- **Consequences:** The implementation baseline is `FUTURE_POSTCARDS_V3_IMPLEMENTATION_BASELINE.md` and the executable quality boundary is `quality/feature-contracts/future-postcards-v3-personal-core.json`. Guided samples require explicit provenance and strict isolation from personal metrics and data. Accounts, synchronization, friends, Circles, shared forecasts, messages, public events, leaderboards, and backend vendor work are staged later work; this decision neither claims they ship nor reverses DEC-005 through DEC-008.

@@ -102,7 +102,9 @@ extension Decision {
     var isQuickCapture: Bool {
         options.isEmpty &&
         predictions.count == 1 &&
-        notes.isEmpty &&
+        category == .personal &&
+        stakesLevel == .low &&
+        isReversible &&
         predictions.first?.title == title
     }
 

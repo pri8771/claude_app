@@ -22,4 +22,6 @@ enum AppStorageKeys {
     static let hapticsEnabled = "hapticsEnabled"
     /// Whether the one-time quick-capture short-horizon suggestion was dismissed or completed.
     static let didCompleteQuickCaptureNudge = "didCompleteQuickCaptureNudge"
+    /// Recoverable in-progress content for the one-sheet Quick Capture flow.
+    static let quickCaptureDraft = "quickCaptureDraft"
 }

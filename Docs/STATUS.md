@@ -27,6 +27,15 @@
 Complete and review the Social v2 F0 contracts and proof-of-fitness spike without weakening the
 separate Build 1 TestFlight release requirements.
 
+## Build 1 website marketing track
+
+`Docs/MARKETING_LANDING_PAGE_TASKS.md` owns a separate public Build 1 landing-page track: three
+complete Claude Design concepts, three icon candidates, synthetic-data screenshot capture,
+HubSpot waitlist consent, website allowlisting/resource routes, verification, and publication.
+The local five-app design package is prepared, but no generated concept, icon, screenshot set,
+waitlist, or page is approved. This track must pass a Social v2 claim-leak review and must not be
+used to market planned accounts, groups, feeds, backend sync, or collaborative forecasting.
+
 ## Verified
 
 - The simulator app builds successfully.
