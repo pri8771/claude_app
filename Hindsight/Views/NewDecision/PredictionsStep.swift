@@ -114,7 +114,10 @@ private struct PredictionEditorCard: View {
                     Text("HOW CONFIDENT ARE YOU?")
                         .font(HindsightTheme.Typography.caption2)
                         .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                    HSlider(value: $prediction.probability)
+                    PredictionConfidenceSlider(
+                        value: $prediction.probability,
+                        accessibilityIdentifier: "newDecision.prediction.confidence.\(index)"
+                    )
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -131,8 +134,110 @@ private struct PredictionEditorCard: View {
     }
 }
 
+/// A 0–100 slider that is visually centered but semantically unselected until
+/// the person interacts with it. The neutral position is not a hidden 50%.
+private struct PredictionConfidenceSlider: View {
+    @Binding var value: Int?
+    let accessibilityIdentifier: String
+
+    private var sliderValue: Binding<Double> {
+        Binding(
+            get: { Double(value ?? 50) },
+            set: { candidate in
+                let next = min(100, max(0, Int(candidate.rounded())))
+                guard next != value else { return }
+                value = next
+            }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(value.map { "\($0)%" } ?? "Not selected")
+                    .font(HindsightTheme.Typography.title2)
+                    .monospacedDigit()
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Spacer()
+                Text(confidenceLabel)
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+
+            Slider(
+                value: sliderValue,
+                in: 0...100,
+                step: 1,
+                onEditingChanged: { isEditing in
+                    // The neutral thumb rests at 50 without selecting it.
+                    // Touching that exact position is still an intentional
+                    // choice, even if SwiftUI never calls the value setter.
+                    if isEditing, value == nil {
+                        value = 50
+                    } else if !isEditing, value != nil {
+                        HapticsManager.shared.selectionChanged()
+                    }
+                }
+            )
+                .tint(value == nil ? HindsightTheme.Colors.textTertiary : HindsightTheme.Colors.accent)
+                .accessibilityIdentifier(accessibilityIdentifier)
+                .accessibilityLabel("Confidence")
+                .accessibilityValue(accessibilityValue)
+                .accessibilityHint(value == nil
+                    ? "No value selected. Swipe up or down to choose a confidence from zero to one hundred percent."
+                    : "Swipe up or down to adjust confidence by one percent.")
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment:
+                        setAccessibleValue(value.map { $0 + 1 } ?? 50)
+                    case .decrement:
+                        setAccessibleValue(value.map { $0 - 1 } ?? 50)
+                    @unknown default:
+                        break
+                    }
+                }
+
+            HStack {
+                Text("0%")
+                Spacer()
+                Text("100%")
+            }
+            .font(HindsightTheme.Typography.caption2)
+            .foregroundStyle(HindsightTheme.Colors.textTertiary)
+
+            if value == nil {
+                Text("Move the slider to record your confidence.")
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+        }
+    }
+
+    private var accessibilityValue: String {
+        guard let value else { return "Not selected" }
+        return "\(value) percent, \(confidenceLabel)"
+    }
+
+    private var confidenceLabel: String {
+        guard let value else { return "Choose a value" }
+        switch value {
+        case 0...20: return "Very unlikely"
+        case 21...40: return "Unlikely"
+        case 41...60: return "Even odds"
+        case 61...80: return "Likely"
+        default: return "Very likely"
+        }
+    }
+
+    private func setAccessibleValue(_ candidate: Int) {
+        let next = min(100, max(0, candidate))
+        guard next != value else { return }
+        value = next
+        HapticsManager.shared.selectionChanged()
+    }
+}
+
 #Preview {
     PredictionsStep(draft: DecisionDraft())
         .hindsightBackground()
-        .preferredColorScheme(.dark)
 }

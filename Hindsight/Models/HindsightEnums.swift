@@ -38,14 +38,14 @@ enum DecisionCategory: String, Codable, CaseIterable, Identifiable {
     /// A distinct accent colour for each category.
     var color: Color {
         switch self {
-        case .career:        return Color(hex: "5B8DEF")
+        case .career:        return HindsightTheme.Colors.categoryCareer
         case .financial:     return HindsightTheme.Colors.success
-        case .health:        return Color(hex: "FF6B6B")
+        case .health:        return HindsightTheme.Colors.categoryHealth
         case .relationships: return HindsightTheme.Colors.accent
-        case .personal:      return Color(hex: "9B6BFF")
+        case .personal:      return HindsightTheme.Colors.categoryPersonal
         case .creative:      return HindsightTheme.Colors.amber
-        case .education:     return Color(hex: "4ECDC4")
-        case .other:         return Color(hex: "8A8AA3")
+        case .education:     return HindsightTheme.Colors.categoryEducation
+        case .other:         return HindsightTheme.Colors.steel
         }
     }
 }
@@ -83,7 +83,7 @@ enum StakesLevel: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .low:      return HindsightTheme.Colors.success
         case .medium:   return HindsightTheme.Colors.amber
-        case .high:     return Color(hex: "FF7849")
+        case .high:     return HindsightTheme.Colors.stakesHigh
         case .critical: return HindsightTheme.Colors.accent
         }
     }
@@ -119,7 +119,7 @@ enum DecisionStatus: String, Codable, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .active:         return Color(hex: "5B8DEF")
+        case .active:         return HindsightTheme.Colors.steel
         case .awaitingReview: return HindsightTheme.Colors.amber
         case .reviewed:       return HindsightTheme.Colors.success
         }
@@ -136,6 +136,19 @@ enum PredictionStatus: String, Codable, CaseIterable, Identifiable {
     case partial   = "Partial"
 
     var id: String { rawValue }
+
+    /// User-facing outcome language. The persisted cases retain their legacy
+    /// names for migration safety, but a forecast is resolved by whether the
+    /// event happened—not by calling the person's probabilistic judgment
+    /// simply "correct" or "incorrect."
+    var eventOutcomeLabel: String {
+        switch self {
+        case .pending: return "Awaiting outcome"
+        case .correct: return "Happened"
+        case .incorrect: return "Did not happen"
+        case .partial: return "Could not judge"
+        }
+    }
 
     var icon: String {
         switch self {

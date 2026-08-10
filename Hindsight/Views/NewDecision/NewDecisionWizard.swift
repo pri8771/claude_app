@@ -20,6 +20,7 @@ struct NewDecisionWizard: View {
     @State private var draft = DecisionDraft()
     @State private var step = 0
     @State private var saveError: String?
+    @State private var isSaving = false
 
     private let totalSteps = 4
     private let titles = ["Basics", "Options", "Predictions", "Review"]
@@ -40,9 +41,10 @@ struct NewDecisionWizard: View {
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.easeInOut, value: step)
-
-                    navigationButtons
                 }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                navigationButtons
             }
             .navigationTitle("New Decision")
             .navigationBarTitleDisplayMode(.inline)
@@ -59,7 +61,6 @@ struct NewDecisionWizard: View {
             } message: { Text(saveError ?? "An error occurred while saving your decision.") }
         }
         .interactiveDismissDisabled(!draft.title.isEmpty)
-        .preferredColorScheme(.dark)
     }
 
     // MARK: Progress bar
@@ -94,23 +95,36 @@ struct NewDecisionWizard: View {
         HStack(spacing: HindsightTheme.Spacing.md) {
             if step > 0 {
                 HButton(title: "Back", icon: "chevron.left", style: .secondary, fullWidth: false) {
+                    dismissKeyboard()
                     HapticsManager.shared.stepReversed()
                     withAnimation { step -= 1 }
                 }
             }
             if step < totalSteps - 1 {
                 HButton(title: "Next", icon: "chevron.right", isEnabled: currentStepValid) {
+                    dismissKeyboard()
                     HapticsManager.shared.stepAdvanced()
                     withAnimation { step += 1 }
                 }
             } else {
-                HButton(title: "Save Decision", icon: "checkmark.seal.fill", isEnabled: canSave) {
+                HButton(
+                    title: isSaving ? "Saving…" : "Save Decision",
+                    icon: "checkmark.seal.fill",
+                    isEnabled: canSave && !isSaving
+                ) {
+                    dismissKeyboard()
                     save()
                 }
             }
         }
         .padding(HindsightTheme.Spacing.md)
         .background(HindsightTheme.Colors.surface.opacity(0.6))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(HindsightTheme.Colors.border)
+                .frame(height: 1)
+                .accessibilityHidden(true)
+        }
     }
 
     private var currentStepValid: Bool {
@@ -128,19 +142,35 @@ struct NewDecisionWizard: View {
         draft.step1Valid && draft.step2Valid && draft.step3Valid
     }
 
+    /// A field on one page must not keep the keyboard over the next page. This
+    /// matters most at accessibility text sizes, where the keyboard and footer
+    /// otherwise leave too little room to reach the next page's first control.
+    private func dismissKeyboard() {
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
+        #endif
+    }
+
     // MARK: Save
 
     private func save() {
+        guard !isSaving else { return }
+        isSaving = true
         let decision = draft.makeDecision()
-        context.insert(decision)
 
         // Attempt save; side effects (reminder scheduling, haptic, dismiss) only on success
-        if PersistenceService.saveOrReport(context) {
+        if NewDecisionGraphPersistenceService.save(decision, in: context) {
             // Only after successful save, schedule the reminder and fire success haptic
             Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
             HapticsManager.shared.decisionSealed()
             dismiss()
         } else {
+            isSaving = false
             saveError = "An error occurred while saving your decision."
         }
     }

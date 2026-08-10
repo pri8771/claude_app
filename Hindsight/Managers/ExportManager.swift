@@ -20,6 +20,7 @@ struct JournalExport: Codable {
 }
 
 struct DecisionExport: Codable {
+    let id: UUID
     let title: String
     let notes: String
     let category: String
@@ -29,13 +30,16 @@ struct DecisionExport: Codable {
     let clarityScore: Int
     let chosenOptionTitle: String?
     let createdAt: Date
+    let decidedAt: Date?
     let dueDate: Date
+    let deadline: Date?
     let options: [OptionExport]
     let predictions: [PredictionExport]
     let outcomeReview: OutcomeReviewExport?
 }
 
 struct OptionExport: Codable {
+    let id: UUID
     let title: String
     let upside: String
     let downside: String
@@ -45,6 +49,7 @@ struct OptionExport: Codable {
 }
 
 struct PredictionExport: Codable {
+    let id: UUID
     let statement: String
     let probabilityPercent: Int
     let dueDate: Date
@@ -53,10 +58,11 @@ struct PredictionExport: Codable {
 }
 
 struct OutcomeReviewExport: Codable {
+    let id: UUID
     let whatHappened: String
-    let outcomeQuality: Int
-    let decisionQuality: Int
-    let wouldDoAgain: Bool
+    let outcomeQuality: Int?
+    let decisionQuality: Int?
+    let wouldDoAgain: Bool?
     let whatSurprised: String
     let mainLesson: String
     let reviewedAt: Date
@@ -72,14 +78,20 @@ enum ExportManager {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 
+    /// Samples are useful in the app, but are never part of a person's export.
+    static func exportableDecisions(from decisions: [Decision]) -> [Decision] {
+        decisions.filter { !SampleData.isDemoDecision($0) }
+    }
+
     // MARK: JSON
 
     static func makeExport(from decisions: [Decision]) -> JournalExport {
         JournalExport(
             exportedAt: Date(),
             appVersion: appVersion,
-            decisions: decisions.map { decision in
+            decisions: exportableDecisions(from: decisions).map { decision in
                 DecisionExport(
+                    id: decision.id,
                     title: decision.title,
                     notes: decision.notes,
                     category: decision.category.rawValue,
@@ -89,20 +101,24 @@ enum ExportManager {
                     clarityScore: decision.clarityScore,
                     chosenOptionTitle: decision.chosenOptionTitle,
                     createdAt: decision.createdAt,
+                    decidedAt: decision.decidedAt,
                     dueDate: decision.dueDate,
+                    deadline: decision.deadline,
                     options: decision.options.map {
-                        OptionExport(title: $0.title, upside: $0.upside, downside: $0.downside,
+                        OptionExport(id: $0.id, title: $0.title, upside: $0.upside, downside: $0.downside,
                                      effortLevel: $0.effortLevel, riskLevel: $0.riskLevel,
                                      gutFeeling: $0.gutFeeling)
                     },
                     predictions: decision.predictions.map {
-                        PredictionExport(statement: $0.title, probabilityPercent: $0.probabilityPercent,
+                        PredictionExport(id: $0.id, statement: $0.title, probabilityPercent: $0.probabilityPercent,
                                          dueDate: $0.dueDate, status: $0.status.rawValue,
                                          actualResult: $0.actualResult)
                     },
                     outcomeReview: decision.outcomeReview.map {
-                        OutcomeReviewExport(whatHappened: $0.whatHappened, outcomeQuality: $0.outcomeQuality,
-                                            decisionQuality: $0.decisionQuality, wouldDoAgain: $0.wouldDoAgain,
+                        OutcomeReviewExport(id: $0.id, whatHappened: $0.whatHappened,
+                                            outcomeQuality: $0.hasOutcomeQuality ? $0.outcomeQuality : nil,
+                                            decisionQuality: $0.hasDecisionQuality ? $0.decisionQuality : nil,
+                                            wouldDoAgain: $0.hasWouldDoAgain ? $0.wouldDoAgain : nil,
                                             whatSurprised: $0.whatSurprised, mainLesson: $0.mainLesson,
                                             reviewedAt: $0.reviewedAt)
                     }
@@ -129,6 +145,7 @@ enum ExportManager {
 
     /// Renders a simple paginated PDF report and returns its URL.
     static func exportPDF(_ decisions: [Decision]) throws -> URL {
+        let includedDecisions = exportableDecisions(from: decisions)
         let pageSize = CGSize(width: 612, height: 792) // US Letter @ 72dpi
         let margin: CGFloat = 48
         let contentWidth = pageSize.width - margin * 2
@@ -187,11 +204,11 @@ enum ExportManager {
                  color: UIColor(red: 0.91, green: 0.27, blue: 0.38, alpha: 1), spacingAfter: 2)
             draw("Remember what you believed before reality gave you the answer.",
                  font: .systemFont(ofSize: 11, weight: .regular), color: .gray, spacingAfter: 4)
-            draw("Exported \(dateFormatter.string(from: Date())) · \(decisions.count) decisions",
+            draw("Exported \(dateFormatter.string(from: Date())) · \(includedDecisions.count) decisions",
                  font: .systemFont(ofSize: 11, weight: .medium), color: .darkGray, spacingAfter: 12)
             divider()
 
-            for decision in decisions {
+            for decision in includedDecisions {
                 draw(decision.title, font: .systemFont(ofSize: 18, weight: .bold), spacingAfter: 2)
                 draw("\(decision.category.rawValue) · \(decision.stakesLevel.rawValue) stakes · \(decision.status.rawValue) · Clarity \(decision.clarityScore)%",
                      font: .systemFont(ofSize: 10, weight: .medium), color: .gray, spacingAfter: 6)
@@ -222,9 +239,18 @@ enum ExportManager {
 
                 if let review = decision.outcomeReview {
                     draw("Outcome review", font: .systemFont(ofSize: 12, weight: .semibold), spacingAfter: 4)
-                    draw("What happened: \(review.whatHappened)", font: .systemFont(ofSize: 11), color: .darkGray)
-                    draw("Outcome quality: \(review.outcomeQuality)/5 · Decision quality: \(review.decisionQuality)/5 · Would do again: \(review.wouldDoAgain ? "Yes" : "No")",
-                         font: .systemFont(ofSize: 10), color: .gray)
+                    if !review.whatHappened.isEmpty {
+                        draw("What happened: \(review.whatHappened)", font: .systemFont(ofSize: 11), color: .darkGray)
+                    }
+                    let recordedRatings = [
+                        review.hasOutcomeQuality ? "Outcome quality: \(review.outcomeQuality)/5" : nil,
+                        review.hasDecisionQuality ? "Decision quality: \(review.decisionQuality)/5" : nil,
+                        review.hasWouldDoAgain ? "Would do again: \(review.wouldDoAgain ? "Yes" : "No")" : nil
+                    ].compactMap { $0 }
+                    if !recordedRatings.isEmpty {
+                        draw(recordedRatings.joined(separator: " · "),
+                             font: .systemFont(ofSize: 10), color: .gray)
+                    }
                     if !review.mainLesson.isEmpty {
                         draw("Lesson: \(review.mainLesson)", font: .systemFont(ofSize: 11, weight: .medium), color: .black)
                     }

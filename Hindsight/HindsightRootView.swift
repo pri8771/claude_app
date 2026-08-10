@@ -16,6 +16,8 @@ import SwiftUI
 final class AppRouter: ObservableObject {
     /// When set, the main app presents the New Decision wizard.
     @Published var presentNewDecision = false
+    /// When set, the main app presents the one-screen forecast capture flow.
+    @Published var presentQuickCapture = false
     /// Set when a local reminder is tapped and the Decisions tab should open
     /// a specific decision detail screen.
     @Published var focusDecisionID: UUID?
@@ -24,8 +26,7 @@ final class AppRouter: ObservableObject {
 struct HindsightRootView: View {
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @StateObject private var router = AppRouter()
-
-    @State private var showSplash = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -38,19 +39,7 @@ struct HindsightRootView: View {
             }
         }
         .environmentObject(router)
-        .animation(.easeInOut(duration: 0.35), value: hasCompletedOnboarding)
-        // Branded launch animation that fades into the app.
-        .overlay {
-            if showSplash {
-                SplashView()
-                    .transition(.opacity)
-                    .zIndex(1)
-            }
-        }
-        .task {
-            try? await Task.sleep(nanoseconds: 1_300_000_000)
-            withAnimation(.easeInOut(duration: 0.45)) { showSplash = false }
-        }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: hasCompletedOnboarding)
     }
 }
 
@@ -58,5 +47,4 @@ struct HindsightRootView: View {
     HindsightRootView()
         .environmentObject(NotificationManager.shared)
         .modelContainer(SampleData.previewContainer)
-        .preferredColorScheme(.dark)
 }

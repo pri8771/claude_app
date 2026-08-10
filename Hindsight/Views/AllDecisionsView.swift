@@ -161,5 +161,4 @@ private struct FilterChip: View {
 #Preview {
     AllDecisionsView()
         .modelContainer(SampleData.previewContainer)
-        .preferredColorScheme(.dark)
 }

@@ -34,5 +34,4 @@ struct OnboardingProgressDotsView: View {
             OnboardingProgressDotsView(count: 4, index: 2)
         }
     }
-    .preferredColorScheme(.dark)
 }

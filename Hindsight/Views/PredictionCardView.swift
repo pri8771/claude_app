@@ -21,7 +21,9 @@ struct PredictionCardView: View {
                         lineWidth: 6,
                         size: 50,
                         tint: ringTint,
-                        label: "\(prediction.probabilityPercent)"
+                        label: "\(prediction.probabilityPercent)",
+                        accessibilityLabel: "Stated confidence",
+                        accessibilityValue: "\(prediction.probabilityPercent) percent"
                     )
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -31,7 +33,7 @@ struct PredictionCardView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         HStack(spacing: 6) {
-                            HBadge(text: prediction.status.rawValue, icon: prediction.status.icon,
+                            HBadge(text: prediction.status.eventOutcomeLabel, icon: prediction.status.icon,
                                    color: prediction.status.color,
                                    filled: prediction.status != .pending)
                             Text(dueText)
@@ -84,5 +86,4 @@ struct PredictionCardView: View {
     }
     .padding()
     .hindsightBackground()
-    .preferredColorScheme(.dark)
 }

@@ -35,7 +35,10 @@ contracts, then this plan.  Build 1 remains a separate local release candidate g
 
 ### Execution status
 
-Only **P1.CORE.1 — personal postcard vertical slice** is `in_progress`.  It is local-only and
+Only **P1.CORE.1 — personal postcard vertical slice** is `in_progress`. Its capture sub-slice
+P1.CORE.1A and native-shell sub-slice P1.CORE.1B are `verification_pending`; redesigned
+resolution/detail, physical-device/accessibility evidence, and later personal-core tasks remain.
+It is local-only and
 must preserve Build 1 behavior.  Every other task in this document is `queued`, unless the
 Social v2 tracker explicitly records inherited foundation evidence as `review_required` or
 `code_complete`.  In particular, all social/backend tasks remain queued behind F0.3/F0.4/F0.5.

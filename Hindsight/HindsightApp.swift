@@ -36,7 +36,13 @@ struct HindsightApp: App {
             defaults.set(true, forKey: AppStorageKeys.hapticsEnabled)
             defaults.set(true, forKey: AppStorageKeys.hasLaunchedBefore)
             defaults.set(true, forKey: AppStorageKeys.didRequestNotifications)
-            defaults.removeObject(forKey: AppStorageKeys.quickCaptureDraft)
+            if Self.shouldResetUITestState {
+                defaults.removeObject(forKey: AppStorageKeys.quickCaptureDraft)
+                defaults.removeObject(forKey: AppStorageKeys.didCompleteQuickCaptureNudge)
+                OutcomeReviewDraftStore.clearAll(defaults: defaults)
+                PredictionResolutionDraftStore.clearAll(defaults: defaults)
+            }
+            defaults.set(MainTabView.Tab.now.rawValue, forKey: AppStorageKeys.selectedMainTab)
         }
 
         // Built locally and handed to `_bootResult`'s initial value below.
@@ -50,13 +56,7 @@ struct HindsightApp: App {
         // by then the view exists and @State behaves normally.)
         let result: Result<ModelContainer, Error>
         do {
-            if Self.isUITesting {
-                let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
-                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-                result = .success(try StoreBootstrap.makeContainer(configuration: config))
-            } else {
-                result = .success(try StoreBootstrap.makeContainer())
-            }
+            result = .success(try Self.makeContainer())
         } catch {
             result = .failure(error)
         }
@@ -75,11 +75,20 @@ struct HindsightApp: App {
     /// `false`, so launch arguments can never opt a distributable build into
     /// its in-memory store or test defaults.
     #if DEBUG
-    private static var isUITesting: Bool {
+    private static var isUITesting: Bool { usesInMemoryUITestStore || usesFileBackedUITestStore }
+    private static var shouldResetUITestState: Bool {
+        usesInMemoryUITestStore || ProcessInfo.processInfo.arguments.contains("-uiTestFileBackedReset")
+    }
+    private static var usesInMemoryUITestStore: Bool {
         ProcessInfo.processInfo.arguments.contains("-uiTestReset")
+    }
+    private static var usesFileBackedUITestStore: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uiTestFileBacked") ||
+        ProcessInfo.processInfo.arguments.contains("-uiTestFileBackedReset")
     }
     #else
     private static let isUITesting = false
+    private static let shouldResetUITestState = false
     #endif
 
     var body: some Scene {
@@ -88,49 +97,72 @@ struct HindsightApp: App {
                 HindsightRootView()
                     .environmentObject(notificationManager)
                     .tint(HindsightTheme.Colors.accent)
-                    .preferredColorScheme(.dark)
                     .modelContainer(container)
             } else if case .failure(let error) = bootResult {
                 StoreRecoveryView(error: error, onRetry: { retryBootstrap() })
                     .tint(HindsightTheme.Colors.accent)
-                    .preferredColorScheme(.dark)
             } else {
                 // Loading state (shouldn't occur in practice, but defensive)
                 ProgressView()
-                    .preferredColorScheme(.dark)
             }
         }
     }
 
     private func retryBootstrap() {
         do {
-            if Self.isUITesting {
-                let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
-                let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-                self.bootResult = .success(try StoreBootstrap.makeContainer(configuration: config))
-            } else {
-                self.bootResult = .success(try StoreBootstrap.makeContainer())
-            }
+            self.bootResult = .success(try Self.makeContainer())
         } catch {
             self.bootResult = .failure(error)
         }
     }
+
+    private static func makeContainer() throws -> ModelContainer {
+        #if DEBUG
+        let schema = Schema([Decision.self, DecisionOption.self, Prediction.self, OutcomeReview.self])
+        if usesInMemoryUITestStore {
+            let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            return try StoreBootstrap.makeContainer(configuration: configuration)
+        }
+        if usesFileBackedUITestStore {
+            let storeURL = uiTestStoreURL
+            if shouldResetUITestState {
+                for url in [storeURL,
+                            URL(fileURLWithPath: storeURL.path + "-wal"),
+                            URL(fileURLWithPath: storeURL.path + "-shm")] {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+            let configuration = ModelConfiguration(schema: schema, url: storeURL)
+            return try StoreBootstrap.makeContainer(configuration: configuration)
+        }
+        #endif
+        return try StoreBootstrap.makeContainer()
+    }
+
+    #if DEBUG
+    private static var uiTestStoreURL: URL {
+        let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return directory.appendingPathComponent("hindsight-ui-test.store")
+    }
+    #endif
 }
 
 // MARK: - UIKit appearance
 
-/// Configures navigation / tab bar chrome to match the dark theme.
+/// Configures navigation and tab chrome for the adaptive adult visual system.
 private enum Appearance {
     static func configure() {
-        let background = UIColor(HindsightTheme.Colors.background)
+        let background = UIColor(HindsightTheme.Colors.surface)
+        let ink = UIColor(HindsightTheme.Colors.textPrimary)
 
         // Navigation bar
         let nav = UINavigationBarAppearance()
         nav.configureWithOpaqueBackground()
         nav.backgroundColor = background
         nav.shadowColor = .clear
-        nav.titleTextAttributes = [.foregroundColor: UIColor.white]
-        nav.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        nav.titleTextAttributes = [.foregroundColor: ink]
+        nav.largeTitleTextAttributes = [.foregroundColor: ink]
         UINavigationBar.appearance().standardAppearance = nav
         UINavigationBar.appearance().scrollEdgeAppearance = nav
         UINavigationBar.appearance().compactAppearance = nav
@@ -139,7 +171,7 @@ private enum Appearance {
         let tab = UITabBarAppearance()
         tab.configureWithOpaqueBackground()
         tab.backgroundColor = UIColor(HindsightTheme.Colors.surface)
-        tab.shadowColor = UIColor.white.withAlphaComponent(0.06)
+        tab.shadowColor = UIColor(HindsightTheme.Colors.border)
         UITabBar.appearance().standardAppearance = tab
         UITabBar.appearance().scrollEdgeAppearance = tab
     }

@@ -25,6 +25,7 @@ struct DecisionDetailView: View {
     @State private var showDeleteConfirm = false
     @State private var expandedOptionID: UUID?
     @State private var saveError: String?
+    @State private var deleteError: String?
 
     var body: some View {
         ZStack {
@@ -84,6 +85,14 @@ struct DecisionDetailView: View {
         )) {
             Button("Cancel", role: .cancel) { saveError = nil }
         } message: { Text(saveError ?? "An error occurred while saving.") }
+        .alert("Couldn't delete", isPresented: Binding(
+            get: { deleteError != nil }, set: { if !$0 { deleteError = nil } }
+        )) {
+            Button("Try Again") { deleteDecision() }
+            Button("Keep Decision", role: .cancel) { deleteError = nil }
+        } message: {
+            Text(deleteError ?? "The decision is still here. Please try again.")
+        }
     }
 
     // MARK: Header
@@ -117,7 +126,9 @@ struct DecisionDetailView: View {
                     progress: Double(decision.clarityScore) / 100,
                     lineWidth: 8, size: 76,
                     tint: HindsightTheme.Colors.amber,
-                    label: "\(decision.clarityScore)", caption: "context"
+                    label: "\(decision.clarityScore)", caption: "context",
+                    accessibilityLabel: "Context captured",
+                    accessibilityValue: "\(decision.clarityScore) out of 100"
                 )
             }
 
@@ -253,6 +264,20 @@ struct DecisionDetailView: View {
 
             if let review = decision.outcomeReview {
                 OutcomeSummaryCard(review: review)
+            } else if allPredictionsHaveTerminalOutcomes {
+                HCard(background: HindsightTheme.Colors.success.opacity(0.10)) {
+                    VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+                        Label("Forecast outcome recorded", systemImage: "checkmark.circle.fill")
+                            .font(HindsightTheme.Typography.headline)
+                            .foregroundStyle(HindsightTheme.Colors.success)
+                        Text(terminalOutcomeDetail)
+                            .font(HindsightTheme.Typography.footnote)
+                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                        HButton(title: "Add Optional Reflection", icon: "square.and.pencil", style: .secondary) {
+                            showOutcomeReview = true
+                        }
+                    }
+                }
             } else if decision.isPastDue {
                 HCard(background: HindsightTheme.Colors.accent.opacity(0.12)) {
                     VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
@@ -299,6 +324,17 @@ struct DecisionDetailView: View {
         decision.predictions.contains { $0.status == .pending && $0.dueDate <= Date() }
     }
 
+    private var allPredictionsHaveTerminalOutcomes: Bool {
+        !decision.predictions.isEmpty && decision.predictions.allSatisfy { $0.status != .pending }
+    }
+
+    private var terminalOutcomeDetail: String {
+        if decision.predictions.contains(where: { $0.dueDate > Date() }) {
+            return "The result is saved. Forecasts enter calibration only after their original check date arrives. A fuller reflection is optional."
+        }
+        return "The result is saved in History and is eligible for calibration when binary. Add a fuller reflection if it would help you learn from the decision."
+    }
+
     // MARK: Actions
 
     private func chooseOption(_ option: DecisionOption) {
@@ -328,15 +364,13 @@ struct DecisionDetailView: View {
     }
 
     private func deleteDecision() {
-        context.delete(decision)
-
-        // Attempt save; side effects (reminder cancellation, haptic, dismiss) only on success
-        if PersistenceService.saveOrReport(context) {
-            notificationManager.cancelReminder(for: decision)
+        switch DataLifecycleManager.deleteDecision(decision, in: context) {
+        case .deleted(let receipt):
+            notificationManager.cancelReminders(withIdentifiers: receipt.reminderIdentifiers)
             HapticsManager.shared.deleteConfirmed()
             dismiss()
-        } else {
-            saveError = "An error occurred while saving."
+        case .failed:
+            deleteError = "The decision and its forecasts were not deleted. They are unchanged and ready to retry."
         }
     }
 }
@@ -420,19 +454,38 @@ private struct OutcomeSummaryCard: View {
     var body: some View {
         HCard {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
-                HStack {
-                    ratingColumn("Outcome", value: review.outcomeQuality, tint: HindsightTheme.Colors.success)
-                    Divider().frame(height: 40).overlay(HindsightTheme.Colors.border)
-                    ratingColumn("Process", value: review.decisionQuality, tint: HindsightTheme.Colors.amber)
-                    Divider().frame(height: 40).overlay(HindsightTheme.Colors.border)
-                    VStack(spacing: 4) {
-                        Text("Again?").font(HindsightTheme.Typography.caption2)
-                            .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                        Image(systemName: review.wouldDoAgain ? "hand.thumbsup.fill" : "hand.thumbsdown.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(review.wouldDoAgain ? HindsightTheme.Colors.success : HindsightTheme.Colors.accent)
+                if review.hasOutcomeQuality || review.hasDecisionQuality || review.hasWouldDoAgain {
+                    HStack {
+                        if review.hasOutcomeQuality {
+                            ratingColumn("Outcome", value: review.outcomeQuality, tint: HindsightTheme.Colors.success)
+                        }
+                        if review.hasOutcomeQuality && (review.hasDecisionQuality || review.hasWouldDoAgain) {
+                            Divider().frame(height: 40).overlay(HindsightTheme.Colors.border)
+                        }
+                        if review.hasDecisionQuality {
+                            ratingColumn("Process", value: review.decisionQuality, tint: HindsightTheme.Colors.amber)
+                        }
+                        if review.hasDecisionQuality && review.hasWouldDoAgain {
+                            Divider().frame(height: 40).overlay(HindsightTheme.Colors.border)
+                        }
+                        if review.hasWouldDoAgain {
+                            VStack(spacing: 4) {
+                                Text("Again?").font(HindsightTheme.Typography.caption2)
+                                    .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                                Image(systemName: review.wouldDoAgain ? "hand.thumbsup.fill" : "hand.thumbsdown.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(review.wouldDoAgain ? HindsightTheme.Colors.success : HindsightTheme.Colors.accent)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Would make the same decision again")
+                            .accessibilityValue(review.wouldDoAgain ? "Yes" : "No")
+                        }
                     }
-                    .frame(maxWidth: .infinity)
+                } else {
+                    Text("No optional ratings recorded")
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
                 }
 
                 if !review.whatHappened.isEmpty {
@@ -490,5 +543,4 @@ private struct OutcomeSummaryCard: View {
     }
     .environmentObject(NotificationManager.shared)
     .modelContainer(SampleData.previewContainer)
-    .preferredColorScheme(.dark)
 }

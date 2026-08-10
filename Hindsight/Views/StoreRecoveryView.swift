@@ -123,9 +123,22 @@ struct StoreRecoveryView: View {
     }
 
     private func resetAppData() {
+        var didFail = false
         for url in StoreBootstrap.storeFileURLs() {
-            try? FileManager.default.removeItem(at: url)
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            do {
+                try FileManager.default.removeItem(at: url)
+            } catch {
+                didFail = true
+            }
         }
+        guard !didFail else {
+            exportError = "Couldn't reset all store files. Your draft and reminders were left untouched. Try again or export the files first."
+            return
+        }
+
+        DataLifecycleManager.clearRecoverablePrivateState()
+        NotificationManager.shared.cancelAll()
         onRetry()
     }
 }

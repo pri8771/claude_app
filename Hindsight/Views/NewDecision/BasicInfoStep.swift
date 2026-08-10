@@ -93,6 +93,7 @@ struct BasicInfoStep: View {
             .padding(HindsightTheme.Spacing.md)
         }
         .scrollIndicators(.hidden)
+        .accessibilityIdentifier("newDecision.basics.scroll")
     }
 }
 
@@ -190,5 +191,4 @@ extension View {
 #Preview {
     BasicInfoStep(draft: DecisionDraft())
         .hindsightBackground()
-        .preferredColorScheme(.dark)
 }

@@ -2,35 +2,43 @@
 //  OutcomeReviewView.swift
 //  Hindsight
 //
-//  The retrospective form: what actually happened, how good the result
-//  and the process were, what surprised you, the lesson learned, and a
-//  verdict on every prediction.
+//  Resolves sealed forecasts while keeping the original evidence immutable.
 //
 
 import SwiftUI
 import SwiftData
-#if canImport(UIKit)
-import UIKit
-#endif
+
+private enum OutcomeReviewFocus: Hashable {
+    case predictionOutcomes
+}
 
 struct OutcomeReviewView: View {
     @Bindable var decision: Decision
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var notificationManager: NotificationManager
 
-    // Form state
+    // Resolution state deliberately has no subjective defaults. The persisted
+    // model predates optional ratings, so new values are assigned only after a
+    // person explicitly chooses them.
     @State private var whatHappened = ""
-    @State private var outcomeQuality = 3
-    @State private var decisionQuality = 3
-    @State private var wouldDoAgain = true
+    @State private var outcomeQuality: Int?
+    @State private var decisionQuality: Int?
+    @State private var wouldDoAgain: Bool?
     @State private var whatSurprised = ""
     @State private var mainLesson = ""
     @State private var predictionVerdicts: [UUID: PredictionStatus] = [:]
     @State private var predictionResults: [UUID: String] = [:]
-    @State private var showValidationHint = false
+    @State private var baselineSnapshot: OutcomeReviewDraftSnapshot?
+    @State private var restoredDraft = false
+    @State private var hasLoadedDraft = false
+    @State private var isSaving = false
+    @State private var showDismissConfirmation = false
+    @State private var showPredictionValidation = false
     @State private var saveError: String?
+    @AccessibilityFocusState private var accessibilityFocus: OutcomeReviewFocus?
 
     var body: some View {
         NavigationStack {
@@ -40,134 +48,125 @@ struct OutcomeReviewView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
                         intro
+                        predictionsSection
                         whatHappenedSection
                         ratingsSection
                         reflectionSection
-                        predictionsSection
-                        HButton(title: "Save Review", icon: "checkmark.seal.fill") { save() }
+                        HButton(title: isSaving ? "Saving…" : "Save review", icon: "checkmark") { save() }
+                            .disabled(isSaving)
                             .padding(.top, HindsightTheme.Spacing.sm)
                         Color.clear.frame(height: 12)
                     }
                     .padding(HindsightTheme.Spacing.md)
                 }
                 .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.interactively)
             }
-            .navigationTitle("Outcome Review")
+            .navigationTitle("Review outcome")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }.tint(HindsightTheme.Colors.textSecondary)
+                    Button("Cancel") { requestDismissal() }
+                        .tint(HindsightTheme.Colors.textSecondary)
                 }
             }
-            .onAppear(perform: seedExistingReview)
+            .onAppear(perform: seedExistingReviewAndDraft)
+            .onChange(of: whatHappened) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: outcomeQuality) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: decisionQuality) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: wouldDoAgain) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: whatSurprised) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: mainLesson) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: predictionVerdicts) { _, _ in persistDraftIfNeeded() }
+            .onChange(of: predictionResults) { _, _ in persistDraftIfNeeded() }
+            .confirmationDialog("Keep this draft?", isPresented: $showDismissConfirmation, titleVisibility: .visible) {
+                Button("Keep Draft") {
+                    persistDraftIfNeeded(force: true)
+                    dismiss()
+                }
+                Button("Discard", role: .destructive) {
+                    OutcomeReviewDraftStore.clear(for: decision.id)
+                    dismiss()
+                }
+                Button("Keep Editing", role: .cancel) {}
+            } message: {
+                Text("Your review has not been saved yet. You can keep it for later or discard it.")
+            }
             .alert("Couldn't save", isPresented: Binding(
                 get: { saveError != nil }, set: { if !$0 { saveError = nil } }
             )) {
                 Button("Try Again") { save() }
-                Button("Cancel", role: .cancel) { saveError = nil }
-            } message: { Text(saveError ?? "An error occurred while saving your review.") }
+                Button("Keep Editing", role: .cancel) { saveError = nil }
+            } message: {
+                Text(saveError ?? "Your review is still here. Please try again.")
+            }
         }
-        .preferredColorScheme(.dark)
+        .interactiveDismissDisabled(hasUnsavedChanges || isSaving)
     }
 
-    // MARK: Sections
+    // MARK: Evidence and form sections
 
     private var intro: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(decision.title)
-                .font(HindsightTheme.Typography.title2)
-                .foregroundStyle(HindsightTheme.Colors.textPrimary)
-            Text("Take a clear, kind look at how this played out.")
-                .font(HindsightTheme.Typography.footnote)
-                .foregroundStyle(HindsightTheme.Colors.textSecondary)
-        }
-    }
-
-    private var whatHappenedSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(title: "What actually happened?", systemImage: "text.bubble.fill")
-            HTextEditor(text: $whatHappened, placeholder: "Describe how it turned out…",
-                        accessibilityIdentifier: "outcomeReview.whatHappened")
-            if showValidationHint {
-                Label("Add a line about what happened before saving.", systemImage: "exclamationmark.circle.fill")
-                    .font(HindsightTheme.Typography.caption)
-                    .foregroundStyle(HindsightTheme.Colors.amber)
-                    .transition(.opacity)
+            HStack {
+                Text("ORIGINAL FORECAST · LOCKED")
+                    .font(HindsightTheme.Typography.metadata)
+                    .tracking(0.6)
+                    .foregroundStyle(HindsightTheme.Colors.accent)
+                Spacer()
+                Image(systemName: "lock.fill")
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    .accessibilityHidden(true)
             }
-        }
-    }
-
-    private var ratingsSection: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
-            HCard {
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                    Text("Was the result good?")
-                        .font(HindsightTheme.Typography.headline)
-                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                    Text("Judge the outcome itself — even good decisions can get unlucky.")
-                        .font(HindsightTheme.Typography.caption)
+            Text(decision.title)
+                .font(HindsightTheme.Typography.authoredStatement)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: HindsightTheme.Spacing.sm) { evidenceDates }
+                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) { evidenceDates }
+            }
+            if !decision.notes.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("ORIGINAL WHY · LOCKED")
+                        .font(HindsightTheme.Typography.metadata)
+                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                    Text(decision.notes)
+                        .font(HindsightTheme.Typography.callout)
                         .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                    HStarRating(rating: $outcomeQuality, size: 34, tint: HindsightTheme.Colors.success)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 4)
                 }
             }
-
-            HCard {
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                    Text("Was your decision-making good?")
-                        .font(HindsightTheme.Typography.headline)
-                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                    Text("Judge the process you followed, regardless of luck.")
-                        .font(HindsightTheme.Typography.caption)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                    HStarRating(rating: $decisionQuality, size: 34, tint: HindsightTheme.Colors.amber)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 4)
-                }
-            }
-
-            HCard {
-                Toggle(isOn: $wouldDoAgain) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Would you make the same decision again?")
-                            .font(HindsightTheme.Typography.headline)
-                            .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                        Text(wouldDoAgain ? "Yes — knowing what you know now" : "No — you'd choose differently")
-                            .font(HindsightTheme.Typography.caption)
-                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                    }
-                }
-                .tint(HindsightTheme.Colors.success)
+            if SampleData.isDemoDecision(decision) {
+                Text("EXAMPLE RECORD · EXCLUDED FROM PERSONAL INSIGHTS")
+                    .font(HindsightTheme.Typography.metadata)
+                    .foregroundStyle(HindsightTheme.Colors.accent)
             }
         }
-    }
-
-    private var reflectionSection: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
-            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                HSectionHeader(title: "What surprised you?", systemImage: "sparkle.magnifyingglass")
-                HTextEditor(text: $whatSurprised, placeholder: "Anything you didn't see coming…", minHeight: 80)
-            }
-            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                HSectionHeader(title: "Main lesson learned", systemImage: "lightbulb.fill")
-                HTextEditor(text: $mainLesson, placeholder: "The one thing to remember next time…", minHeight: 80)
-            }
-        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Original forecast, locked. \(decision.title). Created \(decision.createdAt.formatted(date: .long, time: .omitted)). Review date \(decision.dueDate.formatted(date: .long, time: .omitted)).")
     }
 
     @ViewBuilder private var predictionsSection: some View {
         if !decision.predictions.isEmpty {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                HSectionHeader(title: "Revisit your predictions",
-                               subtitle: "Choose the closest match to what happened", systemImage: "scope")
-                ForEach(decision.predictions) { prediction in
+                HSectionHeader(
+                    title: "Resolve each forecast",
+                    subtitle: "Choose what happened for every pending forecast before saving.",
+                    systemImage: "scope"
+                )
+                if showPredictionValidation {
+                    Label("Choose an outcome for every pending forecast before saving.",
+                          systemImage: "exclamationmark.circle.fill")
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.amber)
+                        .accessibilityFocused($accessibilityFocus, equals: .predictionOutcomes)
+                }
+                ForEach(decision.sortedPredictions) { prediction in
                     PredictionVerdictRow(
                         prediction: prediction,
                         verdict: Binding(
                             get: { predictionVerdicts[prediction.id] },
-                            set: {
-                                if let verdict = $0 {
+                            set: { verdict in
+                                if let verdict {
                                     predictionVerdicts[prediction.id] = verdict
                                 } else {
                                     predictionVerdicts.removeValue(forKey: prediction.id)
@@ -184,81 +183,312 @@ struct OutcomeReviewView: View {
         }
     }
 
-    // MARK: Persistence
+    private var whatHappenedSection: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HSectionHeader(title: "What happened overall?", subtitle: "Optional context for your future self", systemImage: "text.bubble.fill")
+            HTextEditor(text: $whatHappened, placeholder: "Describe how it turned out…",
+                        accessibilityIdentifier: "outcomeReview.whatHappened",
+                        accessibilityLabel: "What happened overall",
+                        accessibilityHint: "Optional context for your future self")
+        }
+    }
 
-    private func seedExistingReview() {
+    private var ratingsSection: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+            OptionalRatingCard(
+                title: "How was the result?",
+                detail: "Optional. A result and a good process are not the same thing.",
+                rating: $outcomeQuality,
+                tint: HindsightTheme.Colors.success,
+                allowsClearing: true
+            )
+            OptionalRatingCard(
+                title: "How was your decision-making?",
+                detail: "Optional. Judge the process separately from luck.",
+                rating: $decisionQuality,
+                tint: HindsightTheme.Colors.amber,
+                allowsClearing: true
+            )
+            WouldRepeatCard(selection: $wouldDoAgain, allowsClearing: true)
+        }
+    }
+
+    private var reflectionSection: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                HSectionHeader(title: "What surprised you?", subtitle: "Optional", systemImage: "sparkle.magnifyingglass")
+                HTextEditor(text: $whatSurprised, placeholder: "Anything you didn't see coming…", minHeight: 80)
+            }
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                HSectionHeader(title: "Main lesson learned", subtitle: "Optional", systemImage: "lightbulb.fill")
+                HTextEditor(text: $mainLesson, placeholder: "The one thing to remember next time…", minHeight: 80)
+            }
+        }
+    }
+
+    // MARK: Draft recovery
+
+    private var currentSnapshot: OutcomeReviewDraftSnapshot {
+        let predictions = decision.predictions.compactMap { prediction -> OutcomeReviewPredictionDraft? in
+            let verdict = predictionVerdicts[prediction.id]
+            let result = predictionResults[prediction.id] ?? ""
+            guard verdict != nil || !result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return nil
+            }
+            return OutcomeReviewPredictionDraft(predictionID: prediction.id, verdict: verdict, result: result)
+        }
+        .sorted { $0.predictionID.uuidString < $1.predictionID.uuidString }
+
+        return OutcomeReviewDraftSnapshot(
+            decisionID: decision.id,
+            whatHappened: whatHappened,
+            outcomeQuality: outcomeQuality,
+            decisionQuality: decisionQuality,
+            wouldDoAgain: wouldDoAgain,
+            whatSurprised: whatSurprised,
+            mainLesson: mainLesson,
+            predictions: predictions
+        )
+    }
+
+    private var hasUnsavedChanges: Bool {
+        guard hasLoadedDraft else { return false }
+        return restoredDraft || (currentSnapshot.hasContent && currentSnapshot != baselineSnapshot)
+    }
+
+    private func seedExistingReviewAndDraft() {
+        guard !hasLoadedDraft else { return }
+
         if let review = decision.outcomeReview {
             whatHappened = review.whatHappened
-            outcomeQuality = review.outcomeQuality
-            decisionQuality = review.decisionQuality
-            wouldDoAgain = review.wouldDoAgain
+            outcomeQuality = review.hasOutcomeQuality ? review.outcomeQuality : nil
+            decisionQuality = review.hasDecisionQuality ? review.decisionQuality : nil
+            wouldDoAgain = review.hasWouldDoAgain ? review.wouldDoAgain : nil
             whatSurprised = review.whatSurprised
             mainLesson = review.mainLesson
         }
         for prediction in decision.predictions {
-            // Only seed verdicts for already-resolved predictions; pending predictions get no entry (nil)
             if prediction.status != .pending {
                 predictionVerdicts[prediction.id] = prediction.status
             }
             predictionResults[prediction.id] = prediction.actualResult ?? ""
         }
+
+        baselineSnapshot = currentSnapshot
+        if let draft = OutcomeReviewDraftStore.load(for: decision.id) {
+            apply(draft)
+            restoredDraft = draft.hasContent
+        }
+        hasLoadedDraft = true
+    }
+
+    private func apply(_ snapshot: OutcomeReviewDraftSnapshot) {
+        whatHappened = snapshot.whatHappened
+        outcomeQuality = snapshot.outcomeQuality
+        decisionQuality = snapshot.decisionQuality
+        wouldDoAgain = snapshot.wouldDoAgain
+        whatSurprised = snapshot.whatSurprised
+        mainLesson = snapshot.mainLesson
+        for prediction in snapshot.predictions {
+            if let verdict = prediction.verdict {
+                predictionVerdicts[prediction.predictionID] = verdict
+            }
+            predictionResults[prediction.predictionID] = prediction.result
+        }
+    }
+
+    private func persistDraftIfNeeded(force: Bool = false) {
+        guard hasLoadedDraft else { return }
+        let snapshot = currentSnapshot
+        if force || restoredDraft || snapshot != baselineSnapshot {
+            OutcomeReviewDraftStore.save(snapshot)
+        }
+    }
+
+    private func requestDismissal() {
+        if hasUnsavedChanges {
+            showDismissConfirmation = true
+        } else {
+            dismiss()
+        }
+    }
+
+    // MARK: Persistence
+
+    private var pendingPredictionsWithoutTerminalOutcome: [Prediction] {
+        decision.predictions.filter {
+            guard $0.status == .pending else { return false }
+            guard let verdict = predictionVerdicts[$0.id] else { return true }
+            return verdict == .pending
+        }
+    }
+
+    private var hasReviewContent: Bool {
+        !whatHappened.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        outcomeQuality != nil ||
+        decisionQuality != nil ||
+        wouldDoAgain != nil ||
+        !whatSurprised.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        !mainLesson.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func save() {
-        // Gentle validation: a review should at least say what happened.
-        guard !whatHappened.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            withAnimation { showValidationHint = true }
+        guard !isSaving else { return }
+        guard pendingPredictionsWithoutTerminalOutcome.isEmpty else {
+            if reduceMotion { showPredictionValidation = true }
+            else { withAnimation { showPredictionValidation = true } }
+            accessibilityFocus = .predictionOutcomes
             HapticsManager.shared.validationWarning()
             return
         }
 
-        let review = decision.outcomeReview ?? OutcomeReview()
-        review.whatHappened = whatHappened
-        review.outcomeQuality = outcomeQuality
-        review.decisionQuality = decisionQuality
-        review.wouldDoAgain = wouldDoAgain
-        review.whatSurprised = whatSurprised
-        review.mainLesson = mainLesson
-        review.reviewedAt = Date()
+        isSaving = true
+        defer { isSaving = false }
 
-        if decision.outcomeReview == nil {
-            review.decision = decision
-            decision.outcomeReview = review
-            context.insert(review)
+        let input = OutcomeReviewPersistenceService.Input(
+            whatHappened: whatHappened,
+            outcomeQuality: outcomeQuality,
+            decisionQuality: decisionQuality,
+            wouldDoAgain: wouldDoAgain,
+            whatSurprised: whatSurprised,
+            mainLesson: mainLesson,
+            predictionVerdicts: predictionVerdicts,
+            predictionResults: predictionResults,
+            createsReview: hasReviewContent
+        )
+
+        guard OutcomeReviewPersistenceService.save(input, for: decision, in: context) else {
+            persistDraftIfNeeded(force: true)
+            saveError = "Your review wasn't saved. It is still here to retry."
+            return
         }
 
-        for prediction in decision.predictions {
-            prediction.status = predictionVerdicts[prediction.id] ?? prediction.status
-            let result = predictionResults[prediction.id]?.trimmingCharacters(in: .whitespacesAndNewlines)
-            prediction.actualResult = (result?.isEmpty == false) ? result : nil
+        OutcomeReviewDraftStore.clear(for: decision.id)
+        for prediction in decision.predictions where prediction.status != .pending {
+            notificationManager.cancelReminder(for: prediction)
         }
+        notificationManager.cancelDecisionReminderOnly(for: decision)
+        notificationManager.schedulePendingPredictionReminders(for: decision)
+        HapticsManager.shared.outcomeReviewed()
+        dismiss()
+    }
 
-        decision.status = .reviewed
+    @ViewBuilder private var evidenceDates: some View {
+        HBadge(text: "Created \(decision.createdAt.formatted(.dateTime.month(.abbreviated).day().year()))",
+               icon: "calendar.badge.clock", color: HindsightTheme.Colors.textSecondary)
+        HBadge(text: "Review \(decision.dueDate.formatted(.dateTime.month(.abbreviated).day().year()))",
+               icon: "calendar", color: HindsightTheme.Colors.steel)
+    }
+}
 
-        // Attempt save; side effects (reminder cancellations, haptic, dismiss) only on success
-        if PersistenceService.saveOrReport(context) {
-            // Only after successful save, cancel reminders and fire success haptic
-            for prediction in decision.predictions where prediction.status != .pending {
-                notificationManager.cancelReminder(for: prediction)
+// MARK: - Optional subjective reflection controls
+
+private struct OptionalRatingCard: View {
+    let title: String
+    let detail: String
+    @Binding var rating: Int?
+    let tint: Color
+    let allowsClearing: Bool
+
+    var body: some View {
+        HCard {
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                Text(title)
+                    .font(HindsightTheme.Typography.headline)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text(detail)
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                HStack(spacing: 6) {
+                    ForEach(1...5, id: \.self) { value in
+                        Button {
+                            rating = value
+                            HapticsManager.shared.selectionChanged()
+                        } label: {
+                            Text("\(value)")
+                                .font(HindsightTheme.Typography.callout)
+                                .monospacedDigit()
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .background(rating == value ? tint : tint.opacity(0.14))
+                                .foregroundStyle(rating == value ? HindsightTheme.Colors.surface : tint)
+                                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(value) out of 5")
+                        .accessibilityValue(rating == value ? "Selected" : "Not selected")
+                    }
+                }
+                if rating == nil {
+                    Text("Not rated")
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                } else if allowsClearing {
+                    Button("Clear rating") { rating = nil }
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.accent)
+                        .frame(minHeight: 44)
+                }
             }
-            notificationManager.cancelDecisionReminderOnly(for: decision)
-            notificationManager.schedulePendingPredictionReminders(for: decision)
-            HapticsManager.shared.outcomeReviewed()
-            dismiss()
-        } else {
-            saveError = "An error occurred while saving your review."
         }
     }
 }
 
-// MARK: - Prediction verdict row
+private struct WouldRepeatCard: View {
+    @Binding var selection: Bool?
+    let allowsClearing: Bool
+
+    var body: some View {
+        HCard {
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                Text("Would you make the same decision again?")
+                    .font(HindsightTheme.Typography.headline)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text("Optional — knowing what you know now.")
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                HStack(spacing: HindsightTheme.Spacing.sm) {
+                    repeatButton(title: "Yes", value: true)
+                    repeatButton(title: "No", value: false)
+                }
+                if selection == nil {
+                    Text("No answer recorded")
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                } else if allowsClearing {
+                    Button("Clear answer") { selection = nil }
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.accent)
+                        .frame(minHeight: 44)
+                }
+            }
+        }
+    }
+
+    private func repeatButton(title: String, value: Bool) -> some View {
+        Button {
+            selection = value
+            HapticsManager.shared.selectionChanged()
+        } label: {
+            Text(title)
+                .font(HindsightTheme.Typography.callout)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .foregroundStyle(selection == value ? HindsightTheme.Colors.surface : HindsightTheme.Colors.steel)
+                .background(selection == value ? HindsightTheme.Colors.steel : HindsightTheme.Colors.steel.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm))
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(selection == value ? "Selected" : "Not selected")
+    }
+}
+
+// MARK: - Prediction outcome row
 
 private struct PredictionVerdictRow: View {
     let prediction: Prediction
     @Binding var verdict: PredictionStatus?
     @Binding var result: String
 
-    private let options: [PredictionStatus] = [.correct, .partial, .incorrect]
+    private let options: [PredictionStatus] = [.correct, .incorrect, .partial]
 
     var body: some View {
         HCard(background: HindsightTheme.Colors.cardElevated) {
@@ -275,32 +505,41 @@ private struct PredictionVerdictRow: View {
                         .foregroundStyle(HindsightTheme.Colors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                Text("Original forecast · locked")
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
 
-                HStack(spacing: 6) {
+                VStack(spacing: 6) {
                     ForEach(options) { status in
                         Button {
                             verdict = status
-                            switch status {
-                            case .correct:   HapticsManager.shared.predictionResolvedCorrect()
-                            case .incorrect: HapticsManager.shared.predictionResolvedIncorrect()
-                            default:         HapticsManager.shared.selectionChanged()
-                            }
+                            HapticsManager.shared.selectionChanged()
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 8) {
                                 Image(systemName: status.icon).font(.system(size: 11, weight: .bold))
-                                Text(status.rawValue).font(HindsightTheme.Typography.caption)
+                                Text(status.eventOutcomeLabel).font(HindsightTheme.Typography.subheadline)
+                                Spacer()
+                                if verdict == status {
+                                    Text("Selected")
+                                        .font(HindsightTheme.Typography.caption)
+                                }
                             }
-                            .foregroundStyle(verdict == status ? .white : status.color)
+                            .foregroundStyle(verdict == status ? HindsightTheme.Colors.surface : status.color)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, HindsightTheme.Spacing.md)
+                            .frame(minHeight: 44)
                             .background(verdict == status ? status.color : status.color.opacity(0.14))
                             .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(status.eventOutcomeLabel)
+                        .accessibilityValue(verdict == status ? "Selected" : "Not selected")
                     }
                 }
 
-                HTextField(text: $result, placeholder: "What actually happened? (optional)")
+                HTextField(text: $result,
+                           placeholder: "What made this outcome clear? (optional)",
+                           accessibilityLabel: "Optional outcome detail")
             }
         }
     }

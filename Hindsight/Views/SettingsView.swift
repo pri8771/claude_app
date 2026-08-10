@@ -16,7 +16,6 @@ struct SettingsView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @Query private var decisions: [Decision]
 
-    @AppStorage(AppStorageKeys.userName) private var userName = "there"
     @AppStorage(AppStorageKeys.reviewReminders) private var reviewReminders = true
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @AppStorage(AppStorageKeys.hapticsEnabled) private var hapticsEnabled = true
@@ -26,6 +25,8 @@ struct SettingsView: View {
     @State private var showRemoveDemoConfirm = false
     @State private var exportError: String?
     @State private var clearError: String?
+    @State private var sampleRemovalError: String?
+    @State private var sampleInsertionError: String?
 
     var body: some View {
         NavigationStack {
@@ -35,7 +36,6 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(spacing: HindsightTheme.Spacing.lg) {
                         privacyCard
-                        profileSection
                         notificationSection
                         hapticsSection
                         dataSection
@@ -45,6 +45,7 @@ struct SettingsView: View {
                         Color.clear.frame(height: 24)
                     }
                     .padding(HindsightTheme.Spacing.md)
+                    .hindsightReadableWidth()
                 }
                 .scrollIndicators(.hidden)
             }
@@ -63,10 +64,9 @@ struct SettingsView: View {
             } message: {
                 Text("This permanently erases all \(decisions.count) decisions, predictions and reviews. This can't be undone.")
             }
-            .confirmationDialog("Remove demo data?", isPresented: $showRemoveDemoConfirm, titleVisibility: .visible) {
-                Button("Remove demo data", role: .destructive) {
-                    _ = SampleData.remove(from: context)
-                    HapticsManager.shared.deleteConfirmed()
+            .confirmationDialog("Remove example records?", isPresented: $showRemoveDemoConfirm, titleVisibility: .visible) {
+                Button("Remove example records", role: .destructive) {
+                    removeDemoData()
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -78,6 +78,18 @@ struct SettingsView: View {
                 Button("Try Again") { clearAllData() }
                 Button("Cancel", role: .cancel) { clearError = nil }
             } message: { Text(clearError ?? "An error occurred while deleting your data.") }
+            .alert("Couldn't remove example records", isPresented: Binding(
+                get: { sampleRemovalError != nil }, set: { if !$0 { sampleRemovalError = nil } }
+            )) {
+                Button("Try Again") { removeDemoData() }
+                Button("Cancel", role: .cancel) { sampleRemovalError = nil }
+            } message: { Text(sampleRemovalError ?? "Your data is still here. Please try again.") }
+            .alert("Couldn't load example records", isPresented: Binding(
+                get: { sampleInsertionError != nil }, set: { if !$0 { sampleInsertionError = nil } }
+            )) {
+                Button("Try Again") { loadExampleData() }
+                Button("Cancel", role: .cancel) { sampleInsertionError = nil }
+            } message: { Text(sampleInsertionError ?? "Nothing was added. Please try again.") }
             .task { await notificationManager.refreshAuthorizationStatus() }
         }
     }
@@ -100,25 +112,6 @@ struct SettingsView: View {
                     Text("100% on-device. No account, no cloud, no tracking.")
                         .font(HindsightTheme.Typography.footnote)
                         .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                }
-            }
-        }
-    }
-
-    // MARK: Profile
-
-    private var profileSection: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(title: "Profile", systemImage: "person.crop.circle")
-            HCard {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("YOUR NAME")
-                        .font(HindsightTheme.Typography.caption2)
-                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                    HTextField(text: $userName, placeholder: "Your name", icon: "person.fill")
-                    Text("Used for the greeting on your home screen.")
-                        .font(HindsightTheme.Typography.caption)
-                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
                 }
             }
         }
@@ -169,7 +162,7 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(title: "Your Data", systemImage: "externaldrive.fill")
+            HSectionHeader(title: "Your data", systemImage: "externaldrive.fill")
             HCard {
                 VStack(spacing: HindsightTheme.Spacing.sm) {
                     settingsRow(icon: "doc.badge.arrow.up", tint: HindsightTheme.Colors.accent,
@@ -185,14 +178,13 @@ struct SettingsView: View {
                     settingsRow(
                         icon: hasDemoData ? "trash.slash" : "wand.and.stars",
                         tint: HindsightTheme.Colors.success,
-                        title: hasDemoData ? "Remove demo data" : "Explore with demo data",
-                        subtitle: hasDemoData ? "Keep your decisions, remove the examples" : "See reviews, predictions and insights"
+                        title: hasDemoData ? "Remove example records" : "Explore example records",
+                        subtitle: hasDemoData ? "Keep your records; remove only examples" : "Clearly labeled and excluded from personal insights"
                     ) {
                         if hasDemoData {
                             showRemoveDemoConfirm = true
                         } else {
-                            _ = SampleData.insertIfMissing(into: context)
-                            HapticsManager.shared.selectionChanged()
+                            loadExampleData()
                         }
                     }
                 }
@@ -208,7 +200,7 @@ struct SettingsView: View {
             HCard {
                 Toggle(isOn: $hapticsEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Haptic Feedback")
+                        Text("Haptic feedback")
                             .font(HindsightTheme.Typography.headline)
                             .foregroundStyle(HindsightTheme.Colors.textPrimary)
                         Text("Subtle taps as you capture, resolve and review.")
@@ -232,7 +224,7 @@ struct SettingsView: View {
             HSectionHeader(title: "Help", systemImage: "questionmark.circle.fill")
             HCard {
                 settingsRow(icon: "sparkles", tint: HindsightTheme.Colors.amber,
-                            title: "Show Onboarding Again",
+                            title: "Show onboarding again",
                             subtitle: "Replay the intro — your data is kept") {
                     hasCompletedOnboarding = false
                 }
@@ -244,7 +236,7 @@ struct SettingsView: View {
 
     private var dangerSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(title: "Danger Zone", systemImage: "exclamationmark.octagon.fill",
+            HSectionHeader(title: "Delete data", systemImage: "exclamationmark.octagon.fill",
                            tint: HindsightTheme.Colors.accent)
             HButton(title: "Clear all data", icon: "trash", style: .destructive) {
                 showClearConfirm = true
@@ -281,7 +273,7 @@ struct SettingsView: View {
         Button(action: action) {
             HStack(spacing: HindsightTheme.Spacing.md) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
                         .fill(tint.opacity(0.16)).frame(width: 36, height: 36)
                     Image(systemName: icon).foregroundStyle(tint).font(.system(size: 16, weight: .semibold))
                 }
@@ -298,6 +290,8 @@ struct SettingsView: View {
             }
         }
         .buttonStyle(.plain)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
 
     // MARK: Actions
@@ -310,7 +304,11 @@ struct SettingsView: View {
         Task {
             if enabled {
                 let granted = await notificationManager.requestAuthorization()
-                if granted { notificationManager.rescheduleAll(for: decisions) }
+                if granted {
+                    notificationManager.rescheduleAll(
+                        for: NotificationManager.decisionsEligibleForRescheduling(decisions)
+                    )
+                }
             } else {
                 notificationManager.cancelAll()
             }
@@ -328,15 +326,31 @@ struct SettingsView: View {
     }
 
     private func clearAllData() {
-        for decision in decisions { context.delete(decision) }
-
-        // Attempt save; side effects (notification cancellation, haptic) only on success
-        if PersistenceService.saveOrReport(context) {
-            // Only after successful save, cancel notifications and fire success haptic
+        if DataLifecycleManager.deleteAllJournalData(decisions, in: context) {
             notificationManager.cancelAll()
             HapticsManager.shared.deleteConfirmed()
         } else {
             clearError = "An error occurred while deleting your data."
+        }
+    }
+
+    private func removeDemoData() {
+        switch SampleData.remove(from: context) {
+        case .success(let removedCount):
+            if removedCount > 0 {
+                HapticsManager.shared.deleteConfirmed()
+            }
+        case .failed:
+            sampleRemovalError = "Your example and personal records are still here. Please try again."
+        }
+    }
+
+    private func loadExampleData() {
+        if SampleData.insertIfMissing(into: context) || SampleData.containsDemoData(in: context) {
+            sampleInsertionError = nil
+            HapticsManager.shared.selectionChanged()
+        } else {
+            sampleInsertionError = "The example records could not be saved. Your existing data is unchanged."
         }
     }
 
@@ -369,5 +383,4 @@ struct ShareSheet: UIViewControllerRepresentable {
     SettingsView()
         .environmentObject(NotificationManager.shared)
         .modelContainer(SampleData.previewContainer)
-        .preferredColorScheme(.dark)
 }

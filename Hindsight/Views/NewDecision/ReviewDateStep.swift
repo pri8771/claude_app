@@ -38,7 +38,9 @@ struct ReviewDateStep: View {
                             progress: Double(draft.clarityScore) / 100,
                             lineWidth: 9, size: 88,
                             tint: HindsightTheme.Colors.amber,
-                            label: "\(draft.clarityScore)", caption: "/ 100"
+                            label: "\(draft.clarityScore)", caption: "/ 100",
+                            accessibilityLabel: "Context captured",
+                            accessibilityValue: "\(draft.clarityScore) out of 100"
                         )
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Context captured")
@@ -100,8 +102,7 @@ struct ReviewDateStep: View {
                     HSectionHeader(title: "Summary", systemImage: "list.bullet.clipboard")
                     HCard {
                         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                            summaryRow(icon: "text.quote", label: "Decision",
-                                       value: draft.title.isEmpty ? "—" : draft.title)
+                            decisionSummaryRow(value: draft.title.isEmpty ? "—" : draft.title)
                             Divider().overlay(HindsightTheme.Colors.border)
                             summaryRow(icon: draft.category.icon, label: "Category",
                                        value: draft.category.rawValue, tint: draft.category.color)
@@ -143,14 +144,36 @@ struct ReviewDateStep: View {
             Text(value)
                 .font(HindsightTheme.Typography.subheadline)
                 .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                .lineLimit(1)
                 .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private func decisionSummaryRow(value: String) -> some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
+            HStack(spacing: HindsightTheme.Spacing.sm) {
+                Image(systemName: "text.quote")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                Text("Decision")
+                    .font(HindsightTheme.Typography.footnote)
+                    .foregroundStyle(HindsightTheme.Colors.textTertiary)
+            }
+            Text(value)
+                .font(HindsightTheme.Typography.subheadline)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Decision")
+        .accessibilityValue(value)
     }
 }
 
 #Preview {
     ReviewDateStep(draft: DecisionDraft())
         .hindsightBackground()
-        .preferredColorScheme(.dark)
 }

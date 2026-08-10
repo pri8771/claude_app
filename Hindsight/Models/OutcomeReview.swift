@@ -18,11 +18,16 @@ final class OutcomeReview {
 
     /// Was the result good? (1–5)
     var outcomeQuality: Int = 3
+    /// Defaults true so a lightweight migration preserves the meaning of
+    /// reviews created before optional-answer semantics existed.
+    var hasOutcomeQuality: Bool = true
     /// Was the decision-making *process* good, regardless of luck? (1–5)
     var decisionQuality: Int = 3
+    var hasDecisionQuality: Bool = true
 
     /// Would the user make the same decision again knowing what they know now?
     var wouldDoAgain: Bool = true
+    var hasWouldDoAgain: Bool = true
 
     /// What surprised the user about how things played out.
     var whatSurprised: String = ""
@@ -36,18 +41,21 @@ final class OutcomeReview {
 
     init(
         whatHappened: String = "",
-        outcomeQuality: Int = 3,
-        decisionQuality: Int = 3,
-        wouldDoAgain: Bool = true,
+        outcomeQuality: Int? = nil,
+        decisionQuality: Int? = nil,
+        wouldDoAgain: Bool? = nil,
         whatSurprised: String = "",
         mainLesson: String = "",
         reviewedAt: Date = Date()
     ) {
         self.id = UUID()
         self.whatHappened = whatHappened
-        self.outcomeQuality = outcomeQuality
-        self.decisionQuality = decisionQuality
-        self.wouldDoAgain = wouldDoAgain
+        self.outcomeQuality = outcomeQuality ?? 3
+        self.hasOutcomeQuality = outcomeQuality != nil
+        self.decisionQuality = decisionQuality ?? 3
+        self.hasDecisionQuality = decisionQuality != nil
+        self.wouldDoAgain = wouldDoAgain ?? true
+        self.hasWouldDoAgain = wouldDoAgain != nil
         self.whatSurprised = whatSurprised
         self.mainLesson = mainLesson
         self.reviewedAt = reviewedAt

@@ -2,204 +2,290 @@
 //  OnboardingView.swift
 //  Hindsight
 //
-//  First-run onboarding: a 4-page, warm, cinematic introduction to a
-//  private decision time capsule. Fully local — no accounts, no network.
+//  A concise, reflection-first introduction to the private calibration loop.
 //
 
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
-
-// MARK: - Onboarding palette
-
-/// A warm, slightly cinematic palette for onboarding. Kept self-contained
-/// so the rest of the app's theme is untouched.
-enum OnboardingTheme {
-    enum Colors {
-        static let background    = Color(hex: "1A1A2E")
-        static let accent        = Color(hex: "E94560")
-        static let amber         = Color(hex: "F5A623")
-        static let card          = Color(hex: "242442")
-        static let elevated      = Color(hex: "2E2E50")
-        static let textPrimary   = Color(hex: "F7F7FB")
-        static let textSecondary = Color(hex: "A7A7C7")
-        static let border        = Color(hex: "343456")
-    }
-}
-
-// MARK: - Root onboarding view
 
 struct OnboardingView: View {
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var router: AppRouter
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sampleLoadError: String?
 
-    @State private var page = 0
-    private let pageCount = 4
-
-    enum Finish { case firstDecision, sampleData, empty }
+    private enum Finish {
+        case firstForecast
+        case exampleData
+        case empty
+    }
 
     var body: some View {
-        ZStack {
-            OnboardingBackground(page: page).ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                topBar
-                pages
-                bottomBar
+        ScrollView {
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xl) {
+                header
+                explanation
+                illustrativeInsight
+                actions
+                privacyNote
             }
+            .frame(maxWidth: 620, alignment: .leading)
+            .padding(.horizontal, HindsightTheme.Spacing.lg)
+            .padding(.vertical, HindsightTheme.Spacing.xxl)
         }
-        .preferredColorScheme(.dark)
+        .background(HindsightTheme.Colors.background.ignoresSafeArea())
+        .alert("Couldn't load example records", isPresented: Binding(
+            get: { sampleLoadError != nil },
+            set: { if !$0 { sampleLoadError = nil } }
+        )) {
+            Button("Try Again") { finish(.exampleData) }
+            Button("Keep choosing", role: .cancel) { sampleLoadError = nil }
+        } message: {
+            Text(sampleLoadError ?? "Nothing was added. Your existing data is unchanged.")
+        }
     }
 
-    // MARK: Top bar (Back appears after page 1)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+            Text("HINDSIGHT")
+                .font(HindsightTheme.Typography.metadata)
+                .foregroundStyle(HindsightTheme.Colors.steel)
+                .tracking(1.2)
 
-    private var topBar: some View {
-        HStack {
-            Button(action: goBack) {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                    Text("Back")
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(OnboardingTheme.Colors.textSecondary)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .background(OnboardingTheme.Colors.elevated.opacity(0.6), in: Capsule())
-            }
-            .opacity(page > 0 ? 1 : 0)
-            .disabled(page == 0)
-            .animation(.easeInOut(duration: 0.2), value: page)
+            Text("A record of your judgment before the outcome is known.")
+                .font(HindsightTheme.Typography.editorialDisplay)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Spacer()
+            Text("Capture a forecast, state how confident you are, and return when the evidence is available. Over time, Hindsight helps you see whether your confidence is calibrated to what actually happens.")
+                .font(HindsightTheme.Typography.body)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, HindsightTheme.Spacing.lg)
-        .padding(.top, HindsightTheme.Spacing.sm)
-        .frame(height: 44)
+        .accessibilityElement(children: .combine)
     }
 
-    // MARK: Paged content
-
-    private var pages: some View {
-        TabView(selection: $page) {
-            OnboardingPageView(
-                iconCluster: ["clock.arrow.circlepath", "lock.shield", "doc.text"],
-                eyebrow: nil,
-                title: "Hindsight",
-                isBrandTitle: true,
-                subtitle: "Your private decision time machine.",
-                message: "Record what you believe before reality gives you the answer."
-            ) { EmptyView() }
-                .tag(0)
-
-            OnboardingPageView(
-                iconCluster: ["lock.shield.fill"],
-                eyebrow: "Private by design",
-                title: "What you write stays yours",
-                subtitle: nil,
-                message: "No account. No server. Your decisions stay on this device."
-            ) { OnboardingPrivacyCard() }
-                .tag(1)
-
-            OnboardingPageView(
-                iconCluster: ["arrow.triangle.2.circlepath"],
-                eyebrow: "How it works",
-                title: "Build better judgment",
-                subtitle: nil,
-                message: "Capture a belief now, then let future-you check the receipts."
-            ) { OnboardingDecisionLoopView() }
-                .tag(2)
-
-            OnboardingFinalCTAView(
-                onFirstDecision: { finish(.firstDecision) },
-                onSampleData:    { finish(.sampleData) },
-                onEmpty:         { finish(.empty) }
+    private var explanation: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            conceptRow(
+                number: "01",
+                title: "Forecast",
+                detail: "Write a specific belief while the result is still uncertain."
             )
-            .tag(3)
+            Divider().overlay(HindsightTheme.Colors.border)
+            conceptRow(
+                number: "02",
+                title: "Confidence",
+                detail: "Choose 0–100% intentionally. It records how likely you thought the outcome was."
+            )
+            Divider().overlay(HindsightTheme.Colors.border)
+            conceptRow(
+                number: "03",
+                title: "Outcome",
+                detail: "Later, mark whether it happened, did not happen, or could not be judged."
+            )
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .animation(.easeInOut, value: page)
-        // Onboarding page swipe / advance (moment #10).
-        .haptics(.light, trigger: page)
+        .overlay(
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("How Hindsight works")
     }
 
-    // MARK: Bottom bar (dots + Continue)
+    private func conceptRow(number: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: HindsightTheme.Spacing.md) {
+            Text(number)
+                .font(HindsightTheme.Typography.metadata)
+                .foregroundStyle(HindsightTheme.Colors.steel)
+                .frame(width: 28, alignment: .leading)
 
-    private var bottomBar: some View {
-        VStack(spacing: HindsightTheme.Spacing.lg) {
-            if page < pageCount - 1 {
-                OnboardingButton(title: "Continue", icon: "arrow.right", kind: .primary, action: advance)
-                    .padding(.horizontal, HindsightTheme.Spacing.lg)
-                    .transition(.opacity)
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
+                Text(title)
+                    .font(HindsightTheme.Typography.headline)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text(detail)
+                    .font(HindsightTheme.Typography.callout)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            OnboardingProgressDotsView(count: pageCount, index: page)
         }
-        .padding(.bottom, HindsightTheme.Spacing.lg)
-        .padding(.top, HindsightTheme.Spacing.sm)
-        .animation(.easeInOut(duration: 0.25), value: page)
+        .padding(HindsightTheme.Spacing.md)
     }
 
-    // MARK: Actions
+    private var illustrativeInsight: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            Label("ILLUSTRATIVE PERSONAL INSIGHT", systemImage: "chart.xyaxis.line")
+                .font(HindsightTheme.Typography.metadata)
+                .foregroundStyle(HindsightTheme.Colors.steel)
 
-    private func advance() {
-        // Page-change haptic is fired by `.haptics(.light, trigger: page)`.
-        withAnimation(.easeInOut) { page = min(page + 1, pageCount - 1) }
+            Text("In 8 resolved forecasts stated at 80% or higher, the outcome happened 6 times.")
+                .font(HindsightTheme.Typography.authoredStatement)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Example only — 6 of 8 eligible resolved forecasts. Your insights appear only from your own resolved forecasts; samples are excluded.")
+                .font(HindsightTheme.Typography.footnote)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(HindsightTheme.Spacing.md)
+        .background(HindsightTheme.Colors.card)
+        .overlay(
+            Rectangle()
+                .fill(HindsightTheme.Colors.steel)
+                .frame(width: 3),
+            alignment: .leading
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
     }
 
-    private func goBack() {
-        withAnimation(.easeInOut) { page = max(page - 1, 0) }
+    private var actions: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            Text("Choose a starting point")
+                .font(HindsightTheme.Typography.headline)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+
+            onboardingAction(
+                title: "Record first forecast",
+                detail: "Open a private forecast and begin with what you believe now.",
+                style: .primary,
+                action: { finish(.firstForecast) }
+            )
+            onboardingAction(
+                title: "Explore example data",
+                detail: "Load clearly marked sample records. They never affect your personal insights or export.",
+                style: .secondary,
+                action: { finish(.exampleData) }
+            )
+            onboardingAction(
+                title: "Start empty",
+                detail: "Go to Today without adding anything.",
+                style: .secondary,
+                action: { finish(.empty) }
+            )
+        }
+    }
+
+    private func onboardingAction(
+        title: String,
+        detail: String,
+        style: OnboardingActionStyle,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: HindsightTheme.Spacing.md) {
+                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
+                    Text(title)
+                        .font(HindsightTheme.Typography.headline)
+                    Text(detail)
+                        .font(HindsightTheme.Typography.footnote)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: HindsightTheme.Spacing.sm)
+                Image(systemName: "arrow.right")
+                    .font(.body.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(style.foreground)
+            .padding(HindsightTheme.Spacing.md)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .background(style.background)
+            .overlay(
+                RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                    .stroke(style.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(detail)
+    }
+
+    private var privacyNote: some View {
+        Text("Private on this device. No account or public profile is required.")
+            .font(HindsightTheme.Typography.footnote)
+            .foregroundStyle(HindsightTheme.Colors.textTertiary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private func finish(_ kind: Finish) {
         switch kind {
-        case .firstDecision: router.presentNewDecision = true
-        case .sampleData:    SampleData.insertIfMissing(into: context)
-        case .empty:         break
+        case .firstForecast:
+            router.presentQuickCapture = true
+        case .exampleData:
+            let inserted = SampleData.insertIfMissing(into: context)
+            guard inserted || SampleData.containsDemoData(in: context) else {
+                sampleLoadError = "The example records could not be saved. Nothing was added; you can retry."
+                return
+            }
+        case .empty:
+            break
         }
         HapticsManager.shared.onboardingCompleted()
-        withAnimation(.easeInOut(duration: 0.35)) { hasCompletedOnboarding = true }
+        if reduceMotion {
+            hasCompletedOnboarding = true
+        } else {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                hasCompletedOnboarding = true
+            }
+        }
     }
 }
 
-// MARK: - Cinematic background
+private enum OnboardingActionStyle {
+    case primary
+    case secondary
 
-/// Soft, layered, performant gradients + a single blurred accent blob that
-/// drifts as the page changes.
+    var foreground: Color {
+        switch self {
+        case .primary: HindsightTheme.Colors.surface
+        case .secondary: HindsightTheme.Colors.textPrimary
+        }
+    }
+
+    var background: Color {
+        switch self {
+        case .primary: HindsightTheme.Colors.textPrimary
+        case .secondary: HindsightTheme.Colors.card
+        }
+    }
+
+    var border: Color {
+        switch self {
+        case .primary: HindsightTheme.Colors.textPrimary
+        case .secondary: HindsightTheme.Colors.borderStrong
+        }
+    }
+}
+
+// These compatibility components remain available to the legacy onboarding
+// subviews while the root uses the quieter, single-screen presentation above.
+// Their colors resolve through the app-wide adaptive theme rather than a
+// separate forced-dark palette.
+enum OnboardingTheme {
+    enum Colors {
+        static let background = HindsightTheme.Colors.background
+        static let accent = HindsightTheme.Colors.accent
+        static let amber = HindsightTheme.Colors.amber
+        static let card = HindsightTheme.Colors.card
+        static let elevated = HindsightTheme.Colors.cardElevated
+        static let textPrimary = HindsightTheme.Colors.textPrimary
+        static let textSecondary = HindsightTheme.Colors.textSecondary
+        static let border = HindsightTheme.Colors.border
+    }
+}
+
 struct OnboardingBackground: View {
     let page: Int
 
     var body: some View {
-        ZStack {
-            OnboardingTheme.Colors.background
-
-            RadialGradient(
-                colors: [OnboardingTheme.Colors.accent.opacity(0.26), .clear],
-                center: .topTrailing, startRadius: 8, endRadius: 460
-            )
-            RadialGradient(
-                colors: [OnboardingTheme.Colors.amber.opacity(0.14), .clear],
-                center: .bottomLeading, startRadius: 8, endRadius: 480
-            )
-
-            Circle()
-                .fill(OnboardingTheme.Colors.accent.opacity(0.12))
-                .frame(width: 340, height: 340)
-                .blur(radius: 90)
-                .offset(x: page.isMultiple(of: 2) ? -130 : 130,
-                        y: CGFloat(page) * 44 - 150)
-                .animation(.easeInOut(duration: 0.7), value: page)
-
-            // A subtle vignette to deepen the journal feel.
-            RadialGradient(
-                colors: [.clear, OnboardingTheme.Colors.background.opacity(0.55)],
-                center: .center, startRadius: 220, endRadius: 620
-            )
-        }
+        HindsightTheme.Colors.background
     }
 }
-
-// MARK: - Shared onboarding button
 
 struct OnboardingButton: View {
     enum Kind { case primary, secondary, tertiary }
@@ -210,55 +296,39 @@ struct OnboardingButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button {
-            // Haptics for onboarding are handled centrally: page changes via
-            // `.haptics(trigger: page)`, completion via `onboardingCompleted()`.
-            action()
-        } label: {
+        Button(action: action) {
             HStack(spacing: HindsightTheme.Spacing.sm) {
                 Text(title)
-                if let icon { Image(systemName: icon).font(.body.weight(.bold)) }
+                if let icon {
+                    Image(systemName: icon)
+                }
             }
-            .font(.headline)
+            .font(HindsightTheme.Typography.headline)
+            .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundStyle(foreground)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background { background }
+            .background(background)
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(borderColor, lineWidth: 1)
+                RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                    .stroke(border, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
     private var foreground: Color {
+        kind == .primary ? HindsightTheme.Colors.surface : HindsightTheme.Colors.textPrimary
+    }
+
+    private var background: Color {
         switch kind {
-        case .primary:   return .white
-        case .secondary: return OnboardingTheme.Colors.textPrimary
-        case .tertiary:  return OnboardingTheme.Colors.textSecondary
+        case .primary: HindsightTheme.Colors.textPrimary
+        case .secondary: HindsightTheme.Colors.card
+        case .tertiary: .clear
         }
     }
 
-    @ViewBuilder private var background: some View {
-        switch kind {
-        case .primary:
-            LinearGradient(colors: [OnboardingTheme.Colors.accent, Color(hex: "C2334B")],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-        case .secondary:
-            OnboardingTheme.Colors.elevated
-        case .tertiary:
-            Color.clear
-        }
-    }
-
-    private var borderColor: Color {
-        switch kind {
-        case .primary:   return .clear
-        case .secondary: return OnboardingTheme.Colors.border
-        case .tertiary:  return .clear
-        }
+    private var border: Color {
+        kind == .tertiary ? .clear : HindsightTheme.Colors.border
     }
 }
 
@@ -266,5 +336,4 @@ struct OnboardingButton: View {
     OnboardingView()
         .environmentObject(AppRouter())
         .modelContainer(SampleData.previewContainer)
-        .preferredColorScheme(.dark)
 }

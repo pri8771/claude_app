@@ -29,23 +29,14 @@ enum PredictionResolutionService {
 
         let previousStatus = prediction.status
         let previousResult = prediction.actualResult
-        let previousDecisionStatus = prediction.decision?.status
         let trimmedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
 
         prediction.status = status
         prediction.actualResult = trimmedNote.isEmpty ? nil : trimmedNote
-        if let decision = prediction.decision,
-           decision.isQuickCapture,
-           decision.predictions.allSatisfy({ $0.status != .pending }) {
-            decision.status = .reviewed
-        }
 
         guard PersistenceService.saveOrReport(context) else {
             prediction.status = previousStatus
             prediction.actualResult = previousResult
-            if let previousDecisionStatus {
-                prediction.decision?.status = previousDecisionStatus
-            }
             return .failed
         }
         return .saved

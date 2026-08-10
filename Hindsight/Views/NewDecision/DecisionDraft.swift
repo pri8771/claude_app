@@ -29,8 +29,22 @@ final class OptionDraft: Identifiable {
 final class PredictionDraft: Identifiable {
     let id = UUID()
     var statement: String = ""
-    var probability: Int = 50
+    /// Nil until the person deliberately moves or adjusts the confidence
+    /// control. The detailed path must not manufacture an "even odds" belief.
+    var probability: Int?
     var dueDate: Date = Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
+
+    var hasStatement: Bool {
+        !statement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var isEmpty: Bool {
+        !hasStatement && probability == nil
+    }
+
+    var isComplete: Bool {
+        hasStatement && probability != nil
+    }
 }
 
 @Observable
@@ -59,10 +73,14 @@ final class DecisionDraft {
     var step2Valid: Bool { validOptions.count >= 2 }
 
     var validPredictions: [PredictionDraft] {
-        predictions.filter { !$0.statement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        predictions.filter(\.isComplete)
     }
 
-    var step3Valid: Bool { !validPredictions.isEmpty }
+    /// At least one complete forecast is required. A partially entered card
+    /// also blocks progress so it can never be silently discarded on save.
+    var step3Valid: Bool {
+        !validPredictions.isEmpty && predictions.allSatisfy { $0.isEmpty || $0.isComplete }
+    }
 
     // MARK: Clarity score
 
@@ -106,10 +124,11 @@ final class DecisionDraft {
             )
         }
 
-        decision.predictions = validPredictions.map {
-            Prediction(
+        decision.predictions = validPredictions.compactMap {
+            guard let probability = $0.probability else { return nil }
+            return Prediction(
                 title: $0.statement.trimmingCharacters(in: .whitespacesAndNewlines),
-                probabilityPercent: $0.probability,
+                probabilityPercent: probability,
                 dueDate: $0.dueDate,
                 status: .pending
             )

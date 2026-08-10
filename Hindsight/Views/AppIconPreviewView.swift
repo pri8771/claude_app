@@ -239,5 +239,4 @@ struct AppIconPreviewView: View {
 
 #Preview("Export screen") {
     AppIconPreviewView()
-        .preferredColorScheme(.dark)
 }

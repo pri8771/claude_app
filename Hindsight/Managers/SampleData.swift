@@ -11,6 +11,11 @@ import SwiftData
 
 enum SampleData {
 
+    enum RemovalResult: Equatable {
+        case success(removedCount: Int)
+        case failed
+    }
+
     private static let decisionIDs: [UUID] = [
         UUID(uuidString: "A1F00100-0000-4000-8000-000000000001")!,
         UUID(uuidString: "A1F00100-0000-4000-8000-000000000002")!,
@@ -20,7 +25,23 @@ enum SampleData {
 
     /// Inserts a handful of realistic decisions into the given context.
     @MainActor
-    static func insert(into context: ModelContext) {
+    @discardableResult
+    static func insert(into context: ModelContext) -> Bool {
+        // Build and persist samples in a separate context. A persister can
+        // reject the first save, and deleting an uncommitted cascade graph in
+        // the caller's context to recover from that failure leaves its visible
+        // objects in an invalid state. The caller sees new samples only after
+        // the staged save succeeds.
+        let stagingContext = ModelContext(context.container)
+        for decision in makeSampleDecisions() {
+            stagingContext.insert(decision)
+        }
+
+        return PersistenceService.saveOrReport(stagingContext)
+    }
+
+    @MainActor
+    private static func makeSampleDecisions() -> [Decision] {
         let calendar = Calendar.current
         let now = Date()
         func days(_ n: Int) -> Date { calendar.date(byAdding: .day, value: n, to: now)! }
@@ -133,15 +154,7 @@ enum SampleData {
             Prediction(title: "I'll still be excited about it in a month", probabilityPercent: 65, dueDate: days(45))
         ]
 
-        for decision in [job, move, gym, side] {
-            context.insert(decision)
-        }
-
-        // Persist demo data; return early on failure without disrupting caller.
-        if !PersistenceService.saveOrReport(context) {
-            // Insertion failed; caller should retry or handle gracefully
-            return
-        }
+        return [job, move, gym, side]
     }
 
     /// Inserts demo decisions if they are not already present. Demo data can
@@ -150,8 +163,7 @@ enum SampleData {
     @discardableResult
     static func insertIfMissing(into context: ModelContext) -> Bool {
         guard !containsDemoData(in: context) else { return false }
-        insert(into: context)
-        return true
+        return insert(into: context)
     }
 
     @MainActor
@@ -169,18 +181,39 @@ enum SampleData {
     /// not by heuristic title matching.
     @MainActor
     @discardableResult
-    static func remove(from context: ModelContext) -> Int {
+    static func remove(from context: ModelContext) -> RemovalResult {
         let decisions = (try? context.fetch(FetchDescriptor<Decision>())) ?? []
         let demoDecisions = decisions.filter { isDemoDecision($0) }
-        for decision in demoDecisions {
-            context.delete(decision)
+
+        let demoIDs = Set(demoDecisions.map(\.id))
+        guard persistDeletion(of: demoIDs, from: context) else {
+            return .failed
         }
 
-        // Persist demo data removal; return 0 on failure (no deletions confirmed).
-        if !PersistenceService.saveOrReport(context) {
-            return 0
+        // Do not delete the same cascade graph a second time in the caller's
+        // context. SwiftData invalidates its child backing data as part of the
+        // staged save; a redundant local cascade can then crash while reading
+        // those invalidated children. @Query observes the store save directly.
+        return .success(removedCount: demoDecisions.count)
+    }
+
+    /// Performs the durable part of a destructive change without touching the
+    /// caller's managed objects. ModelContext.transaction is unavailable here:
+    /// on iOS 17 it persists the transaction itself, which would bypass the
+    /// injectable Persister and make a reported failure non-atomic.
+    @MainActor
+    private static func persistDeletion(of ids: Set<UUID>, from context: ModelContext) -> Bool {
+        guard !ids.isEmpty else { return true }
+
+        let stagingContext = ModelContext(context.container)
+        guard let stagedDecisions = try? stagingContext.fetch(FetchDescriptor<Decision>()) else {
+            return false
         }
-        return demoDecisions.count
+
+        for decision in stagedDecisions where ids.contains(decision.id) {
+            stagingContext.delete(decision)
+        }
+        return PersistenceService.saveOrReport(stagingContext)
     }
 
     /// Compatibility for existing call sites that want samples only in an

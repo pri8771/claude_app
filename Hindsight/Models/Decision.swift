@@ -132,7 +132,9 @@ extension Decision {
 
     /// Whether the most recent outcome was a "win" (good result, would repeat).
     var wasGoodOutcome: Bool {
-        guard let review = outcomeReview else { return false }
+        guard let review = outcomeReview,
+              review.hasOutcomeQuality,
+              review.hasWouldDoAgain else { return false }
         return review.outcomeQuality >= 4 && review.wouldDoAgain
     }
 

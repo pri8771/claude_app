@@ -71,10 +71,10 @@ final class DemoDataSafetyTests: XCTestCase {
         XCTAssertEqual(countBefore, 5)
 
         // Remove demo data.
-        let removedCount = SampleData.remove(from: context)
+        let removalResult = SampleData.remove(from: context)
 
         // Only the 4 demo decisions should be removed (by stable UUID).
-        XCTAssertEqual(removedCount, 4)
+        XCTAssertEqual(removalResult, .success(removedCount: 4))
 
         // The user decision must survive, even though its title matches a demo title.
         let remaining = try context.fetch(FetchDescriptor<Decision>())

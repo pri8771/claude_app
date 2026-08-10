@@ -82,5 +82,4 @@ struct OnboardingPrivacyCard: View {
         OnboardingBackground(page: 1).ignoresSafeArea()
         OnboardingPrivacyCard().padding()
     }
-    .preferredColorScheme(.dark)
 }

@@ -141,6 +141,7 @@ private enum QuickCaptureFocus: Hashable {
 struct QuickCaptureSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var notificationManager: NotificationManager
     @AppStorage(AppStorageKeys.didCompleteQuickCaptureNudge) private var didCompleteNudge = false
 
@@ -148,39 +149,50 @@ struct QuickCaptureSheet: View {
     @State private var saveError: String?
     @State private var isSaving = false
     @State private var showDiscardConfirmation = false
+    @State private var showReasoning = false
     @FocusState private var focusedField: QuickCaptureFocus?
 
     var body: some View {
         NavigationStack {
             ZStack {
-                HindsightTheme.Colors.backgroundGradient.ignoresSafeArea()
+                HindsightTheme.Colors.background.ignoresSafeArea()
                 ScrollView {
-                    VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
-                        if !didCompleteNudge { shortHorizonNudge }
-                        statementSection
-                        reasoningSection
-                        confidenceSection
-                        reviewDateSection
-                        HCard {
-                            Text(ClarityScore.invitation)
-                                .font(HindsightTheme.Typography.footnote)
+                    VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xl) {
+                        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                            Text("PRIVATE FORECAST")
+                                .font(HindsightTheme.Typography.metadata)
+                                .tracking(0.7)
+                                .foregroundStyle(HindsightTheme.Colors.accent)
+                            Text("Record it before you know.")
+                                .font(HindsightTheme.Typography.editorialDisplay)
+                                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                            Text("One clear statement, your confidence, and when the result can be checked.")
+                                .font(HindsightTheme.Typography.callout)
                                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
                         }
+                        if !didCompleteNudge { shortHorizonNudge }
+                        statementSection
+                        confidenceSection
+                        reviewDateSection
+                        reasoningSection
+                        Label("The original statement, confidence, and review date are locked after saving.",
+                              systemImage: "lock")
+                            .font(HindsightTheme.Typography.footnote)
+                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                            .accessibilityLabel("Your original forecast details cannot be edited after saving")
                     }
-                    .padding(HindsightTheme.Spacing.md)
+                    .padding(.horizontal, HindsightTheme.Spacing.md)
+                    .padding(.vertical, HindsightTheme.Spacing.lg)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
                 }
                 .scrollDismissesKeyboard(.interactively)
+                .accessibilityIdentifier("quickCapture.scroll")
             }
-            .navigationTitle("Quick Capture")
+            .navigationTitle("New forecast")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { cancel() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .disabled(!canSave || isSaving)
-                        .accessibilityHint(canSave ? "Saves one prediction for later review" : validationMessage)
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -189,13 +201,25 @@ struct QuickCaptureSheet: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                HButton(title: isSaving ? "Saving…" : "Save Prediction", icon: "checkmark.seal.fill",
-                        isEnabled: canSave && !isSaving, action: save)
-                    .padding(.horizontal, HindsightTheme.Spacing.md)
-                    .padding(.vertical, HindsightTheme.Spacing.sm)
-                    .background(.ultraThinMaterial)
+                Button(action: save) {
+                    Label(isSaving ? "Saving…" : "Lock forecast", systemImage: "lock.fill")
+                        .font(HindsightTheme.Typography.headline)
+                        .foregroundStyle(HindsightTheme.Colors.surface)
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(canSave && !isSaving ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.textTertiary)
+                        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSave || isSaving)
+                .accessibilityIdentifier("Save Prediction")
+                .accessibilityLabel(isSaving ? "Saving forecast" : "Lock forecast")
+                .accessibilityValue(canSave ? "Ready" : validationMessage)
+                .accessibilityHint(canSave ? "Saves this forecast for later comparison" : validationMessage)
+                .padding(.horizontal, HindsightTheme.Spacing.md)
+                .padding(.vertical, HindsightTheme.Spacing.sm)
+                .background(HindsightTheme.Colors.surface)
             }
-            .alert("Couldn't save prediction", isPresented: Binding(
+            .alert("Couldn't save forecast", isPresented: Binding(
                 get: { saveError != nil }, set: { if !$0 { saveError = nil } }
             )) {
                 Button("Try Again") { save() }
@@ -214,11 +238,15 @@ struct QuickCaptureSheet: View {
                 }
                 Button("Keep Editing", role: .cancel) {}
             } message: {
-                Text("Your prediction is not saved yet. You can keep it for later or discard it.")
+                Text("Your forecast is not saved yet. You can keep it for later or discard it.")
             }
         }
+        .futurePostcardScreen()
         .interactiveDismissDisabled(draft.hasContent || isSaving)
-        .onAppear { focusedField = .statement }
+        .onAppear {
+            showReasoning = !draft.trimmedReasoning.isEmpty
+            focusedField = .statement
+        }
         .onChange(of: draft.statement) { _, _ in persistDraft() }
         .onChange(of: draft.reasoning) { _, _ in persistDraft() }
         .onChange(of: draft.confidence) { _, _ in persistDraft() }
@@ -227,70 +255,116 @@ struct QuickCaptureSheet: View {
     }
 
     private var shortHorizonNudge: some View {
-        HCard {
-            HStack(alignment: .top, spacing: HindsightTheme.Spacing.sm) {
-                Image(systemName: "calendar.badge.clock")
-                    .foregroundStyle(HindsightTheme.Colors.accent)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("A quick check-in makes this useful")
-                        .font(HindsightTheme.Typography.headline)
-                    Text("Try a near review date so future you can see what happened.")
-                        .font(HindsightTheme.Typography.footnote)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                }
-                Spacer(minLength: 0)
-                Button("Dismiss") { didCompleteNudge = true }
-                    .font(HindsightTheme.Typography.caption)
-            }
-            .accessibilityElement(children: .contain)
+        HStack(alignment: .top, spacing: HindsightTheme.Spacing.sm) {
+            Image(systemName: "calendar.badge.clock")
+                .foregroundStyle(HindsightTheme.Colors.steel)
+                .accessibilityHidden(true)
+            Text("A near review date produces useful evidence sooner.")
+                .font(HindsightTheme.Typography.footnote)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            Spacer(minLength: HindsightTheme.Spacing.sm)
+            Button("Dismiss") { didCompleteNudge = true }
+                .font(HindsightTheme.Typography.caption)
+                .foregroundStyle(HindsightTheme.Colors.accent)
+                .frame(minHeight: 44)
         }
+        .padding(.horizontal, HindsightTheme.Spacing.md)
+        .background(HindsightTheme.Colors.card)
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private var statementSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            Text("What do you predict?")
-                .font(HindsightTheme.Typography.title2)
-            TextField("For example, I’ll enjoy this job in six months", text: $draft.statement, axis: .vertical)
+            HSectionHeader(title: "What do you expect will happen?")
+            TextField("Write one outcome that can later be checked", text: $draft.statement, axis: .vertical)
                 .lineLimit(3...6)
                 .textInputAutocapitalization(.sentences)
                 .focused($focusedField, equals: .statement)
+                .font(HindsightTheme.Typography.authoredStatement)
                 .padding(HindsightTheme.Spacing.md)
+                .frame(minHeight: 96, alignment: .topLeading)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
                 .background(HindsightTheme.Colors.card)
                 .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                        .stroke(HindsightTheme.Colors.borderStrong, lineWidth: 1)
+                }
                 .accessibilityIdentifier("Quick capture statement")
             if !draft.statement.isEmpty && !draft.isStatementValid {
-                Text("Enter a prediction before saving.")
+                Text("Enter a forecast before saving.")
                     .font(HindsightTheme.Typography.caption)
                     .foregroundStyle(HindsightTheme.Colors.accent)
-                    .accessibilityLabel("A prediction is required before saving")
+                    .accessibilityLabel("A forecast is required before saving")
             }
         }
     }
 
     private var reasoningSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            Text("Why? (optional)")
-                .font(HindsightTheme.Typography.title2)
-            TextField("What makes you think so?", text: $draft.reasoning, axis: .vertical)
-                .lineLimit(2...5)
-                .textInputAutocapitalization(.sentences)
-                .focused($focusedField, equals: .reasoning)
-                .padding(HindsightTheme.Spacing.md)
-                .background(HindsightTheme.Colors.card)
-                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
-                .accessibilityIdentifier("Quick capture reasoning")
+            Button {
+                if reduceMotion {
+                    showReasoning.toggle()
+                } else {
+                    withAnimation(.easeInOut(duration: 0.2)) { showReasoning.toggle() }
+                }
+                if showReasoning { focusedField = .reasoning }
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Why do you think so?")
+                            .font(HindsightTheme.Typography.headline)
+                        Text("Optional context for your future self")
+                            .font(HindsightTheme.Typography.footnote)
+                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: showReasoning ? "chevron.up" : "plus")
+                        .foregroundStyle(HindsightTheme.Colors.steel)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showReasoning ? "Hide optional reasoning" : "Add optional reasoning")
+
+            if showReasoning {
+                TextField("What evidence or assumption is behind this?", text: $draft.reasoning, axis: .vertical)
+                    .lineLimit(2...5)
+                    .textInputAutocapitalization(.sentences)
+                    .focused($focusedField, equals: .reasoning)
+                    .padding(HindsightTheme.Spacing.md)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                    .background(HindsightTheme.Colors.card)
+                    .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                            .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+                    }
+                    .accessibilityIdentifier("Quick capture reasoning")
+            }
         }
     }
 
     private var confidenceSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Text("How confident are you?").font(HindsightTheme.Typography.title2)
                 Spacer()
                 if let confidence = draft.confidence {
                     Text("\(confidence)%")
+                        .font(HindsightTheme.Typography.stat)
                         .foregroundStyle(HindsightTheme.Colors.accent)
                         .monospacedDigit()
+                } else {
+                    Text("Choose")
+                        .font(HindsightTheme.Typography.caption)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
                 }
             }
             Slider(
@@ -307,20 +381,34 @@ struct QuickCaptureSheet: View {
                 ),
                 in: 0...100,
                 step: 1,
-                label: { Text("Confidence") },
-                minimumValueLabel: { Text("0%") },
-                maximumValueLabel: { Text("100%") },
                 onEditingChanged: { isEditing in
-                    if !isEditing, draft.confidence != nil {
+                    // The thumb deliberately rests at 50% before selection.
+                    // Touching it is an explicit choice even when the first
+                    // sampled drag position is unchanged (notably at very
+                    // large Dynamic Type and with assistive input).
+                    if isEditing, draft.confidence == nil {
+                        draft.confidence = 50
+                    } else if !isEditing, draft.confidence != nil {
                         HapticsManager.shared.selectionChanged()
                     }
                 }
             )
             .tint(HindsightTheme.Colors.accent)
+            .frame(minHeight: 44)
+            .accessibilityLabel("Confidence")
             .accessibilityValue(draft.confidence.map { "\($0) percent" } ?? "Not selected")
             .accessibilityHint("Adjust from 0 to 100 percent. A confidence is required before saving.")
             .accessibilityIdentifier("quickCapture.confidenceSlider")
-            Text("Move the slider to choose from 0% to 100%. There is no assumed answer.")
+            HStack {
+                Text("0%")
+                Spacer()
+                Text("100%")
+            }
+            .font(HindsightTheme.Typography.caption)
+            .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            .monospacedDigit()
+            .accessibilityHidden(true)
+            Text(draft.confidence.map(confidenceDescription) ?? "Move the slider from 0% to 100%. No answer is assumed.")
                 .font(HindsightTheme.Typography.caption)
                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
         }
@@ -328,27 +416,36 @@ struct QuickCaptureSheet: View {
 
     private var reviewDateSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            Text("Ask me again when")
+            Text("When can this be checked?")
                 .font(HindsightTheme.Typography.title2)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 112), spacing: HindsightTheme.Spacing.sm)], spacing: HindsightTheme.Spacing.sm) {
-                ForEach(QuickCaptureHorizon.allCases) { horizon in
-                    Button {
-                        draft.selectedHorizon = horizon
-                        HapticsManager.shared.selectionChanged()
-                    } label: {
-                        Text(horizon.rawValue)
-                            .font(HindsightTheme.Typography.subheadline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(draft.selectedHorizon == horizon ? HindsightTheme.Colors.accent : HindsightTheme.Colors.card)
-                            .foregroundStyle(draft.selectedHorizon == horizon ? Color.white : HindsightTheme.Colors.textPrimary)
-                            .clipShape(Capsule())
+            ScrollView(.horizontal) {
+                HStack(spacing: HindsightTheme.Spacing.sm) {
+                    ForEach(QuickCaptureHorizon.allCases) { horizon in
+                        Button {
+                            draft.selectedHorizon = horizon
+                            HapticsManager.shared.selectionChanged()
+                        } label: {
+                            Text(horizon.rawValue)
+                                .font(HindsightTheme.Typography.subheadline)
+                                .foregroundStyle(draft.selectedHorizon == horizon ? HindsightTheme.Colors.surface : HindsightTheme.Colors.textPrimary)
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 44)
+                                .background(draft.selectedHorizon == horizon ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.card)
+                                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                                        .stroke(draft.selectedHorizon == horizon ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.border,
+                                                lineWidth: 1)
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(horizon.rawValue)
+                        .accessibilityValue(draft.selectedHorizon == horizon ? "Selected" : "Not selected")
+                        .accessibilityIdentifier("quickCapture.horizon.\(horizon.rawValue)")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(horizon.rawValue)
-                    .accessibilityValue(draft.selectedHorizon == horizon ? "Selected" : "Not selected")
                 }
             }
+            .scrollIndicators(.hidden)
             if draft.selectedHorizon == .custom {
                 let earliestDate = Calendar.current.date(byAdding: .day, value: 1,
                                                          to: Calendar.current.startOfDay(for: Date())) ?? Date()
@@ -370,12 +467,22 @@ struct QuickCaptureSheet: View {
         }
     }
 
+    private func confidenceDescription(_ confidence: Int) -> String {
+        switch confidence {
+        case 0...20: return "You consider this very unlikely."
+        case 21...40: return "You consider this unlikely."
+        case 41...60: return "You see this as close to even odds."
+        case 61...80: return "You consider this likely."
+        default: return "You consider this very likely."
+        }
+    }
+
     private var canSave: Bool {
         draft.isStatementValid && draft.confidence != nil && draft.dueDate() != nil
     }
 
     private var validationMessage: String {
-        if !draft.isStatementValid { return "Enter a prediction before saving" }
+        if !draft.isStatementValid { return "Enter a forecast before saving" }
         if draft.confidence == nil { return "Choose your confidence before saving" }
         return "Choose a future review date before saving"
     }
@@ -383,18 +490,17 @@ struct QuickCaptureSheet: View {
     private func save() {
         guard !isSaving, let decision = draft.makeDecision() else { return }
         isSaving = true
-        context.insert(decision)
-        if PersistenceService.saveOrReport(context) {
+        if NewDecisionGraphPersistenceService.save(decision, in: context) {
             QuickCaptureDraftStore.clear()
             didCompleteNudge = true
             Task { await notificationManager.scheduleReviewReminderIfAllowed(for: decision) }
             HapticsManager.shared.decisionSealed()
             dismiss()
         } else {
-            // Keep the user-owned draft, but remove the unsaved graph so a retry cannot duplicate it.
-            context.delete(decision)
+            // Keep the user-owned draft. The save boundary already removed
+            // the transient graph, so retry cannot create a duplicate.
             isSaving = false
-            saveError = "Your capture is still here. Please try again."
+            saveError = "Your forecast is still here. Please try again."
         }
     }
 
@@ -419,5 +525,4 @@ struct QuickCaptureSheet: View {
     QuickCaptureSheet()
         .environmentObject(NotificationManager.shared)
         .modelContainer(SampleData.previewContainer)
-        .preferredColorScheme(.dark)
 }

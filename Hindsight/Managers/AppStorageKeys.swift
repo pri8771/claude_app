@@ -24,4 +24,7 @@ enum AppStorageKeys {
     static let didCompleteQuickCaptureNudge = "didCompleteQuickCaptureNudge"
     /// Recoverable in-progress content for the one-sheet Quick Capture flow.
     static let quickCaptureDraft = "quickCaptureDraft"
+    static let predictionResolutionDrafts = "predictionResolutionDrafts"
+    /// Last non-action destination selected in the Future Postcards tab shell.
+    static let selectedMainTab = "selectedMainTab"
 }

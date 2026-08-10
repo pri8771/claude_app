@@ -2,7 +2,7 @@
 //  MainTabView.swift
 //  Hindsight
 //
-//  The app's main tab bar: Today, Decisions, Insights and Settings.
+//  The adult personal shell: Today, History, one-tap Capture, Insights and Settings.
 //  Shown once first-run onboarding is complete (see HindsightRootView).
 //
 
@@ -13,31 +13,46 @@ struct MainTabView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @EnvironmentObject private var router: AppRouter
 
-    @State private var selectedTab: Tab = .today
+    @AppStorage(AppStorageKeys.selectedMainTab) private var selectedTabRaw = Tab.now.rawValue
 
-    enum Tab: Hashable { case today, decisions, insights, settings }
+    enum Tab: String, Hashable {
+        case now
+        case hindsight
+        case capture
+        case insights
+        case settings
+    }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             TodayView()
-                .tabItem { Label("Today", systemImage: "house.fill") }
-                .tag(Tab.today)
+                .tabItem { Label("Today", systemImage: "calendar") }
+                .tag(Tab.now)
 
-            AllDecisionsView()
-                .tabItem { Label("Decisions", systemImage: "books.vertical.fill") }
-                .tag(Tab.decisions)
+            HindsightArchiveView()
+                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+                .tag(Tab.hindsight)
+
+            Color.clear
+                .tabItem { Label("Capture", systemImage: "plus.circle.fill") }
+                .tag(Tab.capture)
 
             InsightsView()
-                .tabItem { Label("Insights", systemImage: "chart.bar.fill") }
+                .tabItem { Label("Insights", systemImage: "chart.xyaxis.line") }
                 .tag(Tab.insights)
 
             SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
         .tint(HindsightTheme.Colors.accent)
+        .toolbarBackground(HindsightTheme.Colors.surface, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
         // Tab switch (moment #12) — very subtle selection feedback.
-        .haptics(.selection, trigger: selectedTab)
+        .haptics(.selection, trigger: selectedTabRaw)
+        .sheet(isPresented: $router.presentQuickCapture) {
+            QuickCaptureSheet()
+        }
         // Deep-link target for onboarding's "Start First Decision" path.
         .sheet(isPresented: $router.presentNewDecision) {
             NewDecisionWizard()
@@ -55,8 +70,21 @@ struct MainTabView: View {
         }
     }
 
+    private var tabSelection: Binding<Tab> {
+        Binding(
+            get: { Tab(rawValue: selectedTabRaw) ?? .now },
+            set: { newValue in
+                if newValue == .capture {
+                    router.presentQuickCapture = true
+                } else {
+                    selectedTabRaw = newValue.rawValue
+                }
+            }
+        )
+    }
+
     private func route(to decisionID: UUID) {
-        selectedTab = .decisions
+        selectedTabRaw = Tab.now.rawValue
         router.focusDecisionID = decisionID
         notificationManager.tappedDecisionID = nil
     }
@@ -67,5 +95,4 @@ struct MainTabView: View {
         .environmentObject(NotificationManager.shared)
         .environmentObject(AppRouter())
         .modelContainer(SampleData.previewContainer)
-        .preferredColorScheme(.dark)
 }

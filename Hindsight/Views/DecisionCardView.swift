@@ -75,9 +75,11 @@ struct DecisionCardView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundStyle(HindsightTheme.Colors.success)
-                    Text("Reviewed · outcome")
+                    Text(review.hasOutcomeQuality ? "Reviewed · outcome" : "Reviewed")
                         .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                    HStarRating(value: review.outcomeQuality, size: 12)
+                    if review.hasOutcomeQuality {
+                        HStarRating(value: review.outcomeQuality, size: 12)
+                    }
                 }
                 .font(HindsightTheme.Typography.caption)
             }
@@ -121,5 +123,4 @@ struct DecisionCardView: View {
     }
     .hindsightBackground()
     .modelContainer(SampleData.previewContainer)
-    .preferredColorScheme(.dark)
 }

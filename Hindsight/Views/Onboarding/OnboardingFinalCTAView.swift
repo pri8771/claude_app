@@ -93,5 +93,4 @@ struct OnboardingFinalCTAView: View {
         OnboardingBackground(page: 3).ignoresSafeArea()
         OnboardingFinalCTAView(onFirstDecision: {}, onSampleData: {}, onEmpty: {})
     }
-    .preferredColorScheme(.dark)
 }

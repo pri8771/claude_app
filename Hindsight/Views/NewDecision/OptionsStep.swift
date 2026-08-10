@@ -66,6 +66,7 @@ struct OptionsStep: View {
             .padding(HindsightTheme.Spacing.md)
         }
         .scrollIndicators(.hidden)
+        .accessibilityIdentifier("newDecision.options.scroll")
     }
 
     private func remove(_ option: OptionDraft) {
@@ -111,7 +112,10 @@ private struct OptionEditorCard: View {
                     HTextField(text: $option.downside, placeholder: "What's bad")
                 }
 
-                HStack(alignment: .top, spacing: HindsightTheme.Spacing.lg) {
+                // Each five-value control needs enough width for five 44-point
+                // targets. Stacking them prevents overlap on compact phones and
+                // lets accessibility text sizes expand without compression.
+                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
                     HStepper(label: "Effort", value: $option.effort, tint: HindsightTheme.Colors.amber)
                     HStepper(label: "Risk", value: $option.risk, tint: HindsightTheme.Colors.accent)
                 }
@@ -120,7 +124,7 @@ private struct OptionEditorCard: View {
                     Text("GUT FEELING")
                         .font(HindsightTheme.Typography.caption2)
                         .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                    HStarRating(rating: $option.gutFeeling, size: 26)
+                    HStarRating(rating: $option.gutFeeling, size: 26, accessibilityLabel: "Gut feeling")
                 }
             }
         }
@@ -140,5 +144,4 @@ private struct OptionEditorCard: View {
 #Preview {
     OptionsStep(draft: DecisionDraft())
         .hindsightBackground()
-        .preferredColorScheme(.dark)
 }

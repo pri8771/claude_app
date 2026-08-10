@@ -209,7 +209,23 @@ final class ResolutionTests: XCTestCase {
         XCTAssertEqual(prediction.status, .partial)
     }
 
-    func testFastResolutionClosesQuickCaptureAfterItsOnlyPredictionResolves() throws {
+    func testFastResolutionOutcomeContextDraftSurvivesAndClearsExplicitly() throws {
+        let suiteName = "ResolutionTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let predictionID = UUID()
+
+        PredictionResolutionDraftStore.save("  The evidence arrived late.  ", for: predictionID, defaults: defaults)
+        XCTAssertEqual(
+            PredictionResolutionDraftStore.load(for: predictionID, defaults: defaults),
+            "  The evidence arrived late.  "
+        )
+
+        PredictionResolutionDraftStore.clear(for: predictionID, defaults: defaults)
+        XCTAssertEqual(PredictionResolutionDraftStore.load(for: predictionID, defaults: defaults), "")
+    }
+
+    func testFastResolutionRecordsOutcomeWithoutClaimingFullReview() throws {
         let context = try makeInMemoryContext()
         let decision = Decision(
             title: "The launch will go smoothly",
@@ -225,10 +241,11 @@ final class ResolutionTests: XCTestCase {
 
         XCTAssertTrue(decision.isQuickCapture)
         XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .correct, note: "", in: context), .saved)
-        XCTAssertEqual(decision.status, .reviewed)
+        XCTAssertEqual(decision.status, .awaitingReview)
+        XCTAssertNil(decision.outcomeReview)
     }
 
-    func testFastResolutionClosesQuickCaptureWithOptionalReasoning() throws {
+    func testFastResolutionWithReasoningStillRequiresReviewForReviewedState() throws {
         let context = try makeInMemoryContext()
         let decision = Decision(
             title: "The launch will go smoothly",
@@ -244,7 +261,8 @@ final class ResolutionTests: XCTestCase {
 
         XCTAssertTrue(decision.isQuickCapture)
         XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .correct, note: "", in: context), .saved)
-        XCTAssertEqual(decision.status, .reviewed)
+        XCTAssertEqual(decision.status, .awaitingReview)
+        XCTAssertNil(decision.outcomeReview)
     }
 
     func testReviewedDecisionRetainsFuturePendingPredictionReminderEligibility() {
@@ -278,6 +296,26 @@ final class ResolutionTests: XCTestCase {
         XCTAssertEqual(eligible.map(\.id), [futurePending.id])
     }
 
+    func testNotificationSelectorsExcludeExplicitSampleRecords() {
+        let now = Date(timeIntervalSince1970: 1_735_689_600)
+        let personal = Decision(title: "Personal", dueDate: now.addingTimeInterval(86_400))
+        let sample = Decision(title: "Example", dueDate: now.addingTimeInterval(86_400))
+        sample.id = UUID(uuidString: "A1F00100-0000-4000-8000-000000000001")!
+        sample.predictions = [Prediction(
+            title: "Sample forecast",
+            dueDate: now.addingTimeInterval(86_400),
+            status: .pending
+        )]
+
+        XCTAssertEqual(
+            NotificationManager.decisionsEligibleForRescheduling([sample, personal]).map(\.id),
+            [personal.id]
+        )
+        XCTAssertTrue(
+            NotificationManager.pendingPredictionsNeedingStandaloneReminders(for: sample, now: now).isEmpty
+        )
+    }
+
     func testFastResolutionFailureRestoresPredictionForRetry() throws {
         let context = try makeInMemoryContext()
         let decision = Decision(title: "Test decision")
@@ -291,5 +329,45 @@ final class ResolutionTests: XCTestCase {
         XCTAssertEqual(PredictionResolutionService.resolve(prediction, as: .incorrect, note: "New note", in: context), .failed)
         XCTAssertEqual(prediction.status, .pending)
         XCTAssertEqual(prediction.actualResult, "Original note")
+    }
+
+    func testFastResolutionPreservesSealedForecastFieldsWhileRecordingOutcome() throws {
+        let context = try makeInMemoryContext()
+        let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let dueDate = Date(timeIntervalSince1970: 1_800_000_000)
+        let decision = Decision(
+            title: "The launch will be calm",
+            notes: "The checklist is complete",
+            category: .personal,
+            stakesLevel: .low,
+            status: .awaitingReview,
+            isReversible: true,
+            createdAt: createdAt,
+            decidedAt: createdAt,
+            dueDate: dueDate
+        )
+        let prediction = Prediction(
+            title: decision.title,
+            probabilityPercent: 75,
+            dueDate: dueDate,
+            status: .pending
+        )
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        XCTAssertEqual(
+            PredictionResolutionService.resolve(prediction, as: .incorrect, note: "  It slipped a week.  ", in: context),
+            .saved
+        )
+
+        XCTAssertEqual(decision.title, "The launch will be calm")
+        XCTAssertEqual(decision.notes, "The checklist is complete")
+        XCTAssertEqual(decision.createdAt, createdAt)
+        XCTAssertEqual(decision.dueDate, dueDate)
+        XCTAssertEqual(prediction.title, "The launch will be calm")
+        XCTAssertEqual(prediction.probabilityPercent, 75)
+        XCTAssertEqual(prediction.status, .incorrect)
+        XCTAssertEqual(prediction.actualResult, "It slipped a week.")
     }
 }

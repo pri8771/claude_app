@@ -16,6 +16,12 @@ import SwiftData
 @MainActor
 final class ModelPersistenceTests: XCTestCase {
 
+    private struct FailingOutcomeReviewPersister: Persisting {
+        func save(_ context: ModelContext) throws {
+            throw NSError(domain: "ModelPersistenceTests", code: 1)
+        }
+    }
+
     private var storeDirectory: URL!
 
     /// Keeps every `ModelContainer` created by a test alive for that test's
@@ -159,10 +165,211 @@ final class ModelPersistenceTests: XCTestCase {
         let review = try XCTUnwrap(fetched.outcomeReview)
         XCTAssertEqual(review.whatHappened, "Saved money, missed the old neighborhood.")
         XCTAssertEqual(review.outcomeQuality, 4)
+        XCTAssertTrue(review.hasOutcomeQuality)
         XCTAssertEqual(review.decisionQuality, 5)
+        XCTAssertTrue(review.hasDecisionQuality)
         XCTAssertTrue(review.wouldDoAgain)
+        XCTAssertTrue(review.hasWouldDoAgain)
         XCTAssertEqual(review.mainLesson, "Weigh commute time more heavily")
         XCTAssertEqual(review.decision?.id, decisionID)
+    }
+
+    func testNewOutcomeReviewInitializerMarksOmittedOptionalAnswersAbsent() {
+        let omitted = OutcomeReview(whatHappened: "Only the facts were recorded")
+        XCTAssertFalse(omitted.hasOutcomeQuality)
+        XCTAssertFalse(omitted.hasDecisionQuality)
+        XCTAssertFalse(omitted.hasWouldDoAgain)
+
+        let explicit = OutcomeReview(outcomeQuality: 3, decisionQuality: 3, wouldDoAgain: true)
+        XCTAssertTrue(explicit.hasOutcomeQuality)
+        XCTAssertTrue(explicit.hasDecisionQuality)
+        XCTAssertTrue(explicit.hasWouldDoAgain)
+    }
+
+    func testOutcomeReviewSaveMarksOmittedOptionalAnswersAbsentAcrossReload() throws {
+        let decisionID = UUID()
+
+        do {
+            let container = try makeFileBackedContainer(filename: "optional-review.store")
+            let context = container.mainContext
+            let decision = Decision(title: "Record facts without subjective scores", status: .awaitingReview)
+            decision.id = decisionID
+            context.insert(decision)
+            try context.save()
+
+            let input = OutcomeReviewPersistenceService.Input(
+                whatHappened: "The forecast resolved",
+                outcomeQuality: nil,
+                decisionQuality: nil,
+                wouldDoAgain: nil,
+                whatSurprised: "",
+                mainLesson: "",
+                predictionVerdicts: [:],
+                predictionResults: [:],
+                createsReview: true
+            )
+            XCTAssertTrue(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+            XCTAssertFalse(try XCTUnwrap(decision.outcomeReview).hasOutcomeQuality)
+        }
+
+        let reopened = try makeFileBackedContainer(filename: "optional-review.store")
+        let fetched = try XCTUnwrap(
+            try reopened.mainContext.fetch(
+                FetchDescriptor<Decision>(predicate: #Predicate { $0.id == decisionID })
+            ).first
+        )
+        let review = try XCTUnwrap(fetched.outcomeReview)
+        XCTAssertFalse(review.hasOutcomeQuality)
+        XCTAssertFalse(review.hasDecisionQuality)
+        XCTAssertFalse(review.hasWouldDoAgain)
+    }
+
+    func testOutcomeReviewSaveCanClearPreviouslyRecordedOptionalAnswers() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(title: "Clear optional answers", status: .reviewed)
+        let review = OutcomeReview(outcomeQuality: 4, decisionQuality: 5, wouldDoAgain: false)
+        decision.outcomeReview = review
+        context.insert(decision)
+        try context.save()
+
+        let input = OutcomeReviewPersistenceService.Input(
+            whatHappened: "Only factual context remains",
+            outcomeQuality: nil,
+            decisionQuality: nil,
+            wouldDoAgain: nil,
+            whatSurprised: "",
+            mainLesson: "",
+            predictionVerdicts: [:],
+            predictionResults: [:],
+            createsReview: true
+        )
+
+        XCTAssertTrue(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+        XCTAssertFalse(review.hasOutcomeQuality)
+        XCTAssertFalse(review.hasDecisionQuality)
+        XCTAssertFalse(review.hasWouldDoAgain)
+        let exported = try XCTUnwrap(ExportManager.makeExport(from: [decision]).decisions.first?.outcomeReview)
+        XCTAssertNil(exported.outcomeQuality)
+        XCTAssertNil(exported.decisionQuality)
+        XCTAssertNil(exported.wouldDoAgain)
+    }
+
+    func testOutcomeReviewFailedSaveRestoresGraphThenRetryCreatesOneReview() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(title: "Keep the original outcome state", status: .awaitingReview)
+        let prediction = Prediction(title: "Forecast", probabilityPercent: 70, status: .pending, actualResult: "Original note")
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        let input = OutcomeReviewPersistenceService.Input(
+            whatHappened: "Changed result",
+            outcomeQuality: 5,
+            decisionQuality: 4,
+            wouldDoAgain: true,
+            whatSurprised: "A surprise",
+            mainLesson: "A lesson",
+            predictionVerdicts: [prediction.id: .correct],
+            predictionResults: [prediction.id: "Resolved note"],
+            createsReview: true
+        )
+        let originalPersister = PersistenceService.shared
+        defer { PersistenceService.shared = originalPersister }
+        let suiteName = "ModelPersistenceTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let draft = OutcomeReviewDraftSnapshot(
+            decisionID: decision.id,
+            whatHappened: input.whatHappened,
+            outcomeQuality: input.outcomeQuality,
+            decisionQuality: input.decisionQuality,
+            wouldDoAgain: input.wouldDoAgain,
+            whatSurprised: input.whatSurprised,
+            mainLesson: input.mainLesson,
+            predictions: [OutcomeReviewPredictionDraft(predictionID: prediction.id, verdict: .correct, result: "Resolved note")]
+        )
+        OutcomeReviewDraftStore.save(draft, defaults: defaults)
+        PersistenceService.shared = FailingOutcomeReviewPersister()
+
+        XCTAssertFalse(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+        XCTAssertEqual(OutcomeReviewDraftStore.load(for: decision.id, defaults: defaults), draft)
+        XCTAssertEqual(decision.status, .awaitingReview)
+        XCTAssertNil(decision.outcomeReview)
+        XCTAssertEqual(prediction.status, .pending)
+        XCTAssertEqual(prediction.actualResult, "Original note")
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<OutcomeReview>()), 0)
+
+        PersistenceService.shared = ContextPersister()
+        XCTAssertTrue(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+        XCTAssertEqual(decision.status, .reviewed)
+        XCTAssertEqual(decision.outcomeReview?.whatHappened, "Changed result")
+        XCTAssertEqual(prediction.status, .correct)
+        XCTAssertEqual(prediction.actualResult, "Resolved note")
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<OutcomeReview>()), 1)
+    }
+
+    func testOutcomeReviewFailedSaveRestoresExistingReviewBeforeRetry() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(title: "Keep existing review", status: .reviewed)
+        let review = OutcomeReview(whatHappened: "Original outcome", outcomeQuality: 2, decisionQuality: 3,
+                                   wouldDoAgain: false, whatSurprised: "Original surprise", mainLesson: "Original lesson")
+        review.hasDecisionQuality = false
+        review.hasWouldDoAgain = false
+        decision.outcomeReview = review
+        context.insert(decision)
+        try context.save()
+
+        let input = OutcomeReviewPersistenceService.Input(
+            whatHappened: "Replacement outcome", outcomeQuality: 5, decisionQuality: 5, wouldDoAgain: true,
+            whatSurprised: "Replacement surprise", mainLesson: "Replacement lesson",
+            predictionVerdicts: [:], predictionResults: [:], createsReview: true
+        )
+        let originalPersister = PersistenceService.shared
+        defer { PersistenceService.shared = originalPersister }
+        PersistenceService.shared = FailingOutcomeReviewPersister()
+
+        XCTAssertFalse(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+        XCTAssertEqual(review.whatHappened, "Original outcome")
+        XCTAssertEqual(review.outcomeQuality, 2)
+        XCTAssertTrue(review.hasOutcomeQuality)
+        XCTAssertEqual(review.decisionQuality, 3)
+        XCTAssertFalse(review.hasDecisionQuality)
+        XCTAssertFalse(review.wouldDoAgain)
+        XCTAssertFalse(review.hasWouldDoAgain)
+        XCTAssertEqual(review.whatSurprised, "Original surprise")
+        XCTAssertEqual(review.mainLesson, "Original lesson")
+
+        PersistenceService.shared = ContextPersister()
+        XCTAssertTrue(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+        XCTAssertEqual(review.whatHappened, "Replacement outcome")
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<OutcomeReview>()), 1)
+    }
+
+    func testPredictionOnlyOutcomeSaveDoesNotCreateReviewedStateWithoutReview() throws {
+        let context = try makeInMemoryContext()
+        let decision = Decision(title: "Forecast only", status: .awaitingReview)
+        let prediction = Prediction(title: "Forecast", status: .pending)
+        decision.predictions = [prediction]
+        context.insert(decision)
+        try context.save()
+
+        let input = OutcomeReviewPersistenceService.Input(
+            whatHappened: "",
+            outcomeQuality: nil,
+            decisionQuality: nil,
+            wouldDoAgain: nil,
+            whatSurprised: "",
+            mainLesson: "",
+            predictionVerdicts: [prediction.id: .correct],
+            predictionResults: [:],
+            createsReview: false
+        )
+
+        XCTAssertTrue(OutcomeReviewPersistenceService.save(input, for: decision, in: context))
+        XCTAssertEqual(prediction.status, .correct)
+        XCTAssertEqual(decision.status, .awaitingReview)
+        XCTAssertNil(decision.outcomeReview)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<OutcomeReview>()), 0)
     }
 
     // MARK: Cascade deletes
@@ -273,6 +480,14 @@ final class ModelPersistenceTests: XCTestCase {
         let mediocre = Decision(title: "mediocre")
         mediocre.outcomeReview = OutcomeReview(outcomeQuality: 3, wouldDoAgain: true)
         XCTAssertFalse(mediocre.wasGoodOutcome)
+
+        let omittedRepeat = Decision(title: "repeat omitted")
+        omittedRepeat.outcomeReview = OutcomeReview(outcomeQuality: 5)
+        XCTAssertFalse(omittedRepeat.wasGoodOutcome)
+
+        let omittedQuality = Decision(title: "quality omitted")
+        omittedQuality.outcomeReview = OutcomeReview(wouldDoAgain: true)
+        XCTAssertFalse(omittedQuality.wasGoodOutcome)
 
         XCTAssertFalse(Decision(title: "unreviewed").wasGoodOutcome)
     }

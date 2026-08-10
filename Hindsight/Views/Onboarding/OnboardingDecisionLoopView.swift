@@ -133,5 +133,4 @@ struct OnboardingDecisionLoopView: View {
         OnboardingBackground(page: 2).ignoresSafeArea()
         ScrollView { OnboardingDecisionLoopView().padding() }
     }
-    .preferredColorScheme(.dark)
 }

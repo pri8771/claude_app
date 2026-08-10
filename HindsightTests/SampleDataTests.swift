@@ -126,8 +126,8 @@ final class SampleDataTests: XCTestCase {
 
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 5)
 
-        let removedCount = SampleData.remove(from: context)
-        XCTAssertEqual(removedCount, 4)
+        let removalResult = SampleData.remove(from: context)
+        XCTAssertEqual(removalResult, .success(removedCount: 4))
 
         let remaining = try context.fetch(FetchDescriptor<Decision>())
         XCTAssertEqual(remaining.count, 1)
@@ -143,16 +143,54 @@ final class SampleDataTests: XCTestCase {
         context.insert(userWithDemoTitle)
         try context.save()
 
-        let removedCount = SampleData.remove(from: context)
+        let removalResult = SampleData.remove(from: context)
         // No demo data was inserted, so nothing should be removed.
-        XCTAssertEqual(removedCount, 0)
+        XCTAssertEqual(removalResult, .success(removedCount: 0))
         // The user's decision should survive, despite the title match.
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 1)
     }
 
     func testRemoveOnEmptyStoreIsANoOp() throws {
         let context = try makeContext()
-        XCTAssertEqual(SampleData.remove(from: context), 0)
+        XCTAssertEqual(SampleData.remove(from: context), .success(removedCount: 0))
+    }
+
+    func testFailedSampleRemovalCanRetryWithoutTouchingMatchingPersonalRecord() throws {
+        let context = try makeContext()
+        defer { PersistenceService.shared = ContextPersister() }
+        SampleData.insert(into: context)
+        let sample = try XCTUnwrap(
+            try context.fetch(FetchDescriptor<Decision>()).first(where: SampleData.isDemoDecision)
+        )
+        let personal = Decision(title: sample.title, notes: "Personal evidence")
+        context.insert(personal)
+        try context.save()
+
+        PersistenceService.shared = SampleRemovalFailingPersister()
+        XCTAssertEqual(SampleData.remove(from: context), .failed)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 5)
+
+        PersistenceService.shared = ContextPersister()
+        XCTAssertEqual(SampleData.remove(from: context), .success(removedCount: 4))
+
+        let remaining = try context.fetch(FetchDescriptor<Decision>())
+        XCTAssertEqual(remaining.map(\.id), [personal.id])
+        XCTAssertEqual(remaining.first?.notes, "Personal evidence")
+    }
+
+    func testFirstSampleSaveFailureLeavesCallerContextUntouchedAndCanRetry() throws {
+        let context = try makeContext()
+        let originalPersister = PersistenceService.shared
+        defer { PersistenceService.shared = originalPersister }
+
+        PersistenceService.shared = SampleRemovalFailingPersister()
+        XCTAssertFalse(SampleData.insert(into: context))
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 0)
+        XCTAssertFalse(SampleData.containsDemoData(in: context))
+
+        PersistenceService.shared = ContextPersister()
+        XCTAssertTrue(SampleData.insert(into: context))
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 4)
     }
 
     // MARK: insertIfEmpty compatibility path
@@ -168,5 +206,11 @@ final class SampleDataTests: XCTestCase {
 
         XCTAssertFalse(SampleData.insertIfEmpty(into: context), "Store is no longer empty")
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<Decision>()), 5)
+    }
+}
+
+private struct SampleRemovalFailingPersister: Persisting {
+    func save(_ context: ModelContext) throws {
+        throw NSError(domain: "SampleDataTests", code: 1)
     }
 }

@@ -9,6 +9,22 @@
 import Foundation
 import UserNotifications
 
+/// Stable request identifiers are derived before destructive persistence so
+/// reminder cleanup never needs to traverse a SwiftData graph after deletion.
+enum ReminderRequestIdentifier {
+    static func decision(_ id: UUID) -> String {
+        "review-\(id.uuidString)"
+    }
+
+    static func prediction(_ id: UUID) -> String {
+        "prediction-\(id.uuidString)"
+    }
+
+    static func all(for decision: Decision) -> [String] {
+        [self.decision(decision.id)] + decision.predictions.map { prediction($0.id) }
+    }
+}
+
 @MainActor
 final class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
@@ -47,6 +63,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     /// Requests notification permission only when needed, then schedules the
     /// reminder if the user has allowed local notifications.
     func scheduleReviewReminderIfAllowed(for decision: Decision) async {
+        guard !SampleData.isDemoDecision(decision) else { return }
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
 
         await refreshAuthorizationStatus()
@@ -68,6 +85,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     /// Schedules a review reminder for a decision on its `dueDate`, plus a
     /// reminder for each prediction that has its own future due date.
     func scheduleReviewReminder(for decision: Decision) {
+        guard !SampleData.isDemoDecision(decision) else { return }
         // Prediction reminders are evaluated independently because a decision
         // can be overdue while one of its predictions is still in the future.
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
@@ -135,9 +153,14 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     /// Cancels any pending reminder for a decision, including reminders for
     /// each of its predictions.
     func cancelReminder(for decision: Decision) {
-        var ids = [requestID(for: decision)]
-        ids.append(contentsOf: decision.predictions.map { requestID(for: $0) })
-        center.removePendingNotificationRequests(withIdentifiers: ids)
+        cancelReminders(withIdentifiers: ReminderRequestIdentifier.all(for: decision))
+    }
+
+    /// Cancels a previously captured set of identifiers. This is the safe
+    /// deletion path because it does not read an invalidated SwiftData model.
+    func cancelReminders(withIdentifiers identifiers: [String]) {
+        guard !identifiers.isEmpty else { return }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     /// Cancels only the decision-level reminder while preserving any
@@ -149,6 +172,7 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     /// Ensures future pending predictions retain standalone reminders after
     /// their parent decision has already received a full review.
     func schedulePendingPredictionReminders(for decision: Decision) {
+        guard !SampleData.isDemoDecision(decision) else { return }
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.reviewReminders) else { return }
         for prediction in Self.pendingPredictionsNeedingStandaloneReminders(for: decision) {
             schedulePredictionReminder(
@@ -165,15 +189,17 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         center.removePendingNotificationRequests(withIdentifiers: [requestID(for: prediction)])
     }
 
-    /// Removes every pending reminder (used by "clear all data" and the toggle).
+    /// Removes every local reminder, including notifications already delivered
+    /// to Notification Center. Used by full data deletion and recovery reset.
     func cancelAll() {
         center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
     }
 
     /// Re-schedules reminders for all decisions that still await review.
     func rescheduleAll(for decisions: [Decision]) {
         cancelAll()
-        for decision in decisions {
+        for decision in Self.decisionsEligibleForRescheduling(decisions) {
             if decision.status != .reviewed {
                 scheduleReviewReminder(for: decision)
             } else {
@@ -186,17 +212,24 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         for decision: Decision,
         now: Date = Date()
     ) -> [Prediction] {
-        decision.predictions.filter {
+        guard !SampleData.isDemoDecision(decision) else { return [] }
+        return decision.predictions.filter {
             $0.status == .pending && $0.dueDate > now
         }
     }
 
+    /// Pure selector used both by Settings and the scheduler. Keeping the
+    /// sample boundary here makes every bulk-reschedule entry point fail safe.
+    static func decisionsEligibleForRescheduling(_ decisions: [Decision]) -> [Decision] {
+        decisions.filter { !SampleData.isDemoDecision($0) }
+    }
+
     private func requestID(for decision: Decision) -> String {
-        "review-\(decision.id.uuidString)"
+        ReminderRequestIdentifier.decision(decision.id)
     }
 
     private func requestID(for prediction: Prediction) -> String {
-        "prediction-\(prediction.id.uuidString)"
+        ReminderRequestIdentifier.prediction(prediction.id)
     }
 
     // MARK: Notification response

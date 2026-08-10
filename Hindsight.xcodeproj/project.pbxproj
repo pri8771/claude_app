@@ -20,6 +20,8 @@
 		FBDC1F46A17FF0348720DE5F /* ClarityScoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8777BBCC3DABBB6C8CBCBD /* ClarityScoreTests.swift */; };
 		F07000000000000000000002 /* SocialV2RolloutPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F07000000000000000000001 /* SocialV2RolloutPolicyTests.swift */; };
 		7AC7D1E89D3C4BA1A2F80001 /* QuickCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC7D1E89D3C4BA1A2F80002 /* QuickCaptureTests.swift */; };
+		D1A7A11F0000000000000001 /* DataLifecycleExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A7A11F0000000000000002 /* DataLifecycleExportTests.swift */; };
+		A11C0DE10000000000000001 /* HStepperSelectionSemanticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11C0DE10000000000000002 /* HStepperSelectionSemanticsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +57,8 @@
 		9E8B7C6D5A4F3E2D1C0B9A8F /* PersistenceBoundaryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PersistenceBoundaryTests.swift; sourceTree = "<group>"; };
 		D5766C7542A2FA83D7A09F96 /* SampleDataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SampleDataTests.swift; sourceTree = "<group>"; };
 		F07000000000000000000001 /* SocialV2RolloutPolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SocialV2RolloutPolicyTests.swift; sourceTree = "<group>"; };
+		D1A7A11F0000000000000002 /* DataLifecycleExportTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DataLifecycleExportTests.swift; sourceTree = "<group>"; };
+		A11C0DE10000000000000002 /* HStepperSelectionSemanticsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HStepperSelectionSemanticsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -168,6 +172,8 @@
 				1B84E31B2BCDC7044BD63CC5 /* StatisticsTests.swift */,
 				A8A13FF6-D8AF-44 /* ResolutionTests.swift */,
 				F07000000000000000000001 /* SocialV2RolloutPolicyTests.swift */,
+				D1A7A11F0000000000000002 /* DataLifecycleExportTests.swift */,
+				A11C0DE10000000000000002 /* HStepperSelectionSemanticsTests.swift */,
 			);
 			name = HindsightTests;
 			path = HindsightTests;
@@ -311,6 +317,8 @@
 				E2C6A7F4A67AF7B3AC2D753B /* StatisticsTests.swift in Sources */,
 				2BE28C68-6411-44 /* ResolutionTests.swift in Sources */,
 				F07000000000000000000002 /* SocialV2RolloutPolicyTests.swift in Sources */,
+				D1A7A11F0000000000000001 /* DataLifecycleExportTests.swift in Sources */,
+				A11C0DE10000000000000001 /* HStepperSelectionSemanticsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,7 +360,7 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -376,7 +384,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -399,7 +407,7 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -424,7 +432,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 796XH483R4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -568,7 +576,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"Hindsight/Preview Content\"";
 				DEVELOPMENT_TEAM = 796XH483R4;
 				ENABLE_PREVIEWS = YES;
@@ -578,7 +586,6 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -599,7 +606,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 796XH483R4;
 				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -608,7 +615,6 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

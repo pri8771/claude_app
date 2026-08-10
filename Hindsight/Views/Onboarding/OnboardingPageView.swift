@@ -137,5 +137,4 @@ struct OnboardingPageView<Accessory: View>: View {
             message: "Record what you believe before reality gives you the answer."
         ) { EmptyView() }
     }
-    .preferredColorScheme(.dark)
 }
