@@ -2,13 +2,13 @@
 //  InsightsView.swift
 //  Hindsight
 //
-//  A private calibration instrument. All forecast figures come from the
-//  sample-safe Statistics snapshot; this view never selects forecasts itself.
+//  Signal Garden turns a private calibration record into an inviting visual
+//  story. Every value still comes from Statistics' strict, sample-safe
+//  snapshot; presentation never re-selects or re-scores forecasts.
 //
 
 import SwiftUI
 import SwiftData
-import Charts
 import Foundation
 
 struct InsightsView: View {
@@ -25,21 +25,22 @@ struct InsightsView: View {
                 HindsightTheme.Colors.background.ignoresSafeArea()
 
                 if decisions.isEmpty {
-                    HEmptyState(
-                        icon: "chart.xyaxis.line",
-                        title: "No calibration record yet",
-                        message: "Capture a forecast, then resolve whether it happened. Insights use only resolved binary outcomes."
-                    )
-                    .padding()
+                    signalGardenEmptyState
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xl) {
-                            calibrationOverview(analytics.overall)
-                            highConfidenceSection(analytics.highConfidence.metric)
-                            confidenceBandsSection(analytics.confidenceBands)
-                            cohortSection(snapshot: analytics)
-                            methodologySection(analytics)
-                            recentReviewsSection
+                            SignalGardenHero(metric: analytics.overall)
+                                .accessibilityIdentifier("insights.signalGarden.hero")
+                            evidenceMilestones
+                            highConfidenceTruth
+                                .accessibilityIdentifier("insights.highConfidence")
+                            confidenceBandGarden
+                                .accessibilityIdentifier("insights.confidenceBands")
+                            personalSignals
+                                .accessibilityIdentifier("insights.personalSignals")
+                            recentReflections
+                            methodology
+                                .accessibilityIdentifier("insights.methodology")
                             Color.clear.frame(height: HindsightTheme.Spacing.md)
                         }
                         .padding(HindsightTheme.Spacing.md)
@@ -53,351 +54,346 @@ struct InsightsView: View {
         }
     }
 
-    // MARK: - Calibration record
+    // MARK: - Empty and evidence progress
 
-    private func calibrationOverview(_ metric: ForecastMetricSummary) -> some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(
-                title: "Calibration record",
-                subtitle: "All time · strictly eligible binary forecasts",
-                systemImage: "scope",
-                tint: HindsightTheme.Colors.steel
-            )
-
-            HCard(background: HindsightTheme.Colors.surface) {
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
-                    Text(overallStory(metric))
-                        .font(HindsightTheme.Typography.headline)
-                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(sampleQualification(metric))
-                        .font(HindsightTheme.Typography.footnote)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    metricGrid(metric)
-                }
+    private var signalGardenEmptyState: some View {
+        VStack(spacing: HindsightTheme.Spacing.lg) {
+            ZStack {
+                Circle()
+                    .stroke(HindsightTheme.Colors.border, lineWidth: 12)
+                    .frame(width: 132, height: 132)
+                Circle()
+                    .trim(from: 0, to: 0.18)
+                    .stroke(HindsightTheme.Colors.steel, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 132, height: 132)
+                Image(systemName: "sparkle.magnifyingglass")
+                    .font(.system(size: 34, weight: .medium))
+                    .foregroundStyle(HindsightTheme.Colors.steel)
             }
-        }
-    }
-
-    private func metricGrid(_ metric: ForecastMetricSummary) -> some View {
-        LazyVGrid(
-            columns: metricColumns,
-            spacing: HindsightTheme.Spacing.sm
-        ) {
-            instrumentValue(value: countText(metric.eligibleCount), label: "Eligible forecasts", tint: HindsightTheme.Colors.steel)
-            instrumentValue(value: percent(metric.meanConfidence), label: "Mean confidence", tint: HindsightTheme.Colors.accent)
-            instrumentValue(value: percent(metric.observedRate), label: "Observed outcome", tint: HindsightTheme.Colors.success)
-            instrumentValue(value: signedPoints(metric.signedGap), label: "Observed − confidence", tint: gapColor(metric.signedGap))
-            instrumentValue(value: brierText(metric.meanBrierScore), label: "Brier score · lower is better", tint: HindsightTheme.Colors.steel)
-        }
-        .accessibilityElement(children: .contain)
-    }
-
-    private func instrumentValue(value: String, label: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
-            Text(value)
-                .font(HindsightTheme.Typography.title2)
-                .monospacedDigit()
-                .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-            Text(label)
-                .font(HindsightTheme.Typography.caption)
-                .foregroundStyle(tint)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-        .padding(HindsightTheme.Spacing.sm)
-        .background(HindsightTheme.Colors.card)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(tint).frame(width: 2)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func highConfidenceSection(_ metric: ForecastMetricSummary) -> some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(
-                title: "High-confidence forecasts",
-                subtitle: "Stated confidence from 80% to 100%",
-                systemImage: "exclamationmark.circle",
-                tint: HindsightTheme.Colors.accent
-            )
-
-            HCard {
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                    Text(highConfidenceStory(metric))
-                        .font(HindsightTheme.Typography.headline)
-                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    if metric.eligibleCount > 0 {
-                        Text("Mean confidence \(percent(metric.meanConfidence)); observed outcome \(percent(metric.observedRate)); signed gap \(signedPoints(metric.signedGap)).")
-                            .font(HindsightTheme.Typography.footnote)
-                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                            .monospacedDigit()
-                    }
-
-                    Text(progressText(metric))
-                        .font(HindsightTheme.Typography.caption)
-                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                        .monospacedDigit()
-                }
-            }
-        }
-    }
-
-    // MARK: - Fixed confidence bands
-
-    private func confidenceBandsSection(_ bands: [ConfidenceBandSummary]) -> some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(
-                title: "Confidence bands",
-                subtitle: "Fixed ranges; each row reports its own denominator",
-                systemImage: "chart.bar.xaxis"
-            )
-
-            directionalCalibrationChart(bands)
-
-            HCard(padding: 0) {
-                VStack(spacing: 0) {
-                    ForEach(Array(bands.enumerated()), id: \.element.id) { index, summary in
-                        confidenceBandRow(summary)
-                        if index < bands.count - 1 {
-                            Divider().overlay(HindsightTheme.Colors.border)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func directionalCalibrationChart(_ bands: [ConfidenceBandSummary]) -> some View {
-        let directional = bands.filter { $0.metric.sampleState == .directional }
-        if !directional.isEmpty {
-            HCard {
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                    Text("Directional bands only")
-                        .font(HindsightTheme.Typography.subheadline)
-                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                    Text("Bars show observed outcome; points show mean stated confidence. Bands need n ≥ 10 to appear here.")
-                        .font(HindsightTheme.Typography.caption)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                    Chart(directional) { summary in
-                        BarMark(
-                            x: .value("Confidence band", summary.band.rawValue),
-                            y: .value("Observed outcome", summary.metric.observedRate * 100)
-                        )
-                        .foregroundStyle(HindsightTheme.Colors.success)
-
-                        PointMark(
-                            x: .value("Confidence band", summary.band.rawValue),
-                            y: .value("Mean confidence", summary.metric.meanConfidence * 100)
-                        )
-                        .foregroundStyle(HindsightTheme.Colors.accent)
-                        .symbolSize(42)
-                    }
-                    .chartYScale(domain: 0...100)
-                    .chartYAxis {
-                        AxisMarks(values: [0, 50, 100]) { value in
-                            AxisGridLine().foregroundStyle(HindsightTheme.Colors.border)
-                            AxisValueLabel {
-                                if let number = value.as(Int.self) {
-                                    Text("\(number)%")
-                                        .font(HindsightTheme.Typography.caption2)
-                                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                                }
-                            }
-                        }
-                    }
-                    .chartXAxis {
-                        AxisMarks { value in
-                            AxisValueLabel {
-                                if let band = value.as(String.self) {
-                                    Text(band).font(HindsightTheme.Typography.caption2)
-                                }
-                            }
-                        }
-                    }
-                    .frame(height: 190)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Directional calibration chart")
-                    .accessibilityValue(directional.map { "\($0.band.rawValue): n \($0.metric.eligibleCount), observed \(percent($0.metric.observedRate)), mean confidence \(percent($0.metric.meanConfidence))" }.joined(separator: "; "))
-                }
-            }
-        }
-    }
-
-    private func confidenceBandRow(_ summary: ConfidenceBandSummary) -> some View {
-        let metric = summary.metric
-        return VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(summary.band.rawValue)
-                    .font(HindsightTheme.Typography.headline)
-                    .monospacedDigit()
+            VStack(spacing: HindsightTheme.Spacing.sm) {
+                Text("Your signal garden starts here")
+                    .font(HindsightTheme.Typography.editorialDisplay)
                     .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                Spacer()
-                Text("n = \(metric.eligibleCount)")
+                    .multilineTextAlignment(.center)
+                Text("Capture a forecast, state your confidence, then resolve what happened. Insights grow only from your eligible personal outcomes.")
+                    .font(HindsightTheme.Typography.callout)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(HindsightTheme.Spacing.xl)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("insights.empty")
+    }
+
+    private var evidenceMilestones: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            SignalSectionHeading(
+                eyebrow: "EVIDENCE IN MOTION",
+                title: milestoneTitle,
+                detail: sampleQualification(analytics.overall),
+                color: HindsightTheme.Colors.categoryEducation
+            )
+            SignalMilestoneRail(count: analytics.overall.eligibleCount)
+        }
+    }
+
+    private var milestoneTitle: String {
+        switch analytics.overall.sampleState {
+        case .noEvidence: return "Resolve one forecast to plant the first signal"
+        case .learning: return "A pattern is beginning to take root"
+        case .earlySignal: return "The early shape is visible"
+        case .directional: return "Your calibration record can support a directional read"
+        }
+    }
+
+    // MARK: - High-confidence truth
+
+    private var highConfidenceTruth: some View {
+        let metric = analytics.highConfidence.metric
+        return VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            SignalSectionHeading(
+                eyebrow: "WHEN YOU FELT SURE",
+                title: "80%+ confidence, meet reality",
+                detail: "Only personal, due, binary outcomes. This card always shows its own denominator.",
+                color: HindsightTheme.Colors.accent
+            )
+
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
+                if metric.eligibleCount == 0 {
+                    LockedSignal(
+                        icon: "sun.max.trianglebadge.exclamationmark",
+                        title: "No eligible high-confidence outcomes yet",
+                        detail: "Resolve a due forecast originally recorded between 80% and 100% confidence to begin this view.",
+                        footer: "n = 0 in the 80–100% band"
+                    )
+                } else {
+                    Text(highConfidenceStory(metric))
+                        .font(HindsightTheme.Typography.authoredStatement)
+                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: HindsightTheme.Spacing.sm) {
+                            SignalMetricTile(
+                                value: insightPercent(metric.meanConfidence),
+                                label: "Mean stated confidence",
+                                color: HindsightTheme.Colors.accent
+                            )
+                            SignalMetricTile(
+                                value: insightPercent(metric.observedRate),
+                                label: "Observed outcome rate",
+                                color: HindsightTheme.Colors.success
+                            )
+                            SignalMetricTile(
+                                value: insightSignedPoints(metric.signedGap),
+                                label: "Observed − confidence",
+                                color: insightGapColor(metric.signedGap)
+                            )
+                        }
+                        VStack(spacing: HindsightTheme.Spacing.sm) {
+                            SignalMetricTile(value: insightPercent(metric.meanConfidence), label: "Mean stated confidence", color: HindsightTheme.Colors.accent)
+                            SignalMetricTile(value: insightPercent(metric.observedRate), label: "Observed outcome rate", color: HindsightTheme.Colors.success)
+                            SignalMetricTile(value: insightSignedPoints(metric.signedGap), label: "Observed − confidence", color: insightGapColor(metric.signedGap))
+                        }
+                    }
+
+                    HStack {
+                        Label("n = \(metric.eligibleCount)", systemImage: "number")
+                        Spacer()
+                        Text(sampleStateLabel(metric.sampleState))
+                    }
                     .font(HindsightTheme.Typography.metadata)
                     .foregroundStyle(HindsightTheme.Colors.textSecondary)
-            }
-
-            if metric.eligibleCount == 0 {
-                Text("No resolved eligible forecasts in this range.")
-                    .font(HindsightTheme.Typography.footnote)
-                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
-            } else {
-                Text("Mean confidence \(percent(metric.meanConfidence)) · observed outcome \(percent(metric.observedRate)) · gap \(signedPoints(metric.signedGap))")
-                    .font(HindsightTheme.Typography.footnote)
-                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
                     .monospacedDigit()
-                Text(progressText(metric))
-                    .font(HindsightTheme.Typography.caption)
-                    .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                }
+            }
+            .padding(HindsightTheme.Spacing.lg)
+            .background(HindsightTheme.Colors.accent.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                    .stroke(HindsightTheme.Colors.accent.opacity(0.35), lineWidth: 1)
             }
         }
-        .padding(HindsightTheme.Spacing.md)
-        .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Gated cohorts
+    // MARK: - Confidence bands
 
-    private func cohortSection(snapshot: ForecastAnalyticsSnapshot) -> some View {
+    private var confidenceBandGarden: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(
-                title: "Context cohorts",
-                subtitle: "Shown only when the analytics gate is met",
-                systemImage: "square.grid.2x2"
+            SignalSectionHeading(
+                eyebrow: "YOUR CONFIDENCE LANDSCAPE",
+                title: "Where belief and outcomes line up",
+                detail: "Every fixed band stays in place. Filled bars are observed outcomes; outlined markers are mean stated confidence.",
+                color: HindsightTheme.Colors.amber
             )
 
-            cohortGroup(title: "By category", rows: snapshot.categoryCohorts.map { cohort in
-                cohortRow(label: cohort.category.rawValue, metric: cohort.metric)
-            }, eligibleCount: snapshot.overall.eligibleCount, required: "n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize) per category")
-
-            cohortGroup(title: "By forecast horizon", rows: snapshot.horizonCohorts.map { cohort in
-                cohortRow(label: cohort.horizon.rawValue, metric: cohort.metric)
-            }, eligibleCount: snapshot.overall.eligibleCount, required: "n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize) per horizon")
-
-            cohortGroup(title: "With or without reasoning", rows: snapshot.reasoningCohorts.map { cohort in
-                cohortRow(label: cohort.hasReasoning ? "With Why" : "Without Why", metric: cohort.metric)
-            }, eligibleCount: snapshot.overall.eligibleCount, required: "both groups need n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize)")
+            VStack(spacing: HindsightTheme.Spacing.sm) {
+                ForEach(analytics.confidenceBands) { summary in
+                    ConfidenceBandSignalRow(summary: summary)
+                }
+            }
         }
     }
 
-    private func cohortGroup(title: String, rows: [CohortDisplayRow], eligibleCount: Int, required: String) -> some View {
-        HCard {
-            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                Text(title)
-                    .font(HindsightTheme.Typography.headline)
-                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+    // MARK: - Personal signals
 
-                if rows.isEmpty {
-                    Text("Not shown yet. Current analytic base: n = \(eligibleCount); \(required).")
-                        .font(HindsightTheme.Typography.footnote)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                        .monospacedDigit()
-                        .fixedSize(horizontal: false, vertical: true)
+    private var personalSignals: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            SignalSectionHeading(
+                eyebrow: "PERSONAL SIGNALS",
+                title: "Context changes the picture",
+                detail: "These are observations from eligible cohorts—not labels about you. Each cohort needs n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize).",
+                color: HindsightTheme.Colors.categoryPersonal
+            )
+
+            LazyVGrid(columns: patternColumns, spacing: HindsightTheme.Spacing.sm) {
+                SignalPatternCard(model: momentumPattern)
+
+                if let surprisePattern {
+                    SignalPatternCard(model: surprisePattern)
                 } else {
-                    ForEach(rows) { row in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(row.label) · n = \(row.metric.eligibleCount)")
-                                .font(HindsightTheme.Typography.subheadline)
-                                .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                                .monospacedDigit()
-                            Text("Mean confidence \(percent(row.metric.meanConfidence)) · observed outcome \(percent(row.metric.observedRate)) · gap \(signedPoints(row.metric.signedGap)) · Brier \(brierText(row.metric.meanBrierScore))")
-                                .font(HindsightTheme.Typography.caption)
-                                .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                                .monospacedDigit()
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
+                    LockedPatternCard(
+                        title: "A confidence-band surprise",
+                        detail: "Unlocks when at least one fixed confidence band reaches n = 10.",
+                        color: HindsightTheme.Colors.amber
+                    )
+                }
+
+                if categoryPatterns.isEmpty {
+                    LockedPatternCard(
+                        title: "Signals by life area",
+                        detail: "Each category appears only after n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize) eligible forecasts in that category.",
+                        color: HindsightTheme.Colors.categoryCareer
+                    )
+                } else {
+                    ForEach(categoryPatterns) { SignalPatternCard(model: $0) }
+                }
+
+                if horizonPatterns.isEmpty {
+                    LockedPatternCard(
+                        title: "Short calls vs long calls",
+                        detail: "Each time horizon appears only after n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize) eligible forecasts.",
+                        color: HindsightTheme.Colors.categoryEducation
+                    )
+                } else {
+                    ForEach(horizonPatterns) { SignalPatternCard(model: $0) }
+                }
+
+                if let reasoningPattern {
+                    SignalPatternCard(model: reasoningPattern)
+                } else {
+                    LockedPatternCard(
+                        title: "Does writing Why change the record?",
+                        detail: "This comparison waits until both With Why and Without Why have n ≥ \(ForecastAnalyticsSnapshot.cohortMinimumSampleSize).",
+                        color: HindsightTheme.Colors.success
+                    )
                 }
             }
         }
     }
 
-    private func cohortRow(label: String, metric: ForecastMetricSummary) -> CohortDisplayRow {
-        CohortDisplayRow(label: label, metric: metric)
+    private var momentumPattern: SignalPatternCardModel {
+        let metric = analytics.overall
+        let title: String
+        let detail: String
+        switch metric.sampleState {
+        case .noEvidence:
+            title = "The first signal is waiting"
+            detail = "No eligible personal outcomes yet. One resolved due binary forecast begins the record."
+        case .learning:
+            title = "\(metric.eligibleCount) of 5 toward an early shape"
+            detail = "Current evidence: n = \(metric.eligibleCount). Measurements remain descriptive until the sample grows."
+        case .earlySignal:
+            title = "\(metric.eligibleCount) of 10 toward a directional read"
+            detail = "An early signal is visible, but Hindsight still withholds a directional conclusion."
+        case .directional:
+            title = "A directional record is active"
+            detail = "Based on n = \(metric.eligibleCount) eligible outcomes; mean confidence \(insightPercent(metric.meanConfidence)), observed \(insightPercent(metric.observedRate))."
+        }
+        return SignalPatternCardModel(
+            id: "momentum",
+            eyebrow: "EVIDENCE MOMENTUM · n = \(metric.eligibleCount)",
+            title: title,
+            detail: detail,
+            icon: "leaf.arrow.triangle.circlepath",
+            color: HindsightTheme.Colors.categoryPersonal
+        )
     }
 
-    // MARK: - Method and exclusions
+    private var surprisePattern: SignalPatternCardModel? {
+        guard let summary = analytics.confidenceBands
+            .filter({ $0.metric.sampleState == .directional })
+            .max(by: { abs($0.metric.signedGap) < abs($1.metric.signedGap) }) else { return nil }
+        let metric = summary.metric
+        let title = abs(metric.signedGap) < 0.005
+            ? "\(summary.band.rawValue) matched closely"
+            : "\(summary.band.rawValue) showed the widest band gap"
+        return SignalPatternCardModel(
+            id: "surprise-\(summary.id)",
+            eyebrow: "BAND SIGNAL · n = \(metric.eligibleCount)",
+            title: title,
+            detail: "Mean confidence \(insightPercent(metric.meanConfidence)); observed outcome \(insightPercent(metric.observedRate)); gap \(insightSignedPoints(metric.signedGap)).",
+            icon: "sparkle.magnifyingglass",
+            color: confidenceBandColor(summary.band)
+        )
+    }
 
-    private func methodologySection(_ snapshot: ForecastAnalyticsSnapshot) -> some View {
-        let exclusions = snapshot.exclusions
-        return VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(title: "Method and exclusions", systemImage: "checklist")
-            HCard(background: HindsightTheme.Colors.cardElevated) {
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                    Text("\(snapshot.overall.eligibleCount) of \(exclusions.totalPredictions) stored forecasts are eligible for this record.")
-                        .font(HindsightTheme.Typography.headline)
-                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                        .monospacedDigit()
-                    Text("Eligible means a personal forecast whose check date has arrived, with valid 0–100% confidence and a terminal binary outcome: happened or did not happen.")
-                        .font(HindsightTheme.Typography.footnote)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    exclusionRow(label: "Sample forecasts", count: exclusions.sample)
-                    exclusionRow(label: "Pending outcomes", count: exclusions.pending)
-                    exclusionRow(label: "Partial or ambiguous outcomes", count: exclusions.partial)
-                    exclusionRow(label: "Outcome recorded before check date", count: exclusions.notYetDue)
-                    exclusionRow(label: "Invalid confidence", count: exclusions.invalidConfidence)
-                    Text("Excluded total: \(exclusions.excludedCount). Brier score is the mean squared probability error; lower is better. This screen reports evidence, not a trait or a grade.")
-                        .font(HindsightTheme.Typography.caption)
-                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+    private var categoryPatterns: [SignalPatternCardModel] {
+        analytics.categoryCohorts
+            .sorted { abs($0.metric.signedGap) > abs($1.metric.signedGap) }
+            .prefix(2)
+            .map { cohort in
+                SignalPatternCardModel(
+                    id: "category-\(cohort.id)",
+                    eyebrow: "CATEGORY · n = \(cohort.metric.eligibleCount)",
+                    title: cohort.category.rawValue,
+                    detail: "Mean confidence \(insightPercent(cohort.metric.meanConfidence)); observed \(insightPercent(cohort.metric.observedRate)); gap \(insightSignedPoints(cohort.metric.signedGap)).",
+                    icon: cohort.category.icon,
+                    color: cohort.category.color
+                )
             }
-        }
     }
 
-    private func exclusionRow(label: String, count: Int) -> some View {
-        HStack {
-            Text(label)
-                .font(HindsightTheme.Typography.footnote)
-                .foregroundStyle(HindsightTheme.Colors.textSecondary)
-            Spacer()
-            Text("n = \(count)")
-                .font(HindsightTheme.Typography.metadata)
-                .foregroundStyle(HindsightTheme.Colors.textPrimary)
-        }
-        .accessibilityElement(children: .combine)
+    private var horizonPatterns: [SignalPatternCardModel] {
+        analytics.horizonCohorts
+            .sorted { abs($0.metric.signedGap) > abs($1.metric.signedGap) }
+            .prefix(2)
+            .map { cohort in
+                SignalPatternCardModel(
+                    id: "horizon-\(cohort.id)",
+                    eyebrow: "HORIZON · n = \(cohort.metric.eligibleCount)",
+                    title: cohort.horizon.rawValue,
+                    detail: "Mean confidence \(insightPercent(cohort.metric.meanConfidence)); observed \(insightPercent(cohort.metric.observedRate)); gap \(insightSignedPoints(cohort.metric.signedGap)).",
+                    icon: "calendar.badge.clock",
+                    color: HindsightTheme.Colors.categoryEducation
+                )
+            }
     }
 
-    // MARK: - Navigation retained from the evidence ledger
+    private var reasoningPattern: SignalPatternCardModel? {
+        guard analytics.reasoningCohorts.count == 2,
+              let without = analytics.reasoningCohorts.first(where: { !$0.hasReasoning }),
+              let with = analytics.reasoningCohorts.first(where: { $0.hasReasoning }) else { return nil }
+        return SignalPatternCardModel(
+            id: "reasoning",
+            eyebrow: "WHY COMPARISON · n = \(without.metric.eligibleCount) + \(with.metric.eligibleCount)",
+            title: "With Why vs without Why",
+            detail: "Observed outcome: \(insightPercent(with.metric.observedRate)) with Why and \(insightPercent(without.metric.observedRate)) without. Gaps: \(insightSignedPoints(with.metric.signedGap)) vs \(insightSignedPoints(without.metric.signedGap)). This is association, not causation.",
+            icon: "text.quote",
+            color: HindsightTheme.Colors.success
+        )
+    }
 
-    @ViewBuilder private var recentReviewsSection: some View {
+    // MARK: - Recent reflections and methodology
+
+    @ViewBuilder private var recentReflections: some View {
         let reviewed = Statistics.reviewedDecisions(decisions)
             .filter { !SampleData.isDemoDecision($0) }
             .sorted { ($0.outcomeReview?.reviewedAt ?? .distantPast) > ($1.outcomeReview?.reviewedAt ?? .distantPast) }
-            .prefix(4)
+            .prefix(3)
+
         if !reviewed.isEmpty {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                HSectionHeader(title: "Recent review record", subtitle: "Open the original decision and outcome", systemImage: "clock.arrow.circlepath")
+                SignalSectionHeading(
+                    eyebrow: "RECENT REFLECTIONS",
+                    title: "The stories behind the signal",
+                    detail: "Open an original record without changing what you believed.",
+                    color: HindsightTheme.Colors.steel
+                )
+
                 ForEach(Array(reviewed)) { decision in
                     NavigationLink(value: decision) {
-                        HCard {
-                            HStack(spacing: HindsightTheme.Spacing.sm) {
+                        HStack(spacing: HindsightTheme.Spacing.md) {
+                            ZStack {
+                                Circle().fill(decision.category.color.opacity(0.16))
                                 Image(systemName: decision.category.icon)
                                     .foregroundStyle(decision.category.color)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(decision.title)
-                                        .font(HindsightTheme.Typography.callout)
-                                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Text(decision.outcomeReview?.reviewedAt.formatted(date: .abbreviated, time: .omitted) ?? "Reviewed")
-                                        .font(HindsightTheme.Typography.caption)
-                                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(HindsightTheme.Colors.textTertiary)
                             }
+                            .frame(width: 46, height: 46)
+                            .accessibilityHidden(true)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(decision.title)
+                                    .font(HindsightTheme.Typography.callout)
+                                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text("Reviewed \(decision.outcomeReview?.reviewedAt.formatted(date: .abbreviated, time: .omitted) ?? "recently")")
+                                    .font(HindsightTheme.Typography.caption)
+                                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                        }
+                        .padding(HindsightTheme.Spacing.md)
+                        .background(decision.category.color.opacity(0.07))
+                        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                                .stroke(decision.category.color.opacity(0.24), lineWidth: 1)
                         }
                     }
                     .buttonStyle(.plain)
@@ -406,103 +402,580 @@ struct InsightsView: View {
         }
     }
 
-    // MARK: - Evidence language
+    private var methodology: some View {
+        let exclusions = analytics.exclusions
+        return VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            SignalSectionHeading(
+                eyebrow: "WHAT COUNTS",
+                title: "A transparent evidence boundary",
+                detail: "\(analytics.overall.eligibleCount) of \(exclusions.totalPredictions) stored forecasts are eligible. Nothing below is folded into the denominator.",
+                color: HindsightTheme.Colors.steel
+            )
 
-    private func overallStory(_ metric: ForecastMetricSummary) -> String {
-        guard metric.eligibleCount > 0 else {
-            return "No resolved personal forecast outcomes are eligible yet."
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                Text("Eligible means personal, due, valid 0–100% confidence, and a binary outcome: happened or did not happen.")
+                    .font(HindsightTheme.Typography.footnote)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ExclusionLine(label: "Examples", count: exclusions.sample, color: HindsightTheme.Colors.amber)
+                ExclusionLine(label: "Pending outcomes", count: exclusions.pending, color: HindsightTheme.Colors.steel)
+                ExclusionLine(label: "Ambiguous outcomes", count: exclusions.partial, color: HindsightTheme.Colors.categoryEducation)
+                ExclusionLine(label: "Resolved before check date", count: exclusions.notYetDue, color: HindsightTheme.Colors.categoryPersonal)
+                ExclusionLine(label: "Invalid confidence", count: exclusions.invalidConfidence, color: HindsightTheme.Colors.accent)
+                Divider().overlay(HindsightTheme.Colors.border)
+                Text("Excluded total: \(exclusions.excludedCount). Brier score \(insightBrier(analytics.overall.meanBrierScore)) is mean squared probability error; lower is better. It is not an accuracy grade.")
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                    .monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(HindsightTheme.Spacing.md)
+            .background(HindsightTheme.Colors.cardElevated)
+            .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                    .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+            }
         }
-        if metric.sampleState == .directional {
-            return "Across \(metric.eligibleCount) resolved eligible forecasts, outcomes occurred \(percent(metric.observedRate)) of the time against mean stated confidence of \(percent(metric.meanConfidence))."
-        }
-        return "There are \(metric.eligibleCount) resolved eligible forecast\(metric.eligibleCount == 1 ? "" : "s") in the record. The measurements below are not yet a conclusion."
     }
 
+    // MARK: - Evidence language
+
     private func highConfidenceStory(_ metric: ForecastMetricSummary) -> String {
-        guard metric.eligibleCount > 0 else {
-            return "No resolved eligible 80%+ forecasts yet."
-        }
         if metric.sampleState == .directional {
-            return "In \(metric.eligibleCount) resolved 80%+ forecasts, \(gapInterpretation(metric.signedGap))."
+            return "In \(metric.eligibleCount) resolved 80%+ forecasts, outcomes occurred \(insightPercent(metric.observedRate)) of the time against mean confidence of \(insightPercent(metric.meanConfidence))."
         }
-        return "\(metric.eligibleCount) resolved 80%+ forecast\(metric.eligibleCount == 1 ? "" : "s") recorded so far; keep resolving before drawing a conclusion."
+        return "\(metric.eligibleCount) resolved 80%+ forecast\(metric.eligibleCount == 1 ? "" : "s") are measured so far. The values are real; the sample is not yet a conclusion."
     }
 
     private func sampleQualification(_ metric: ForecastMetricSummary) -> String {
         switch metric.sampleState {
         case .noEvidence:
-            return "Resolve a forecast as happened or did not happen to begin the calibration record."
+            return "n = 0. Resolve a due forecast as happened or did not happen to begin."
         case .learning:
-            return "Learning state: n = \(metric.eligibleCount). Reach n = 5 for an early signal and n = 10 for a directional read."
+            return "n = \(metric.eligibleCount). Reach n = 5 for an early shape and n = 10 for a directional read."
         case .earlySignal:
-            return "Early signal only: n = \(metric.eligibleCount). Reach n = 10 before treating the direction as a calibration read."
+            return "n = \(metric.eligibleCount). Early shape only; reach n = 10 before treating direction as a calibration read."
         case .directional:
-            return "Directional read: n = \(metric.eligibleCount). The signed gap is \(signedPoints(metric.signedGap)); \(gapInterpretation(metric.signedGap))."
+            return "n = \(metric.eligibleCount). Observed minus confidence is \(insightSignedPoints(metric.signedGap))."
         }
     }
 
-    private func progressText(_ metric: ForecastMetricSummary) -> String {
-        switch metric.sampleState {
-        case .noEvidence:
-            return "n = 0 · no evidence yet"
-        case .learning:
-            return "n = \(metric.eligibleCount) / 5 for an early signal · n = \(metric.eligibleCount) / 10 for a directional read"
-        case .earlySignal:
-            return "n = \(metric.eligibleCount) / 10 for a directional read · early signal only"
-        case .directional:
-            return "n = \(metric.eligibleCount) · directional read"
-        }
-    }
-
-    private func gapInterpretation(_ gap: Double) -> String {
-        let points = Int((abs(gap) * 100).rounded())
-        if points == 0 {
-            return "observed outcomes and stated confidence matched in this sample"
-        } else if gap < 0 {
-            return "observed outcomes were \(points) percentage points below stated confidence (an over-confidence signal in this sample)"
-        } else {
-            return "observed outcomes were \(points) percentage points above stated confidence (an under-confidence signal in this sample)"
-        }
-    }
-
-    private func percent(_ value: Double) -> String {
-        "\(Int((value * 100).rounded()))%"
-    }
-
-    private func signedPoints(_ value: Double) -> String {
-        let points = Int((value * 100).rounded())
-        return "\(points >= 0 ? "+" : "")\(points) pp"
-    }
-
-    private func brierText(_ value: Double?) -> String {
-        guard let value else { return "—" }
-        return String(format: "%.3f", value)
-    }
-
-    private func countText(_ count: Int) -> String {
-        "n = \(count)"
-    }
-
-    private func gapColor(_ gap: Double) -> Color {
-        gap < 0 ? HindsightTheme.Colors.accent : HindsightTheme.Colors.success
-    }
-
-    private var metricColumns: [GridItem] {
-        if dynamicTypeSize.isAccessibilitySize {
-            return [GridItem(.flexible())]
-        }
-        return [
-            GridItem(.flexible(), spacing: HindsightTheme.Spacing.sm),
-            GridItem(.flexible(), spacing: HindsightTheme.Spacing.sm)
-        ]
+    private var patternColumns: [GridItem] {
+        dynamicTypeSize.isAccessibilitySize
+            ? [GridItem(.flexible())]
+            : [
+                GridItem(.flexible(), spacing: HindsightTheme.Spacing.sm),
+                GridItem(.flexible(), spacing: HindsightTheme.Spacing.sm)
+            ]
     }
 }
 
-private struct CohortDisplayRow: Identifiable {
-    let label: String
+// MARK: - Signal Garden components
+
+private struct SignalGardenHero: View {
     let metric: ForecastMetricSummary
 
-    var id: String { label }
+    var body: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
+                Text("YOUR SIGNAL GARDEN")
+                    .font(HindsightTheme.Typography.metadata)
+                    .tracking(0.9)
+                    .foregroundStyle(HindsightTheme.Colors.categoryPersonal)
+                Text(heroTitle)
+                    .font(HindsightTheme.Typography.editorialDisplay)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(heroDetail)
+                    .font(HindsightTheme.Typography.callout)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: HindsightTheme.Spacing.xl) { orbit; heroMetrics }
+                VStack(spacing: HindsightTheme.Spacing.lg) { orbit; heroMetrics }
+            }
+        }
+        .padding(HindsightTheme.Spacing.lg)
+        .background(HindsightTheme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                .stroke(HindsightTheme.Colors.categoryPersonal.opacity(0.30), lineWidth: 1)
+        }
+    }
+
+    private var orbit: some View {
+        ZStack {
+            Circle()
+                .stroke(HindsightTheme.Colors.border, lineWidth: 13)
+            Circle()
+                .trim(from: 0, to: ringValue(metric.meanConfidence))
+                .stroke(HindsightTheme.Colors.accent, style: StrokeStyle(lineWidth: 13, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Circle()
+                .stroke(HindsightTheme.Colors.border.opacity(0.75), lineWidth: 10)
+                .frame(width: 116, height: 116)
+            Circle()
+                .trim(from: 0, to: ringValue(metric.observedRate))
+                .stroke(HindsightTheme.Colors.success, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: 116, height: 116)
+            VStack(spacing: 0) {
+                Text("n = \(metric.eligibleCount)")
+                    .font(HindsightTheme.Typography.title2)
+                    .monospacedDigit()
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text("eligible")
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+        }
+        .frame(width: 164, height: 164)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Calibration orbit")
+        .accessibilityValue("n \(metric.eligibleCount), mean confidence \(insightPercent(metric.meanConfidence)), observed outcome \(insightPercent(metric.observedRate))")
+    }
+
+    private var heroMetrics: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            OrbitLegend(color: HindsightTheme.Colors.accent, value: insightPercent(metric.meanConfidence), label: "You said")
+            OrbitLegend(color: HindsightTheme.Colors.success, value: insightPercent(metric.observedRate), label: "It happened")
+            Divider().overlay(HindsightTheme.Colors.border)
+            OrbitLegend(color: insightGapColor(metric.signedGap), value: insightSignedPoints(metric.signedGap), label: "Observed − confidence")
+            OrbitLegend(color: HindsightTheme.Colors.steel, value: insightBrier(metric.meanBrierScore), label: "Brier · lower is better")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var heroTitle: String {
+        switch metric.sampleState {
+        case .noEvidence: return "The shape of your judgment will appear here"
+        case .learning: return "Reality has started answering back"
+        case .earlySignal: return "Your first calibration shape is emerging"
+        case .directional:
+            if abs(metric.signedGap) < 0.05 { return "Confidence and outcomes are traveling close together" }
+            return metric.signedGap < 0
+                ? "Confidence is running ahead of observed outcomes"
+                : "Observed outcomes are running ahead of confidence"
+        }
+    }
+
+    private var heroDetail: String {
+        guard metric.eligibleCount > 0 else {
+            return "Only resolved, due, personal binary forecasts can draw this picture."
+        }
+        return "Across n = \(metric.eligibleCount) eligible forecasts, mean stated confidence is \(insightPercent(metric.meanConfidence)) and the observed outcome rate is \(insightPercent(metric.observedRate))."
+    }
+
+    private func ringValue(_ value: Double) -> Double {
+        guard metric.eligibleCount > 0 else { return 0 }
+        return max(0.002, min(1, value))
+    }
+}
+
+private struct OrbitLegend: View {
+    let color: Color
+    let value: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: HindsightTheme.Spacing.sm) {
+            Circle().fill(color).frame(width: 10, height: 10).accessibilityHidden(true)
+            Text(label)
+                .font(HindsightTheme.Typography.footnote)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            Spacer()
+            Text(value)
+                .font(HindsightTheme.Typography.subheadline)
+                .monospacedDigit()
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct SignalSectionHeading: View {
+    let eyebrow: String
+    let title: String
+    let detail: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(eyebrow)
+                .font(HindsightTheme.Typography.metadata)
+                .tracking(0.7)
+                .foregroundStyle(color)
+            Text(title)
+                .font(HindsightTheme.Typography.title2)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(detail)
+                .font(HindsightTheme.Typography.footnote)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+private struct SignalMilestoneRail: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let count: Int
+
+    private let milestones = [(1, "First signal"), (5, "Early shape"), (10, "Directional")]
+
+    var body: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+                    ForEach(Array(milestones.enumerated()), id: \.offset) { _, milestone in
+                        milestoneView(milestone)
+                    }
+                }
+            } else {
+                HStack(spacing: HindsightTheme.Spacing.xs) {
+                    ForEach(Array(milestones.enumerated()), id: \.offset) { index, milestone in
+                        milestoneView(milestone)
+                        if index < milestones.count - 1 {
+                            Capsule()
+                                .fill(count >= milestones[index + 1].0 ? HindsightTheme.Colors.categoryPersonal : HindsightTheme.Colors.border)
+                                .frame(height: 3)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(HindsightTheme.Spacing.md)
+        .background(HindsightTheme.Colors.categoryPersonal.opacity(0.07))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+    }
+
+    private func milestoneView(_ milestone: (Int, String)) -> some View {
+        let reached = count >= milestone.0
+        return HStack(spacing: HindsightTheme.Spacing.sm) {
+            ZStack {
+                Circle().fill(reached ? HindsightTheme.Colors.categoryPersonal : HindsightTheme.Colors.cardElevated)
+                Image(systemName: reached ? "checkmark" : "lock.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(reached ? HindsightTheme.Colors.surface : HindsightTheme.Colors.textTertiary)
+            }
+            .frame(width: 30, height: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(milestone.1)
+                    .font(HindsightTheme.Typography.caption)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text("n = \(milestone.0)")
+                    .font(HindsightTheme.Typography.metadata)
+                    .monospacedDigit()
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(reached ? "Reached" : "Locked; current n is \(count)")
+    }
+}
+
+private struct SignalMetricTile: View {
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(HindsightTheme.Typography.title2)
+                .monospacedDigit()
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+            Text(label)
+                .font(HindsightTheme.Typography.caption)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .padding(HindsightTheme.Spacing.sm)
+        .background(color.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm, style: .continuous))
+        .overlay(alignment: .leading) { Rectangle().fill(color).frame(width: 3) }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct ConfidenceBandSignalRow: View {
+    let summary: ConfidenceBandSummary
+
+    private var metric: ForecastMetricSummary { summary.metric }
+    private var color: Color { confidenceBandColor(summary.band) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HStack(alignment: .firstTextBaseline) {
+                HStack(spacing: 8) {
+                    RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 8, height: 24)
+                    Text(summary.band.rawValue)
+                        .font(HindsightTheme.Typography.headline)
+                        .monospacedDigit()
+                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                }
+                Spacer()
+                Text("n = \(metric.eligibleCount)")
+                    .font(HindsightTheme.Typography.metadata)
+                    .monospacedDigit()
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+
+            if metric.eligibleCount == 0 {
+                HStack(spacing: HindsightTheme.Spacing.sm) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                    Text("No resolved eligible forecasts in this band yet.")
+                        .font(HindsightTheme.Typography.footnote)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                }
+            } else {
+                BandComparisonTrack(metric: metric, color: color)
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        bandLegend(color: color, label: "Observed", value: insightPercent(metric.observedRate), filled: true)
+                        Spacer()
+                        bandLegend(color: HindsightTheme.Colors.textPrimary, label: "Mean confidence", value: insightPercent(metric.meanConfidence), filled: false)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        bandLegend(color: color, label: "Observed", value: insightPercent(metric.observedRate), filled: true)
+                        bandLegend(color: HindsightTheme.Colors.textPrimary, label: "Mean confidence", value: insightPercent(metric.meanConfidence), filled: false)
+                    }
+                }
+                HStack {
+                    Text(insightSignedPoints(metric.signedGap) + " gap")
+                    Spacer()
+                    Text(sampleStateLabel(metric.sampleState))
+                }
+                .font(HindsightTheme.Typography.caption)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .monospacedDigit()
+            }
+        }
+        .padding(HindsightTheme.Spacing.md)
+        .background(color.opacity(metric.eligibleCount == 0 ? 0.035 : 0.075))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                .stroke(color.opacity(metric.eligibleCount == 0 ? 0.15 : 0.32), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+    }
+
+    private func bandLegend(color: Color, label: String, value: String, filled: Bool) -> some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(filled ? color : Color.clear)
+                .overlay(Circle().stroke(color, lineWidth: 2))
+                .frame(width: 9, height: 9)
+            Text("\(label) \(value)")
+                .font(HindsightTheme.Typography.caption)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .monospacedDigit()
+        }
+    }
+
+    private var accessibilitySummary: String {
+        guard metric.eligibleCount > 0 else {
+            return "\(summary.band.rawValue), n zero, no resolved eligible forecasts"
+        }
+        return "\(summary.band.rawValue), n \(metric.eligibleCount), observed \(insightPercent(metric.observedRate)), mean confidence \(insightPercent(metric.meanConfidence)), gap \(insightSignedPoints(metric.signedGap)), \(sampleStateLabel(metric.sampleState))"
+    }
+}
+
+private struct BandComparisonTrack: View {
+    let metric: ForecastMetricSummary
+    let color: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = max(1, proxy.size.width)
+            let observedX = width * min(1, max(0, metric.observedRate))
+            let confidenceX = width * min(1, max(0, metric.meanConfidence))
+            ZStack(alignment: .leading) {
+                Capsule().fill(HindsightTheme.Colors.border).frame(height: 12)
+                Capsule().fill(color.opacity(0.72)).frame(width: max(3, observedX), height: 12)
+                Circle()
+                    .fill(HindsightTheme.Colors.surface)
+                    .overlay(Circle().stroke(HindsightTheme.Colors.textPrimary, lineWidth: 2))
+                    .frame(width: 16, height: 16)
+                    .offset(x: min(max(0, confidenceX - 8), max(0, width - 16)))
+            }
+            .frame(height: 20)
+        }
+        .frame(height: 20)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct SignalPatternCardModel: Identifiable {
+    let id: String
+    let eyebrow: String
+    let title: String
+    let detail: String
+    let icon: String
+    let color: Color
+}
+
+private struct SignalPatternCard: View {
+    let model: SignalPatternCardModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            HStack {
+                Image(systemName: model.icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(model.color)
+                    .frame(width: 38, height: 38)
+                    .background(model.color.opacity(0.14), in: Circle())
+                Spacer()
+            }
+            Text(model.eyebrow)
+                .font(HindsightTheme.Typography.metadata)
+                .foregroundStyle(model.color)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(model.title)
+                .font(HindsightTheme.Typography.headline)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(model.detail)
+                .font(HindsightTheme.Typography.caption)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 190, alignment: .topLeading)
+        .padding(HindsightTheme.Spacing.md)
+        .background(model.color.opacity(0.075))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                .stroke(model.color.opacity(0.28), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct LockedPatternCard: View {
+    let title: String
+    let detail: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+            Image(systemName: "lock.fill")
+                .foregroundStyle(color)
+                .frame(width: 38, height: 38)
+                .background(color.opacity(0.12), in: Circle())
+            Text("MORE EVIDENCE NEEDED")
+                .font(HindsightTheme.Typography.metadata)
+                .foregroundStyle(color)
+            Text(title)
+                .font(HindsightTheme.Typography.headline)
+                .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(detail)
+                .font(HindsightTheme.Typography.caption)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 190, alignment: .topLeading)
+        .padding(HindsightTheme.Spacing.md)
+        .background(HindsightTheme.Colors.cardElevated.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                .stroke(color.opacity(0.20), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct LockedSignal: View {
+    let icon: String
+    let title: String
+    let detail: String
+    let footer: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: HindsightTheme.Spacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(HindsightTheme.Colors.accent)
+                .frame(width: 48, height: 48)
+                .background(HindsightTheme.Colors.accent.opacity(0.12), in: Circle())
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title).font(HindsightTheme.Typography.headline).foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text(detail).font(HindsightTheme.Typography.footnote).foregroundStyle(HindsightTheme.Colors.textSecondary)
+                Text(footer).font(HindsightTheme.Typography.metadata).monospacedDigit().foregroundStyle(HindsightTheme.Colors.textTertiary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct ExclusionLine: View {
+    let label: String
+    let count: Int
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: HindsightTheme.Spacing.sm) {
+            Circle().fill(color).frame(width: 8, height: 8).accessibilityHidden(true)
+            Text(label).font(HindsightTheme.Typography.footnote).foregroundStyle(HindsightTheme.Colors.textSecondary)
+            Spacer()
+            Text("n = \(count)").font(HindsightTheme.Typography.metadata).monospacedDigit().foregroundStyle(HindsightTheme.Colors.textPrimary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Formatting
+
+private func insightPercent(_ value: Double) -> String {
+    "\(Int((value * 100).rounded()))%"
+}
+
+private func insightSignedPoints(_ value: Double) -> String {
+    let points = Int((value * 100).rounded())
+    return "\(points >= 0 ? "+" : "")\(points) pp"
+}
+
+private func insightBrier(_ value: Double?) -> String {
+    guard let value else { return "—" }
+    return String(format: "%.3f", value)
+}
+
+private func insightGapColor(_ gap: Double) -> Color {
+    if abs(gap) < 0.005 { return HindsightTheme.Colors.steel }
+    return gap < 0 ? HindsightTheme.Colors.accent : HindsightTheme.Colors.success
+}
+
+private func sampleStateLabel(_ state: ForecastSampleState) -> String {
+    switch state {
+    case .noEvidence: return "No evidence yet"
+    case .learning: return "Learning · below n = 5"
+    case .earlySignal: return "Early signal · below n = 10"
+    case .directional: return "Directional · n ≥ 10"
+    }
+}
+
+private func confidenceBandColor(_ band: ConfidenceBand) -> Color {
+    switch band {
+    case .zeroToFortyNine: return HindsightTheme.Colors.steel
+    case .fiftyToFiftyNine: return HindsightTheme.Colors.categoryEducation
+    case .sixtyToSixtyNine: return HindsightTheme.Colors.categoryPersonal
+    case .seventyToSeventyNine: return HindsightTheme.Colors.amber
+    case .eightyToEightyNine: return HindsightTheme.Colors.categoryHealth
+    case .ninetyToNinetyNine: return HindsightTheme.Colors.accent
+    case .oneHundred: return HindsightTheme.Colors.stakesHigh
+    }
 }
 
 #Preview {

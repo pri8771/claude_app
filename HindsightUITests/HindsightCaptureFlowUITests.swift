@@ -371,6 +371,14 @@ final class HindsightCaptureFlowUITests: XCTestCase {
         app.buttons["Save review"].tap()
 
         // MARK: Back on decision detail — the review should now be recorded.
+        let postSaveScreenshot = XCTAttachment(screenshot: app.screenshot())
+        postSaveScreenshot.name = "Post review save state"
+        postSaveScreenshot.lifetime = .deleteOnSuccess
+        add(postSaveScreenshot)
+        let postSaveHierarchy = XCTAttachment(string: app.debugDescription)
+        postSaveHierarchy.name = "Post review save hierarchy"
+        postSaveHierarchy.lifetime = .deleteOnSuccess
+        add(postSaveHierarchy)
         let reviewedTimestamp = app.staticTexts.matching(
             NSPredicate(format: "label BEGINSWITH 'Reviewed '")
         ).firstMatch

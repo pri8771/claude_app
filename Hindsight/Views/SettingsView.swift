@@ -35,6 +35,7 @@ struct SettingsView: View {
 
                 ScrollView {
                     VStack(spacing: HindsightTheme.Spacing.lg) {
+                        settingsHeader
                         privacyCard
                         notificationSection
                         hapticsSection
@@ -96,20 +97,71 @@ struct SettingsView: View {
 
     // MARK: Privacy card
 
+    private var settingsHeader: some View {
+        HCard(padding: 0, background: HindsightTheme.Colors.card) {
+            ZStack(alignment: .topTrailing) {
+                LinearGradient(
+                    colors: [
+                        HindsightTheme.Colors.categoryPersonal.opacity(0.19),
+                        HindsightTheme.Colors.categoryEducation.opacity(0.13),
+                        HindsightTheme.Colors.amber.opacity(0.10)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Circle()
+                    .fill(HindsightTheme.Colors.accent.opacity(0.12))
+                    .frame(width: 150, height: 150)
+                    .offset(x: 54, y: -62)
+                    .accessibilityHidden(true)
+                HStack(spacing: HindsightTheme.Spacing.md) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                            .fill(HindsightTheme.Colors.accentGradient)
+                        Image(systemName: "scope")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .frame(width: 56, height: 56)
+                    .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Your Hindsight")
+                            .font(HindsightTheme.Typography.title)
+                            .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                        Text("Tune the experience without changing the evidence.")
+                            .font(HindsightTheme.Typography.footnote)
+                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(HindsightTheme.Spacing.lg)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     private var privacyCard: some View {
-        HCard(background: HindsightTheme.Colors.success.opacity(0.10)) {
+        HCard(background: HindsightTheme.Colors.success.opacity(0.09)) {
             HStack(spacing: HindsightTheme.Spacing.md) {
                 ZStack {
-                    Circle().fill(HindsightTheme.Colors.success.opacity(0.18)).frame(width: 48, height: 48)
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [HindsightTheme.Colors.success, HindsightTheme.Colors.categoryEducation],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 48, height: 48)
                     Image(systemName: "lock.shield.fill")
                         .font(.system(size: 22))
-                        .foregroundStyle(HindsightTheme.Colors.success)
+                        .foregroundStyle(.white)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Your decisions never leave this device")
+                    Text("Your private garden")
                         .font(HindsightTheme.Typography.headline)
                         .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                    Text("100% on-device. No account, no cloud, no tracking.")
+                    Text("Your records stay on-device. No account, cloud sync, ads, or tracking.")
                         .font(HindsightTheme.Typography.footnote)
                         .foregroundStyle(HindsightTheme.Colors.textSecondary)
                 }
@@ -248,9 +300,16 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         VStack(spacing: 6) {
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 28))
-                .foregroundStyle(HindsightTheme.Colors.accent)
+            ZStack {
+                RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                    .fill(HindsightTheme.Colors.accentGradient)
+                Image(systemName: "scope")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 48, height: 48)
+            .hindsightShadow(HindsightTheme.Shadows.glow)
+            .accessibilityHidden(true)
             Text("Hindsight")
                 .font(HindsightTheme.Typography.headline)
                 .foregroundStyle(HindsightTheme.Colors.textPrimary)

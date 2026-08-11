@@ -2,7 +2,8 @@
 //  HindsightInputs.swift
 //  Hindsight
 //
-//  Quiet, high-legibility input controls. Their public APIs are retained.
+//  Rounded, high-legibility Signal Garden inputs. Their public APIs,
+//  identifiers, validation behavior, and focus semantics are retained.
 //
 
 import SwiftUI
@@ -32,6 +33,7 @@ struct HTextField: View {
     var accessibilityLabel: String? = nil
     var accessibilityHint: String? = nil
     @FocusState private var isFocused: Bool
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
 
     var body: some View {
         HStack(spacing: HindsightTheme.Spacing.sm) {
@@ -58,10 +60,18 @@ struct HTextField: View {
             }
         }
         .padding(.horizontal, HindsightTheme.Spacing.md)
-        .frame(minHeight: 48)
-        .background(HindsightTheme.Colors.cardElevated)
+        .frame(minHeight: 50)
+        .background(isFocused ? HindsightTheme.Colors.card : HindsightTheme.Colors.cardElevated)
         .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous).strokeBorder(HindsightTheme.Colors.border, lineWidth: 1))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                .strokeBorder(
+                    isFocused ? HindsightTheme.Colors.accent : HindsightTheme.Colors.border,
+                    lineWidth: isFocused || colorSchemeContrast == .increased ? 2 : 1
+                )
+        }
+        .shadow(color: isFocused ? HindsightTheme.Colors.accent.opacity(0.14) : .clear, radius: 9, y: 4)
+        .hindsightMotion(value: isFocused)
     }
 }
 
@@ -75,6 +85,7 @@ struct HTextEditor: View {
     var accessibilityLabel: String? = nil
     var accessibilityHint: String? = nil
     @FocusState private var isFocused: Bool
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -104,9 +115,17 @@ struct HTextEditor: View {
                     }
                 }
         }
-        .background(HindsightTheme.Colors.cardElevated)
+        .background(isFocused ? HindsightTheme.Colors.card : HindsightTheme.Colors.cardElevated)
         .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous).strokeBorder(HindsightTheme.Colors.border, lineWidth: 1))
+        .overlay {
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
+                .strokeBorder(
+                    isFocused ? HindsightTheme.Colors.accent : HindsightTheme.Colors.border,
+                    lineWidth: isFocused || colorSchemeContrast == .increased ? 2 : 1
+                )
+        }
+        .shadow(color: isFocused ? HindsightTheme.Colors.accent.opacity(0.14) : .clear, radius: 9, y: 4)
+        .hindsightMotion(value: isFocused)
     }
 }
 
@@ -126,11 +145,12 @@ struct HStepper: View {
                 ForEach(range, id: \.self) { item in
                     Button { value = item; HapticsManager.shared.selectionChanged() } label: {
                         Text("\(item)").font(HindsightTheme.Typography.subheadline).monospacedDigit()
-                            .foregroundStyle(item <= value ? HindsightTheme.Colors.surface : HindsightTheme.Colors.textSecondary)
+                            .foregroundStyle(item <= value ? HindsightTheme.Colors.onAccent : HindsightTheme.Colors.textSecondary)
                             .frame(width: 44, height: 44)
                             .background(item <= value ? tint : HindsightTheme.Colors.cardElevated)
-                            .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm, style: .continuous).strokeBorder(item <= value ? tint : HindsightTheme.Colors.border, lineWidth: 1))
+                            .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous).strokeBorder(item <= value ? tint : HindsightTheme.Colors.border, lineWidth: 1))
+                            .shadow(color: item <= value ? tint.opacity(0.14) : .clear, radius: 6, y: 3)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(label) \(item)")

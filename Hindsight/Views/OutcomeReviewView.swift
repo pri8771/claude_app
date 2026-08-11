@@ -14,6 +14,7 @@ private enum OutcomeReviewFocus: Hashable {
 
 struct OutcomeReviewView: View {
     @Bindable var decision: Decision
+    var onSaved: (Date) -> Void = { _ in }
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -47,6 +48,7 @@ struct OutcomeReviewView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
+                        reviewHeader
                         intro
                         predictionsSection
                         whatHappenedSection
@@ -106,39 +108,85 @@ struct OutcomeReviewView: View {
 
     // MARK: Evidence and form sections
 
+    private var reviewHeader: some View {
+        HStack(alignment: .center, spacing: HindsightTheme.Spacing.md) {
+            ZStack {
+                Circle().fill(HindsightTheme.Colors.accentGradient)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 52, height: 52)
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("LOOK BACK, LEARN FORWARD")
+                    .font(HindsightTheme.Typography.metadata)
+                    .tracking(0.7)
+                    .foregroundStyle(HindsightTheme.Colors.accent)
+                Text("Turn the outcome into insight")
+                    .font(HindsightTheme.Typography.title)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     private var intro: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HStack {
-                Text("ORIGINAL FORECAST · LOCKED")
-                    .font(HindsightTheme.Typography.metadata)
-                    .tracking(0.6)
-                    .foregroundStyle(HindsightTheme.Colors.accent)
-                Spacer()
-                Image(systemName: "lock.fill")
-                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+        HCard(padding: 0, background: HindsightTheme.Colors.card) {
+            ZStack(alignment: .topTrailing) {
+                LinearGradient(
+                    colors: [
+                        HindsightTheme.Colors.categoryPersonal.opacity(0.20),
+                        HindsightTheme.Colors.categoryEducation.opacity(0.12),
+                        HindsightTheme.Colors.amber.opacity(0.10)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Circle()
+                    .fill(HindsightTheme.Colors.amber.opacity(0.15))
+                    .frame(width: 150, height: 150)
+                    .offset(x: 55, y: -70)
                     .accessibilityHidden(true)
-            }
-            Text(decision.title)
-                .font(HindsightTheme.Typography.authoredStatement)
-                .foregroundStyle(HindsightTheme.Colors.textPrimary)
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: HindsightTheme.Spacing.sm) { evidenceDates }
-                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) { evidenceDates }
-            }
-            if !decision.notes.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("ORIGINAL WHY · LOCKED")
-                        .font(HindsightTheme.Typography.metadata)
-                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
-                    Text(decision.notes)
-                        .font(HindsightTheme.Typography.callout)
-                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+                    HStack {
+                        Label("ORIGINAL BELIEF · LOCKED", systemImage: "lock.fill")
+                            .font(HindsightTheme.Typography.metadata)
+                            .tracking(0.6)
+                            .foregroundStyle(HindsightTheme.Colors.accent)
+                        Spacer()
+                        Text("\(decision.averageConfidence)%")
+                            .font(.system(.title2, design: .rounded).weight(.bold))
+                            .foregroundStyle(HindsightTheme.Colors.accent)
+                            .monospacedDigit()
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 34)
+                            .background(HindsightTheme.Colors.surface.opacity(0.80), in: Capsule())
+                    }
+                    Text(decision.title)
+                        .font(HindsightTheme.Typography.authoredStatement)
+                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: HindsightTheme.Spacing.sm) { evidenceDates }
+                        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) { evidenceDates }
+                    }
+                    if !decision.notes.isEmpty {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Label("Your original thinking", systemImage: "quote.bubble.fill")
+                                .font(HindsightTheme.Typography.caption2)
+                                .foregroundStyle(HindsightTheme.Colors.categoryEducation)
+                            Text(decision.notes)
+                                .font(HindsightTheme.Typography.callout)
+                                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                        }
+                        .padding(HindsightTheme.Spacing.md)
+                        .background(HindsightTheme.Colors.surface.opacity(0.72), in: RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
+                    }
+                    if SampleData.isDemoDecision(decision) {
+                        HBadge(text: "Example only · excluded from personal insights", icon: "wand.and.stars", color: HindsightTheme.Colors.amber)
+                    }
                 }
-            }
-            if SampleData.isDemoDecision(decision) {
-                Text("EXAMPLE RECORD · EXCLUDED FROM PERSONAL INSIGHTS")
-                    .font(HindsightTheme.Typography.metadata)
-                    .foregroundStyle(HindsightTheme.Colors.accent)
+                .padding(HindsightTheme.Spacing.lg)
             }
         }
         .accessibilityElement(children: .contain)
@@ -362,6 +410,8 @@ struct OutcomeReviewView: View {
             saveError = "Your review wasn't saved. It is still here to retry."
             return
         }
+
+        onSaved(decision.outcomeReview?.reviewedAt ?? Date())
 
         OutcomeReviewDraftStore.clear(for: decision.id)
         for prediction in decision.predictions where prediction.status != .pending {

@@ -2,9 +2,9 @@
 //  FuturePostcardTheme.swift
 //  Hindsight
 //
-//  Compatibility facade for the in-flight Future Postcards slice. The public
-//  names are retained; the visual language is now Editorial Observatory,
-//  without stamps, rotation, postcard paper, or decorative shadows.
+//  Compatibility facade for views that still use the Future Postcards names.
+//  Public APIs remain stable, but every visual role now resolves through the
+//  Signal Garden system without paper, handwriting, or postal metaphors.
 //
 
 import SwiftUI
@@ -15,7 +15,7 @@ enum FuturePostcardTheme {
         static let paperRaised = HindsightTheme.Colors.card
         static let ink = HindsightTheme.Colors.textPrimary
         static let inkMuted = HindsightTheme.Colors.textSecondary
-        static let rust = HindsightTheme.Colors.accent
+        static let rust = HindsightTheme.Colors.coral
         static let amber = HindsightTheme.Colors.amber
         static let sage = HindsightTheme.Colors.success
         static let steel = HindsightTheme.Colors.steel
@@ -33,16 +33,15 @@ enum FuturePostcardTheme {
     }
 }
 
-/// Compatibility label; intentionally rendered as a neutral instrument tag,
-/// rather than a stamp. Call sites can migrate the wording independently.
+/// Compatibility label rendered as a rounded signal chip rather than a stamp.
 struct FuturePostcardStamp: View {
     let text: String
     var color: Color = FuturePostcardTheme.Colors.amber
     var body: some View {
-        Text(text.uppercased()).font(FuturePostcardTheme.Typography.label).tracking(0.55)
-            .foregroundStyle(FuturePostcardTheme.Colors.ink).padding(.horizontal, 8).frame(minHeight: 28)
-            .background(color.opacity(0.13)).clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: HindsightTheme.Radius.sm, style: .continuous).stroke(color.opacity(0.75), lineWidth: 1))
+        Text(text.uppercased()).font(FuturePostcardTheme.Typography.label).tracking(0.45)
+            .foregroundStyle(color).padding(.horizontal, 10).frame(minHeight: 30)
+            .background(color.opacity(0.12)).clipShape(Capsule())
+            .overlay(Capsule().stroke(color.opacity(0.56), lineWidth: 1))
             .accessibilityLabel(text)
     }
 }
@@ -86,7 +85,9 @@ struct FuturePostcardDecisionCard: View {
 
 extension View {
     func futurePostcardScreen() -> some View {
-        background(HindsightTheme.Colors.background.ignoresSafeArea()).foregroundStyle(HindsightTheme.Colors.textPrimary)
-            .toolbarBackground(HindsightTheme.Colors.surface, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
+        background { SignalGardenBackground() }
+            .foregroundStyle(HindsightTheme.Colors.textPrimary)
+            .toolbarBackground(HindsightTheme.Colors.surface, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
     }
 }

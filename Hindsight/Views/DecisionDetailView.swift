@@ -26,6 +26,8 @@ struct DecisionDetailView: View {
     @State private var expandedOptionID: UUID?
     @State private var saveError: String?
     @State private var deleteError: String?
+    @State private var outcomeRefreshID = UUID()
+    @State private var reviewConfirmationDate: Date?
 
     var body: some View {
         ZStack {
@@ -33,6 +35,9 @@ struct DecisionDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
+                    if let reviewConfirmationDate {
+                        reviewSavedBanner(reviewConfirmationDate)
+                    }
                     header
                     timeline
                     if !decision.notes.isEmpty { notesSection }
@@ -43,6 +48,7 @@ struct DecisionDetailView: View {
                 }
                 .padding(.horizontal, HindsightTheme.Spacing.md)
                 .padding(.top, HindsightTheme.Spacing.sm)
+                .id(outcomeRefreshID)
             }
             .scrollIndicators(.hidden)
         }
@@ -68,8 +74,16 @@ struct DecisionDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showOutcomeReview) {
-            OutcomeReviewView(decision: decision)
+        .sheet(isPresented: $showOutcomeReview, onDismiss: {
+            // SwiftData relationship changes saved inside a sheet can arrive
+            // before this detail hierarchy is invalidated. Rebuild the visible
+            // evidence once so the completed review is announced immediately.
+            outcomeRefreshID = UUID()
+        }) {
+            OutcomeReviewView(decision: decision, onSaved: { reviewedAt in
+                reviewConfirmationDate = reviewedAt
+                outcomeRefreshID = UUID()
+            })
         }
         .sheet(isPresented: $showDuePredictionStack) {
             DuePredictionResolveStackView()
@@ -97,6 +111,26 @@ struct DecisionDetailView: View {
 
     // MARK: Header
 
+    private func reviewSavedBanner(_ reviewedAt: Date) -> some View {
+        HCard(background: HindsightTheme.Colors.success.opacity(0.12)) {
+            HStack(alignment: .top, spacing: HindsightTheme.Spacing.sm) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(HindsightTheme.Colors.success)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Reviewed \(reviewedAt.formatted(.dateTime.month(.wide).day().year()))")
+                        .font(HindsightTheme.Typography.headline)
+                        .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                    Text("Your outcome and original forecast are now saved together.")
+                        .font(HindsightTheme.Typography.footnote)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
             HStack(alignment: .top, spacing: HindsightTheme.Spacing.md) {
@@ -118,6 +152,11 @@ struct DecisionDetailView: View {
                         HBadge(text: decision.isReversible ? "Reversible" : "Irreversible",
                                icon: decision.isReversible ? "arrow.uturn.backward" : "lock.fill",
                                color: decision.isReversible ? HindsightTheme.Colors.success : HindsightTheme.Colors.textSecondary)
+                    }
+                    if let reviewedAt = decision.outcomeReview?.reviewedAt {
+                        Text("Reviewed \(reviewedAt.formatted(.dateTime.month(.wide).day().year()))")
+                            .font(HindsightTheme.Typography.caption)
+                            .foregroundStyle(HindsightTheme.Colors.textTertiary)
                     }
                 }
                 Spacer(minLength: 0)

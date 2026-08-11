@@ -30,16 +30,23 @@ struct HindsightRootView: View {
 
     var body: some View {
         ZStack {
+            SignalGardenBackground()
+
             if hasCompletedOnboarding {
                 MainTabView()
-                    .transition(.opacity)
+                    .transition(rootTransition)
             } else {
                 OnboardingView()
-                    .transition(.opacity)
+                    .transition(rootTransition)
             }
         }
         .environmentObject(router)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: hasCompletedOnboarding)
+        .tint(HindsightTheme.Colors.accent)
+        .animation(reduceMotion ? nil : HindsightTheme.Motion.gentle, value: hasCompletedOnboarding)
+    }
+
+    private var rootTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.985))
     }
 }
 

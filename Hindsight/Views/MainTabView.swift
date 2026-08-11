@@ -12,6 +12,7 @@ import SwiftData
 struct MainTabView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @EnvironmentObject private var router: AppRouter
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @AppStorage(AppStorageKeys.selectedMainTab) private var selectedTabRaw = Tab.now.rawValue
 
@@ -24,38 +25,48 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        TabView(selection: tabSelection) {
-            TodayView()
-                .tabItem { Label("Today", systemImage: "calendar") }
-                .tag(Tab.now)
+        ZStack(alignment: .bottom) {
+            TabView(selection: tabSelection) {
+                TodayView()
+                    .tabItem { Label("Today", systemImage: "sun.max.fill") }
+                    .tag(Tab.now)
 
-            HindsightArchiveView()
-                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
-                .tag(Tab.hindsight)
+                HindsightArchiveView()
+                    .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+                    .tag(Tab.hindsight)
 
-            Color.clear
-                .tabItem { Label("Capture", systemImage: "plus.circle.fill") }
-                .tag(Tab.capture)
+                Color.clear
+                    .tabItem { Label("Capture", systemImage: "plus.circle.fill") }
+                    .tag(Tab.capture)
 
-            InsightsView()
-                .tabItem { Label("Insights", systemImage: "chart.xyaxis.line") }
-                .tag(Tab.insights)
+                InsightsView()
+                    .tabItem { Label("Insights", systemImage: "chart.line.uptrend.xyaxis") }
+                    .tag(Tab.insights)
 
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(Tab.settings)
+                SettingsView()
+                    .tabItem { Label("Settings", systemImage: "slider.horizontal.3") }
+                    .tag(Tab.settings)
+            }
+
+            if horizontalSizeClass == .compact {
+                HCaptureOrb(size: 44)
+                    .scaleEffect(router.presentQuickCapture ? 0.94 : 1)
+                    .hindsightMotion(value: router.presentQuickCapture)
+            }
         }
         .tint(HindsightTheme.Colors.accent)
-        .toolbarBackground(HindsightTheme.Colors.surface, for: .tabBar)
+        .toolbarBackground(HindsightTheme.Colors.tabBarSurface, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         // Tab switch (moment #12) — very subtle selection feedback.
         .haptics(.selection, trigger: selectedTabRaw)
         .sheet(isPresented: $router.presentQuickCapture) {
             QuickCaptureSheet()
+                .presentationCornerRadius(HindsightTheme.Radius.xl)
         }
         // Deep-link target for onboarding's "Start First Decision" path.
         .sheet(isPresented: $router.presentNewDecision) {
             NewDecisionWizard()
+                .presentationCornerRadius(HindsightTheme.Radius.xl)
         }
         .task {
             await notificationManager.refreshAuthorizationStatus()

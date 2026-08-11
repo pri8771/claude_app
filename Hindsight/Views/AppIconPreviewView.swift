@@ -8,11 +8,9 @@
 //  export a 1024×1024 PNG to fill the asset catalog (see
 //  Docs/AppIconAndLaunchScreen.md).
 //
-//  Concept: a sealed decision on a private journal card.
-//    • Dark navy rounded-square base
-//    • A slightly lighter navy journal card
-//    • An accent-red wax seal (the decision, committed)
-//    • An amber time-arc sweeping around it, ending in a "future" spark
+//  Signal Garden concept: distinct probabilities orbit a central point of
+//  clarity. The same mark appears in the launch experience; App Store assets
+//  use the generated production rendering in Assets.xcassets.
 //
 
 import SwiftUI
@@ -30,23 +28,14 @@ struct HindsightIconMark: View {
     private var s: CGFloat { size }
 
     var body: some View {
-        // The amber spark sits exactly at the end of the time-arc (t = 0.95
-        // around a circle that starts at 3 o'clock and sweeps clockwise).
-        let arcRadius = s * 0.205
-        let sparkAngle = 2 * Double.pi * 0.95
-        let sparkX = arcRadius * CGFloat(cos(sparkAngle))
-        let sparkY = arcRadius * CGFloat(sin(sparkAngle))
-        let sealDrop = s * 0.02   // seal sits just below the card's centre
-
         ZStack {
             base
-            card
-            timeArc.frame(width: arcRadius * 2, height: arcRadius * 2).offset(y: sealDrop)
-            seal.offset(y: sealDrop)
-            spark.offset(x: sparkX, y: sparkY + sealDrop)
+            orbit
+            probabilityDots
+            centralSignal
         }
         .frame(width: s, height: s)
-        .background(Color(hex: "1A1A2E"))
+        .background(Color(hex: "110B55"))
         .clipShape(clip)
     }
 
@@ -55,80 +44,94 @@ struct HindsightIconMark: View {
     private var base: some View {
         ZStack {
             Rectangle()
-                .fill(LinearGradient(colors: [Color(hex: "1E1E36"), Color(hex: "141428")],
-                                     startPoint: .top, endPoint: .bottom))
-            RadialGradient(colors: [Color(hex: "262648").opacity(0.9), .clear],
-                           center: UnitPoint(x: 0.5, y: 0.32),
-                           startRadius: 0, endRadius: s * 0.55)
-            // A whisper of amber warmth at the bottom.
-            RadialGradient(colors: [Color(hex: "F5A623").opacity(0.06), .clear],
-                           center: UnitPoint(x: 0.5, y: 0.9),
-                           startRadius: 0, endRadius: s * 0.5)
-        }
-    }
-
-    // MARK: Journal card
-
-    private var card: some View {
-        RoundedRectangle(cornerRadius: s * 0.13, style: .continuous)
-            .fill(LinearGradient(colors: [Color(hex: "2E2E50"), Color(hex: "242442")],
-                                 startPoint: .topLeading, endPoint: .bottomTrailing))
-            .frame(width: s * 0.60, height: s * 0.70)
-            .overlay(
-                RoundedRectangle(cornerRadius: s * 0.13, style: .continuous)
-                    .strokeBorder(Color(hex: "343456"), lineWidth: s * 0.008)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: "4D19C7"), Color(hex: "1B126D"), Color(hex: "071044")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            RadialGradient(
+                colors: [Color(hex: "7C3AED").opacity(0.48), .clear],
+                center: UnitPoint(x: 0.50, y: 0.18),
+                startRadius: 0,
+                endRadius: s * 0.62
             )
-            .overlay(alignment: .top) { pageLines.padding(.top, s * 0.115) }
-            .shadow(color: .black.opacity(0.45), radius: s * 0.05, x: 0, y: s * 0.02)
-    }
-
-    /// Two faint "written" lines that imply a journal page without using text.
-    private var pageLines: some View {
-        VStack(spacing: s * 0.024) {
-            Capsule().fill(Color(hex: "A7A7C7").opacity(0.16)).frame(width: s * 0.30, height: s * 0.012)
-            Capsule().fill(Color(hex: "A7A7C7").opacity(0.11)).frame(width: s * 0.22, height: s * 0.012)
+            RadialGradient(
+                colors: [Color(hex: "00D8D6").opacity(0.12), .clear],
+                center: UnitPoint(x: 0.56, y: 0.80),
+                startRadius: 0,
+                endRadius: s * 0.52
+            )
         }
     }
 
-    // MARK: Accent-red wax seal
-
-    private var seal: some View {
-        ZStack {
-            Circle()
-                .fill(RadialGradient(colors: [Color(hex: "F0506A"), Color(hex: "E94560"), Color(hex: "C2334B")],
-                                     center: UnitPoint(x: 0.40, y: 0.35),
-                                     startRadius: s * 0.01, endRadius: s * 0.17))
-                .frame(width: s * 0.26, height: s * 0.26)
-                .shadow(color: Color(hex: "E94560").opacity(0.45), radius: s * 0.03, x: 0, y: s * 0.006)
-            // Stamped inner ring.
-            Circle()
-                .strokeBorder(Color(hex: "1A1A2E").opacity(0.22), lineWidth: s * 0.012)
-                .frame(width: s * 0.205, height: s * 0.205)
-            // Glossy rim highlight.
-            Circle()
-                .strokeBorder(.white.opacity(0.12), lineWidth: s * 0.005)
-                .frame(width: s * 0.255, height: s * 0.255)
-        }
-    }
-
-    // MARK: Amber time-arc
-
-    private var timeArc: some View {
+    private var orbit: some View {
         Circle()
-            .trim(from: 0.55, to: 0.95)
-            .stroke(LinearGradient(colors: [Color(hex: "F5A623"), Color(hex: "FFC65A")],
-                                   startPoint: .leading, endPoint: .trailing),
-                    style: StrokeStyle(lineWidth: s * 0.026, lineCap: .round))
+            .stroke(
+                AngularGradient(
+                    colors: [
+                        Color(hex: "FF4D8D"), Color(hex: "FF7B64"), Color(hex: "FFD33D"),
+                        Color(hex: "B8FF32"), Color(hex: "35E8C6"), Color(hex: "34A8FF"),
+                        Color(hex: "A86BFF"), Color(hex: "FF4D8D")
+                    ],
+                    center: .center
+                ),
+                style: StrokeStyle(lineWidth: max(1, s * 0.014), lineCap: .round)
+            )
+            .frame(width: s * 0.68, height: s * 0.68)
+            .shadow(color: Color(hex: "8B5CF6").opacity(0.44), radius: s * 0.03)
     }
 
-    // MARK: Amber "future" spark
-
-    private var spark: some View {
+    private var probabilityDots: some View {
         ZStack {
-            Circle().fill(Color(hex: "F5A623")).frame(width: s * 0.052, height: s * 0.052)
-            Circle().fill(Color(hex: "FFD98A")).frame(width: s * 0.024, height: s * 0.024)
+            ForEach(0..<20, id: \.self) { index in
+                let angle = (Double(index) / 20 * 360) - 90
+                let radians = angle * Double.pi / 180
+                let radius = s * 0.34
+                let dotSize = s * dotScale(for: index)
+                Circle()
+                    .fill(dotColor(for: index))
+                    .frame(width: dotSize, height: dotSize)
+                    .shadow(color: dotColor(for: index).opacity(0.76), radius: max(1, s * 0.014))
+                    .offset(
+                        x: radius * CGFloat(cos(radians)),
+                        y: radius * CGFloat(sin(radians))
+                    )
+            }
         }
-        .shadow(color: Color(hex: "F5A623").opacity(0.85), radius: s * 0.03)
+    }
+
+    private var centralSignal: some View {
+        ZStack {
+            Image(systemName: "sparkle")
+                .font(.system(size: s * 0.29, weight: .bold))
+                .foregroundStyle(.white)
+                .shadow(color: Color(hex: "FFB45C").opacity(0.90), radius: s * 0.035)
+            Circle()
+                .fill(Color.white.opacity(0.20))
+                .frame(width: s * 0.12, height: s * 0.12)
+                .blur(radius: s * 0.025)
+        }
+    }
+
+    private func dotScale(for index: Int) -> CGFloat {
+        switch index % 5 {
+        case 0: return 0.067
+        case 1: return 0.046
+        case 2: return 0.031
+        case 3: return 0.024
+        default: return 0.039
+        }
+    }
+
+    private func dotColor(for index: Int) -> Color {
+        let palette = [
+            Color(hex: "FFD33D"), Color(hex: "FF7B64"), Color(hex: "FF4D8D"),
+            Color(hex: "A86BFF"), Color(hex: "34A8FF"), Color(hex: "35E8C6"),
+            Color(hex: "B8FF32")
+        ]
+        return palette[index % palette.count]
     }
 
     // MARK: Clip

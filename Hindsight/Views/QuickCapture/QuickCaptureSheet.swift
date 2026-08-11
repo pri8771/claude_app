@@ -111,6 +111,26 @@ enum QuickCaptureHorizon: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var shortLabel: String {
+        switch self {
+        case .tomorrow: return "Tomorrow"
+        case .thisWeek: return "This week"
+        case .thisMonth: return "This month"
+        case .sixMonths: return "6 months"
+        case .custom: return "Pick date"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .tomorrow: return "sunrise.fill"
+        case .thisWeek: return "calendar.badge.clock"
+        case .thisMonth: return "calendar"
+        case .sixMonths: return "leaf.fill"
+        case .custom: return "calendar.badge.plus"
+        }
+    }
+
     func date(from now: Date, calendar: Calendar) -> Date {
         let start = calendar.startOfDay(for: now)
         switch self {
@@ -155,35 +175,22 @@ struct QuickCaptureSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                HindsightTheme.Colors.background.ignoresSafeArea()
+                HindsightTheme.Colors.backgroundGradient.ignoresSafeArea()
                 ScrollView {
-                    VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xl) {
-                        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-                            Text("PRIVATE FORECAST")
-                                .font(HindsightTheme.Typography.metadata)
-                                .tracking(0.7)
-                                .foregroundStyle(HindsightTheme.Colors.accent)
-                            Text("Record it before you know.")
-                                .font(HindsightTheme.Typography.editorialDisplay)
-                                .foregroundStyle(HindsightTheme.Colors.textPrimary)
-                            Text("One clear statement, your confidence, and when the result can be checked.")
-                                .font(HindsightTheme.Typography.callout)
-                                .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                        }
+                    VStack(alignment: .leading, spacing: HindsightTheme.Spacing.lg) {
+                        captureHeader
                         if !didCompleteNudge { shortHorizonNudge }
                         statementSection
                         confidenceSection
                         reviewDateSection
                         reasoningSection
-                        Label("The original statement, confidence, and review date are locked after saving.",
-                              systemImage: "lock")
-                            .font(HindsightTheme.Typography.footnote)
-                            .foregroundStyle(HindsightTheme.Colors.textSecondary)
-                            .accessibilityLabel("Your original forecast details cannot be edited after saving")
+                        lockPromise
                     }
                     .padding(.horizontal, HindsightTheme.Spacing.md)
-                    .padding(.vertical, HindsightTheme.Spacing.lg)
+                    .padding(.top, HindsightTheme.Spacing.sm)
+                    .padding(.bottom, HindsightTheme.Spacing.xl)
                     .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                    .hindsightReadableWidth()
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .accessibilityIdentifier("quickCapture.scroll")
@@ -202,12 +209,29 @@ struct QuickCaptureSheet: View {
             }
             .safeAreaInset(edge: .bottom) {
                 Button(action: save) {
-                    Label(isSaving ? "Saving…" : "Lock forecast", systemImage: "lock.fill")
+                    HStack(spacing: HindsightTheme.Spacing.sm) {
+                        Image(systemName: isSaving ? "hourglass" : "sparkles")
+                        Text(isSaving ? "Saving…" : "Lock in my belief")
+                        Spacer()
+                        Image(systemName: "arrow.right")
+                    }
                         .font(HindsightTheme.Typography.headline)
-                        .foregroundStyle(HindsightTheme.Colors.surface)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(canSave && !isSaving ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.textTertiary)
-                        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                        .padding(.horizontal, HindsightTheme.Spacing.lg)
+                        .background {
+                            if canSave && !isSaving {
+                                HindsightTheme.Colors.accentGradient
+                            } else {
+                                LinearGradient(
+                                    colors: [HindsightTheme.Colors.textTertiary, HindsightTheme.Colors.textTertiary],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            }
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.pill, style: .continuous))
+                        .hindsightShadow(canSave && !isSaving ? HindsightTheme.Shadows.glow : HindsightTheme.Shadows.card)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSave || isSaving)
@@ -217,7 +241,7 @@ struct QuickCaptureSheet: View {
                 .accessibilityHint(canSave ? "Saves this forecast for later comparison" : validationMessage)
                 .padding(.horizontal, HindsightTheme.Spacing.md)
                 .padding(.vertical, HindsightTheme.Spacing.sm)
-                .background(HindsightTheme.Colors.surface)
+                .background(.ultraThinMaterial)
             }
             .alert("Couldn't save forecast", isPresented: Binding(
                 get: { saveError != nil }, set: { if !$0 { saveError = nil } }
@@ -254,12 +278,42 @@ struct QuickCaptureSheet: View {
         .onChange(of: draft.customDate) { _, _ in persistDraft() }
     }
 
+    private var captureHeader: some View {
+        HStack(alignment: .top, spacing: HindsightTheme.Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(HindsightTheme.Colors.accentGradient)
+                Image(systemName: "lightbulb.max.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 54, height: 54)
+            .hindsightShadow(HindsightTheme.Shadows.glow)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: HindsightTheme.Spacing.xs) {
+                Text("CAPTURE A SIGNAL")
+                    .font(HindsightTheme.Typography.metadata)
+                    .tracking(0.8)
+                    .foregroundStyle(HindsightTheme.Colors.accent)
+                Text("What do you believe?")
+                    .font(HindsightTheme.Typography.editorialDisplay)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Say it now. Compare it with reality later.")
+                    .font(HindsightTheme.Typography.callout)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
     private var shortHorizonNudge: some View {
         HStack(alignment: .top, spacing: HindsightTheme.Spacing.sm) {
-            Image(systemName: "calendar.badge.clock")
-                .foregroundStyle(HindsightTheme.Colors.steel)
+            Image(systemName: "bolt.fill")
+                .foregroundStyle(HindsightTheme.Colors.amber)
                 .accessibilityHidden(true)
-            Text("A near review date produces useful evidence sooner.")
+            Text("Shorter forecasts teach you faster. Tomorrow or this week is a great first signal.")
                 .font(HindsightTheme.Typography.footnote)
                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
             Spacer(minLength: HindsightTheme.Spacing.sm)
@@ -268,33 +322,34 @@ struct QuickCaptureSheet: View {
                 .foregroundStyle(HindsightTheme.Colors.accent)
                 .frame(minHeight: 44)
         }
-        .padding(.horizontal, HindsightTheme.Spacing.md)
-        .background(HindsightTheme.Colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+        .padding(HindsightTheme.Spacing.md)
+        .background(HindsightTheme.Colors.amber.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
-                .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                .stroke(HindsightTheme.Colors.amber.opacity(0.30), lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }
 
     private var statementSection: some View {
         VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HSectionHeader(title: "What do you expect will happen?")
+            signalStep(number: "1", title: "Make it checkable", detail: "One outcome your future self can judge")
             TextField("Write one outcome that can later be checked", text: $draft.statement, axis: .vertical)
                 .lineLimit(3...6)
                 .textInputAutocapitalization(.sentences)
                 .focused($focusedField, equals: .statement)
                 .font(HindsightTheme.Typography.authoredStatement)
-                .padding(HindsightTheme.Spacing.md)
-                .frame(minHeight: 96, alignment: .topLeading)
+                .padding(HindsightTheme.Spacing.lg)
+                .frame(minHeight: 118, alignment: .topLeading)
                 .foregroundStyle(HindsightTheme.Colors.textPrimary)
                 .background(HindsightTheme.Colors.card)
-                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.xl, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
-                        .stroke(HindsightTheme.Colors.borderStrong, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.xl, style: .continuous)
+                        .stroke(HindsightTheme.Colors.categoryPersonal.opacity(0.34), lineWidth: 1.5)
                 }
+                .hindsightShadow(HindsightTheme.Shadows.raised)
                 .accessibilityIdentifier("Quick capture statement")
             if !draft.statement.isEmpty && !draft.isStatementValid {
                 Text("Enter a forecast before saving.")
@@ -306,7 +361,7 @@ struct QuickCaptureSheet: View {
     }
 
     private var reasoningSection: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
             Button {
                 if reduceMotion {
                     showReasoning.toggle()
@@ -315,11 +370,19 @@ struct QuickCaptureSheet: View {
                 }
                 if showReasoning { focusedField = .reasoning }
             } label: {
-                HStack {
+                HStack(spacing: HindsightTheme.Spacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(HindsightTheme.Colors.categoryEducation.opacity(0.13))
+                        Image(systemName: "brain.head.profile")
+                            .foregroundStyle(HindsightTheme.Colors.categoryEducation)
+                    }
+                    .frame(width: 40, height: 40)
+                    .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Why do you think so?")
+                        Text("Add your thinking")
                             .font(HindsightTheme.Typography.headline)
-                        Text("Optional context for your future self")
+                        Text("Optional — evidence, intuition, or assumptions")
                             .font(HindsightTheme.Typography.footnote)
                             .foregroundStyle(HindsightTheme.Colors.textSecondary)
                     }
@@ -327,7 +390,10 @@ struct QuickCaptureSheet: View {
                     Image(systemName: showReasoning ? "chevron.up" : "plus")
                         .foregroundStyle(HindsightTheme.Colors.steel)
                 }
-                .frame(minHeight: 44)
+                .padding(HindsightTheme.Spacing.md)
+                .frame(minHeight: 56)
+                .background(HindsightTheme.Colors.card)
+                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -341,10 +407,10 @@ struct QuickCaptureSheet: View {
                     .padding(HindsightTheme.Spacing.md)
                     .foregroundStyle(HindsightTheme.Colors.textPrimary)
                     .background(HindsightTheme.Colors.card)
-                    .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
-                            .stroke(HindsightTheme.Colors.border, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                            .stroke(HindsightTheme.Colors.categoryEducation.opacity(0.28), lineWidth: 1)
                     }
                     .accessibilityIdentifier("Quick capture reasoning")
             }
@@ -352,72 +418,94 @@ struct QuickCaptureSheet: View {
     }
 
     private var confidenceSection: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("How confident are you?").font(HindsightTheme.Typography.title2)
-                Spacer()
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+            signalStep(number: "2", title: "How sure are you?", detail: "Choose anywhere from 0 to 100")
+            VStack(spacing: HindsightTheme.Spacing.md) {
                 if let confidence = draft.confidence {
                     Text("\(confidence)%")
-                        .font(HindsightTheme.Typography.stat)
+                        .font(.system(size: 58, weight: .bold, design: .rounded))
                         .foregroundStyle(HindsightTheme.Colors.accent)
                         .monospacedDigit()
+                        .contentTransition(.numericText())
+                    Text(confidenceDescription(confidence))
+                        .font(HindsightTheme.Typography.callout)
+                        .foregroundStyle(HindsightTheme.Colors.textSecondary)
                 } else {
-                    Text("Choose")
-                        .font(HindsightTheme.Typography.caption)
+                    Text("—%")
+                        .font(.system(size: 58, weight: .bold, design: .rounded))
+                        .foregroundStyle(HindsightTheme.Colors.textTertiary)
+                    Text("Move the slider to make an intentional choice")
+                        .font(HindsightTheme.Typography.callout)
                         .foregroundStyle(HindsightTheme.Colors.textSecondary)
                 }
-            }
-            Slider(
-                value: Binding(
-                    // The thumb rests at neutral 50% until the user interacts; the model stays
-                    // nil, so this is never treated as an inferred confidence selection.
-                    get: { Double(draft.confidence ?? 50) },
-                    set: { value in
-                        let selectedValue = Int(value.rounded())
-                        if draft.confidence != selectedValue {
-                            draft.confidence = selectedValue
+                Slider(
+                    value: Binding(
+                        // The thumb rests at neutral 50% until the user interacts; the model stays
+                        // nil, so this is never treated as an inferred confidence selection.
+                        get: { Double(draft.confidence ?? 50) },
+                        set: { value in
+                            let selectedValue = Int(value.rounded())
+                            if draft.confidence != selectedValue {
+                                draft.confidence = selectedValue
+                            }
+                        }
+                    ),
+                    in: 0...100,
+                    step: 1,
+                    onEditingChanged: { isEditing in
+                        // Touching neutral is still an explicit 50% selection.
+                        if isEditing, draft.confidence == nil {
+                            draft.confidence = 50
+                        } else if !isEditing, draft.confidence != nil {
+                            HapticsManager.shared.selectionChanged()
                         }
                     }
-                ),
-                in: 0...100,
-                step: 1,
-                onEditingChanged: { isEditing in
-                    // The thumb deliberately rests at 50% before selection.
-                    // Touching it is an explicit choice even when the first
-                    // sampled drag position is unchanged (notably at very
-                    // large Dynamic Type and with assistive input).
-                    if isEditing, draft.confidence == nil {
-                        draft.confidence = 50
-                    } else if !isEditing, draft.confidence != nil {
-                        HapticsManager.shared.selectionChanged()
-                    }
+                )
+                .tint(HindsightTheme.Colors.accent)
+                .frame(minHeight: 48)
+                .background {
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    HindsightTheme.Colors.categoryEducation.opacity(0.24),
+                                    HindsightTheme.Colors.success.opacity(0.24),
+                                    HindsightTheme.Colors.amber.opacity(0.24),
+                                    HindsightTheme.Colors.accent.opacity(0.24)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 10)
                 }
-            )
-            .tint(HindsightTheme.Colors.accent)
-            .frame(minHeight: 44)
-            .accessibilityLabel("Confidence")
-            .accessibilityValue(draft.confidence.map { "\($0) percent" } ?? "Not selected")
-            .accessibilityHint("Adjust from 0 to 100 percent. A confidence is required before saving.")
-            .accessibilityIdentifier("quickCapture.confidenceSlider")
-            HStack {
-                Text("0%")
-                Spacer()
-                Text("100%")
-            }
-            .font(HindsightTheme.Typography.caption)
-            .foregroundStyle(HindsightTheme.Colors.textSecondary)
-            .monospacedDigit()
-            .accessibilityHidden(true)
-            Text(draft.confidence.map(confidenceDescription) ?? "Move the slider from 0% to 100%. No answer is assumed.")
+                .accessibilityLabel("Confidence")
+                .accessibilityValue(draft.confidence.map { "\($0) percent" } ?? "Not selected")
+                .accessibilityHint("Adjust from 0 to 100 percent. A confidence is required before saving.")
+                .accessibilityIdentifier("quickCapture.confidenceSlider")
+                HStack {
+                    Text("Not at all")
+                    Spacer()
+                    Text("Completely")
+                }
                 .font(HindsightTheme.Typography.caption)
                 .foregroundStyle(HindsightTheme.Colors.textSecondary)
+                .accessibilityHidden(true)
+            }
+            .padding(HindsightTheme.Spacing.lg)
+            .background(HindsightTheme.Colors.card)
+            .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.xl, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: HindsightTheme.Radius.xl, style: .continuous)
+                    .stroke(HindsightTheme.Colors.accent.opacity(0.20), lineWidth: 1)
+            }
+            .hindsightShadow(HindsightTheme.Shadows.raised)
         }
     }
 
     private var reviewDateSection: some View {
-        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.sm) {
-            Text("When can this be checked?")
-                .font(HindsightTheme.Typography.title2)
+        VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
+            signalStep(number: "3", title: "When will you know?", detail: "Pick the first date reality can answer")
             ScrollView(.horizontal) {
                 HStack(spacing: HindsightTheme.Spacing.sm) {
                     ForEach(QuickCaptureHorizon.allCases) { horizon in
@@ -425,16 +513,30 @@ struct QuickCaptureSheet: View {
                             draft.selectedHorizon = horizon
                             HapticsManager.shared.selectionChanged()
                         } label: {
-                            Text(horizon.rawValue)
-                                .font(HindsightTheme.Typography.subheadline)
-                                .foregroundStyle(draft.selectedHorizon == horizon ? HindsightTheme.Colors.surface : HindsightTheme.Colors.textPrimary)
+                            VStack(spacing: 5) {
+                                Image(systemName: horizon.icon)
+                                    .font(.system(size: 16, weight: .semibold))
+                                Text(horizon.shortLabel)
+                                    .font(HindsightTheme.Typography.subheadline)
+                            }
+                                .foregroundStyle(draft.selectedHorizon == horizon ? Color.white : HindsightTheme.Colors.textPrimary)
                                 .padding(.horizontal, 14)
-                                .frame(minHeight: 44)
-                                .background(draft.selectedHorizon == horizon ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.card)
-                                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous))
+                                .frame(minWidth: 92, minHeight: 68)
+                                .background {
+                                    if draft.selectedHorizon == horizon {
+                                        HindsightTheme.Colors.accentGradient
+                                    } else {
+                                        LinearGradient(
+                                            colors: [HindsightTheme.Colors.card, HindsightTheme.Colors.card],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    }
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
                                 .overlay {
-                                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.md, style: .continuous)
-                                        .stroke(draft.selectedHorizon == horizon ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.border,
+                                    RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous)
+                                        .stroke(draft.selectedHorizon == horizon ? HindsightTheme.Colors.accent : HindsightTheme.Colors.border,
                                                 lineWidth: 1)
                                 }
                         }
@@ -453,6 +555,8 @@ struct QuickCaptureSheet: View {
                            in: earliestDate...,
                            displayedComponents: .date)
                     .datePickerStyle(.compact)
+                    .padding(HindsightTheme.Spacing.md)
+                    .background(HindsightTheme.Colors.card, in: RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
             }
             if let dueDate = draft.dueDate() {
                 Text("Review on \(dueDate.formatted(date: .long, time: .omitted)).")
@@ -465,6 +569,41 @@ struct QuickCaptureSheet: View {
                     .foregroundStyle(HindsightTheme.Colors.textSecondary)
             }
         }
+    }
+
+    private func signalStep(number: String, title: String, detail: String) -> some View {
+        HStack(spacing: HindsightTheme.Spacing.sm) {
+            Text(number)
+                .font(HindsightTheme.Typography.caption2)
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(HindsightTheme.Colors.accentGradient, in: Circle())
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(HindsightTheme.Typography.title2)
+                    .foregroundStyle(HindsightTheme.Colors.textPrimary)
+                Text(detail)
+                    .font(HindsightTheme.Typography.footnote)
+                    .foregroundStyle(HindsightTheme.Colors.textSecondary)
+            }
+        }
+    }
+
+    private var lockPromise: some View {
+        HStack(alignment: .top, spacing: HindsightTheme.Spacing.sm) {
+            Image(systemName: "lock.shield.fill")
+                .foregroundStyle(HindsightTheme.Colors.success)
+                .accessibilityHidden(true)
+            Text("Once saved, your belief, confidence, and check date stay locked—so future-you sees exactly what you thought today.")
+                .font(HindsightTheme.Typography.footnote)
+                .foregroundStyle(HindsightTheme.Colors.textSecondary)
+        }
+        .padding(HindsightTheme.Spacing.md)
+        .background(HindsightTheme.Colors.success.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: HindsightTheme.Radius.lg, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Your original forecast details cannot be edited after saving")
     }
 
     private func confidenceDescription(_ confidence: Int) -> String {
