@@ -110,11 +110,11 @@ forecast,prediction,confidence,calibration,reflection,accuracy,judgment,probabil
 
 ### Required and optional URLs/contact
 
-- Support URL: **`<USER-OWNED: PUBLIC HTTPS SUPPORT URL>`**
-- Privacy Policy URL: **`<USER-OWNED: PUBLIC HTTPS PRIVACY-POLICY URL>`**
-- Marketing URL (optional): **`<USER-OWNED: PUBLIC HTTPS MARKETING URL OR OMIT>`**
-- Public support email: **`<USER-OWNED: DURABLE SUPPORT EMAIL>`**
-- Copyright/legal name: **`© 2026 <USER-OWNED: LEGAL OWNER NAME>`**
+- Support URL: **`https://priyanshchordia.com/apps/hindsight/support/`**
+- Privacy Policy URL: **`https://priyanshchordia.com/apps/hindsight/privacy/`**
+- Marketing URL (optional): **`https://priyanshchordia.com/products/hindsight/`**
+- Public support email: **`support@priyanshchordia.com`**
+- Copyright/legal name: **`© 2026 Priyansh Chordia`**
 
 ## TestFlight copy
 
@@ -195,7 +195,7 @@ Settings contains local reminder controls, optional example-data controls, JSON/
 
 No special credentials or hardware are required. To test resolution, create a forecast with a short custom review date and return after that date passes.
 
-Review contact email: <USER-OWNED: REVIEW CONTACT EMAIL>
+Review contact email: priyansh.chordia@gmail.com
 Review contact phone: <USER-OWNED: REVIEW CONTACT PHONE>
 ```
 
@@ -212,7 +212,7 @@ enabled.
 | Data linked to the user | **None** | There is no account or remote identifier. |
 | Data used to track the user | **None / No tracking** | `PrivacyInfo.xcprivacy` declares `NSPrivacyTracking` as false and has no tracking domains. |
 | Third-party partner data practices | **None** | The production app uses Apple frameworks and no third-party analytics, advertising, or data-processing SDK. |
-| Privacy Policy URL | **`<USER-OWNED: PUBLIC HTTPS PRIVACY-POLICY URL>`** | Required for iOS submission; publish the approved policy before entering this field. |
+| Privacy Policy URL | **`https://priyanshchordia.com/apps/hindsight/privacy/`** | Required for iOS submission; publish the approved policy before entering this field. |
 | Privacy Choices URL | **Omit** | There is no remote account or developer-held personal data to manage in this build. Reassess if data practices change. |
 
 The privacy manifest declares no collected data types and one required-reason API category:

@@ -7,10 +7,10 @@
 > privacy answers using an approved data inventory and obtain owner/legal review.
 
 **Draft last updated:** August 10, 2026
-**Proposed effective date:** **`<USER/LEGAL: SET WHEN PUBLISHED>`**
+**Proposed effective date:** **`2026-08-13`**
 **Publication status:** **DRAFT — not legally approved or published**
-**Required publication location:** **`<USER-OWNED: PUBLIC HTTPS PRIVACY-POLICY URL>`**
-**Required contact:** **`<USER-OWNED: DURABLE SUPPORT EMAIL>`**
+**Required publication location:** **`https://priyanshchordia.com/apps/hindsight/privacy/`**
+**Required contact:** **`support@priyanshchordia.com`**
 
 Hindsight is a private decision-calibration journal. Version 1.0 lets you record what you believe
 before an outcome is known, return after a chosen date, resolve what happened, and learn how your
@@ -123,9 +123,9 @@ policy changes.
 
 ## Contact
 
-Privacy or support questions: **`<USER-OWNED: DURABLE SUPPORT EMAIL>`**
+Privacy or support questions: **`support@priyanshchordia.com`**
 
-Public support page: **`<USER-OWNED: PUBLIC HTTPS SUPPORT URL>`**
+Public support page: **`https://priyanshchordia.com/apps/hindsight/support/`**
 
 This draft must receive owner/legal approval and be published at the public HTTPS privacy-policy
 URL before external TestFlight distribution or App Store submission.
