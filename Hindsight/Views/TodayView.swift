@@ -346,11 +346,13 @@ struct TodayView: View {
     }
 
     @ViewBuilder private var upcomingForecastsSection: some View {
-        if !upcomingDecisions.isEmpty {
+        // Snapshot once so indices and elements come from the same collection;
+        // the live query can change between evaluations (e.g. after a review save).
+        let upcoming = Array(upcomingDecisions.prefix(5))
+        if !upcoming.isEmpty {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
                 sectionHeading("Growing signals", detail: "Waiting for their check date", icon: "leaf.fill", color: HindsightTheme.Colors.success)
-                ForEach(Array(upcomingDecisions.prefix(5)).indices, id: \.self) { index in
-                    let decision = Array(upcomingDecisions.prefix(5))[index]
+                ForEach(Array(upcoming.enumerated()), id: \.element.id) { index, decision in
                     decisionButton(
                         decision,
                         state: "Review \(decision.dueDate.formatted(.dateTime.month(.abbreviated).day()))",
@@ -362,11 +364,13 @@ struct TodayView: View {
     }
 
     @ViewBuilder private var examplesSection: some View {
-        if !exampleDecisions.isEmpty {
+        // Same snapshot-once pattern as upcomingForecastsSection to avoid
+        // indexing a re-evaluated collection.
+        let examples = Array(exampleDecisions.prefix(3))
+        if !examples.isEmpty {
             VStack(alignment: .leading, spacing: HindsightTheme.Spacing.md) {
                 sectionHeading("Try the garden", detail: "Examples stay separate from your records and insights", icon: "wand.and.stars", color: HindsightTheme.Colors.categoryPersonal)
-                ForEach(Array(exampleDecisions.prefix(3)).indices, id: \.self) { index in
-                    let decision = Array(exampleDecisions.prefix(3))[index]
+                ForEach(Array(examples.enumerated()), id: \.element.id) { index, decision in
                     decisionButton(decision, state: "Example only", accent: signalColors[index % signalColors.count])
                 }
             }
