@@ -46,6 +46,23 @@ surface in this candidate. Social paths remain disabled and fail closed.
 The authoritative dated record is
 `quality/evidence/adult-decision-observatory-release-candidate-2026-08-10.md`.
 
+## Known blocker: build 4 likely ships a fixed crash
+
+Commit `59938e2` ("Fix index-out-of-range crash in TodayView after outcome review save",
+2026-08-14, branch `fix/todayview-forecast-crash`) fixes an `EXC_BREAKPOINT` index-out-of-range
+trap in `TodayView.upcomingForecastsSection`/`examplesSection`: a `ForEach` derived indices from
+one evaluation of the live SwiftData query and then subscripted a freshly re-evaluated snapshot
+inside the row closure, so saving an outcome review (which shrinks `upcomingDecisions` while
+`TodayView` is still on the navigation stack) could trap on a stale index. This commit postdates
+the build-4 archive/upload (2026-08-10 17:15Z) and is **not merged to `origin/main`**, so the
+build currently sitting in App Store Connect almost certainly still contains this crash.
+
+**Next required action when this app is picked back up:** merge or otherwise land
+`fix/todayview-forecast-crash`, then cut and upload a new build (1.0 (5) or later) before any
+TestFlight tester or reviewer exercises the capture-to-resolution loop. Build 4 should not be
+treated as release-ready until a build containing this fix is uploaded and verified. See
+`Docs/BUGS.md` (HIND-B05) for tracking.
+
 ## Verification pending
 
 - App Store Connect processing, TestFlight availability, and tester/review confirmation for build

@@ -7,7 +7,11 @@ items here do not pause unrelated implementation or verification.
 
 - [ ] Re-authenticate App Store Connect if the active session expires or MFA is requested.
 - [ ] Confirm that uploaded build `1.0 (4)` finishes App Store Connect processing, becomes
-      available in TestFlight, and clears the intended tester/review gate.
+      available in TestFlight, and clears the intended tester/review gate. Note: build 4 predates
+      the `fix/todayview-forecast-crash` fix (commit `59938e2`, unmerged as of 2026-08-14) and
+      almost certainly still crashes when an outcome review is saved — see `Docs/STATUS.md`
+      "Known blocker". Confirming build 4's processing status does not make it release-ready; a
+      later build carrying the fix is still required.
 - [ ] Install and launch build `1.0 (4)` on an available physical device, then complete the manual
       device pass. Build 3 had previously been installed on the paired iPhone 16 Pro Max, which is
       now unavailable.

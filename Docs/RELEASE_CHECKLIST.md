@@ -49,9 +49,20 @@
       review/testing.
 - [ ] App Store privacy answers, support email, privacy-policy/support URLs, terms, age rating,
       and screenshots match actual local-only behavior.
+- [ ] Support URL (`https://priyanshchordia.com/apps/hindsight/support/`), Privacy Policy URL
+      (`https://priyanshchordia.com/apps/hindsight/privacy/`), and Marketing URL
+      (`https://priyanshchordia.com/products/hindsight/`) confirmed live: verified 2026-08-14 via
+      `curl -sI`, all three returned `HTTP/2 200`.
+- [ ] `fix/todayview-forecast-crash` (commit `59938e2`) merged to `origin/main` and a new build
+      (1.0 (5) or later) archived/uploaded. Build 4 predates this fix and almost certainly still
+      traps in `TodayView` when an outcome review is saved; see `Docs/STATUS.md` "Known blocker"
+      and `Docs/BUGS.md` HIND-B05. **No build should be promoted to TestFlight tester/review or
+      submitted until this gate is checked.**
 
 ## Completion rule
 
 Do not mark the candidate `done` or ready/shipped until every applicable gate has dated evidence.
 Build 3 is superseded/historical; previous Build 1 or Future Postcards results, including the
-`1.0 (2)` upload, do not satisfy a build-4 gate.
+`1.0 (2)` upload, do not satisfy a build-4 gate. Build 4 additionally does not satisfy the
+crash-fix gate above; a later build is required before this candidate can be considered
+release-ready.
