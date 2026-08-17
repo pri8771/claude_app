@@ -88,7 +88,12 @@ struct BasicInfoStep: View {
                     HTextEditor(text: $draft.notes, placeholder: "Why does this decision matter right now? (optional)", minHeight: 90)
                 }
 
-                Color.clear.frame(height: 12)
+                // Clears the sticky navigationButtons bar in NewDecisionWizard
+                // (~82pt: 50pt button + 16pt vertical padding × 2). TabView's
+                // .page style doesn't reliably propagate the parent's
+                // safeAreaInset into each page's ScrollView content, so this
+                // must be sized explicitly rather than relying on that.
+                Color.clear.frame(height: 100)
             }
             .padding(HindsightTheme.Spacing.md)
         }

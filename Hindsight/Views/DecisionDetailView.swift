@@ -72,6 +72,7 @@ struct DecisionDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle").tint(HindsightTheme.Colors.textPrimary)
                 }
+                .accessibilityLabel("More options")
             }
         }
         .sheet(isPresented: $showOutcomeReview, onDismiss: {
@@ -220,7 +221,7 @@ struct DecisionDetailView: View {
                 .font(HindsightTheme.Typography.caption2)
                 .foregroundStyle(done ? HindsightTheme.Colors.textPrimary : HindsightTheme.Colors.textTertiary)
             Text(date.map { $0.formatted(.dateTime.month(.abbreviated).day()) } ?? "—")
-                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .font(HindsightTheme.Typography.caption2)
                 .foregroundStyle(HindsightTheme.Colors.textTertiary)
         }
         .fixedSize()

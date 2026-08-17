@@ -423,7 +423,7 @@ struct QuickCaptureSheet: View {
             VStack(spacing: HindsightTheme.Spacing.md) {
                 if let confidence = draft.confidence {
                     Text("\(confidence)%")
-                        .font(.system(size: 58, weight: .bold, design: .rounded))
+                        .font(HindsightTheme.Typography.largeTitle)
                         .foregroundStyle(HindsightTheme.Colors.accent)
                         .monospacedDigit()
                         .contentTransition(.numericText())
@@ -432,7 +432,7 @@ struct QuickCaptureSheet: View {
                         .foregroundStyle(HindsightTheme.Colors.textSecondary)
                 } else {
                     Text("—%")
-                        .font(.system(size: 58, weight: .bold, design: .rounded))
+                        .font(HindsightTheme.Typography.largeTitle)
                         .foregroundStyle(HindsightTheme.Colors.textTertiary)
                     Text("Move the slider to make an intentional choice")
                         .font(HindsightTheme.Typography.callout)
