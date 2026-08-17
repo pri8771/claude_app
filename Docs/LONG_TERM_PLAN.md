@@ -170,6 +170,19 @@ Settle it with H2 data, not another debate.
 - Path A vs Path B — but revisit deliberately, on a date, not when a feature forces it.
 - Monetisation. Note that Path A supports a one-time purchase and Path B effectively requires a
   subscription, so this decision is downstream of the fork.
+- **Cloud-Pro tier (direction only, discussed 2026-08-14, not scoped).** An LLM reading a
+  user's decision history to surface real patterns — "you're 80%+ confident on career calls
+  but right 60% of the time." Design constraint to hold if this is built: **mirror, not
+  oracle** — it reflects the user's own established patterns back at them, it does not
+  volunteer an opinion on a decision still in progress. Volunteering opinions on active
+  decisions collapses the product into "ask the AI what to do," which is undifferentiated and
+  cuts against the core mechanic of grading the user's *own* judgment against reality. This
+  is also the natural engine behind the Horizon 3 social features already planned above
+  (duels, shared receipts already assume backend infrastructure — this isn't new scope, it
+  accelerates something already assumed). Portfolio-wide shared-infra direction: PostHog
+  (multi-project analytics, cross-app + per-app filtering) and Supabase (shared Postgres +
+  Auth + Edge Functions backend, namespaced by app). Any cloud tier must keep the free,
+  on-device path exactly as currently pitched and disclosed; see "Never revisit" below.
 
 **Never revisit:**
 - Fabricating a confidence value the user did not give.
