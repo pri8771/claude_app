@@ -43,25 +43,48 @@ surface in this candidate. Social paths remain disabled and fail closed.
   at **2026-08-10 17:15:06Z**; it is processing (app ID `6796111127`, delivery UUID
   `f572a99b-eb57-4cd6-8757-4e41db82310a`).
 
+- 2026-08-18 regression check on branch `release/1.0-4-store-listing` (source `d0189bc`, docs and
+  screenshot assets only on top): `Scripts/personal_release_candidate_check.sh` passed — 127/127
+  tests, 0 failures, 0 skips, iPhone 17 Pro simulator, iOS 26.5; result bundle
+  `/private/tmp/claude-501/-Users-pchordia-Documents/88daf776-92f3-4798-8f8f-b6b37484892b/scratchpad/rc-dd/Logs/Test/Test-Hindsight-2026.08.18_13-10-15--0400.xcresult`
+  (session scratch; not durable). This is not build-4 evidence; it only shows the tree at
+  `d0189bc` is green.
+
 The authoritative dated record is
 `quality/evidence/adult-decision-observatory-release-candidate-2026-08-10.md`.
 
-## Known blocker: build 4 likely ships a fixed crash
+## Resolved (2026-08-18): build 4 predates the TodayView crash
 
-Commit `59938e2` ("Fix index-out-of-range crash in TodayView after outcome review save",
-2026-08-14, branch `fix/todayview-forecast-crash`) fixes an `EXC_BREAKPOINT` index-out-of-range
-trap in `TodayView.upcomingForecastsSection`/`examplesSection`: a `ForEach` derived indices from
-one evaluation of the live SwiftData query and then subscripted a freshly re-evaluated snapshot
-inside the row closure, so saving an outcome review (which shrinks `upcomingDecisions` while
-`TodayView` is still on the navigation stack) could trap on a stale index. This commit postdates
-the build-4 archive/upload (2026-08-10 17:15Z) and is **not merged to `origin/main`**, so the
-build currently sitting in App Store Connect almost certainly still contains this crash.
+The 2026-08-14 note that "build 4 likely ships a fixed crash" was wrong. Established by `git diff`
+on 2026-08-18:
 
-**Next required action when this app is picked back up:** merge or otherwise land
-`fix/todayview-forecast-crash`, then cut and upload a new build (1.0 (5) or later) before any
-TestFlight tester or reviewer exercises the capture-to-resolution loop. Build 4 should not be
-treated as release-ready until a build containing this fix is uploaded and verified. See
-`Docs/BUGS.md` (HIND-B05) for tracking.
+- The build-4 release-candidate commit `f7935cd` ("Ship adult decision calibration release
+  candidate", 2026-08-10 13:22 local; App Store Connect accepted the build-4 upload at 17:15:06Z
+  the same day) contains the safe snapshot-once shape in `Hindsight/Views/TodayView.swift`:
+  `ForEach(Array(upcomingDecisions.prefix(5))) { decision in` and
+  `ForEach(Array(exampleDecisions.prefix(3))) { decision in`.
+- The index-then-resubscript pattern (`ForEach(Array(...prefix(5)).indices, id: \.self) { index in
+  let decision = Array(...prefix(5))[index]`) first appears in the 2026-08-11 WIP checkpoint
+  `c66c690` ("checkpoint: preserve Hindsight WIP before factory enrollment"); see
+  `git diff f7935cd c66c690 -- Hindsight/Views/TodayView.swift`.
+- Commit `59938e2` (2026-08-14, branch `fix/todayview-forecast-crash`) restores the snapshot-once
+  shape.
+
+So the `EXC_BREAKPOINT` index-out-of-range trap tracked as `Docs/BUGS.md` HIND-B05 was introduced
+in post-build-4 WIP and is contained in **no uploaded build**. Build 4 does not need to be
+replaced on account of it. The fix still belongs in the next build's line: any 1.1 build must be
+cut from a branch that contains `59938e2`. As of 2026-08-18, `59938e2` is contained in
+`fix/todayview-forecast-crash`, `release/1.0-4-store-listing`, `app-factory/enroll`, and local
+`factory/pilot-1.1` (verified with `git branch --contains 59938e2`); `origin/main` (`9500c47`)
+contains neither the regression `c66c690` nor the build-4 commit `f7935cd` and is simply behind.
+
+Owner decision (2026-08-14, reconfirmed 2026-08-18): ship 1.0 from build 4, free, no in-app
+purchase. The App Store listing pack for that submission is `Docs/APP_STORE_LISTING.md`;
+store screenshots are under `quality/store-assets/1.0-4/`.
+
+Also on 2026-08-17 the App Factory's verified change `1b65f20` (DecisionDetailView due-prediction
+`onDismiss` refresh) was fast-forwarded onto local branch `factory/pilot-1.1`; it is not part of
+build 4 either.
 
 ## Verification pending
 
@@ -72,8 +95,9 @@ treated as release-ready until a build containing this fix is uploaded and verif
 - Physical-device notification/deep-link, export/share, and delete/reset checks.
 - Manual VoiceOver, notification-permission, largest Dynamic Type, contrast, and reduced-motion
   review. Automated responsive light/dark, narrow-phone, and iPad visual smoke is already green.
-- App Store privacy answers, final support email, privacy-policy URL, terms, age rating, and
-  screenshots.
+- Owner entry/approval in App Store Connect of the listing pack (`Docs/APP_STORE_LISTING.md`,
+  prepared 2026-08-18: copy, URLs, App Privacy, age rating, export compliance, review notes) and
+  of the simulator screenshots in `quality/store-assets/1.0-4/`.
 
 ## Deferred external actions
 

@@ -48,21 +48,32 @@
 - [ ] Build 4 completes App Store Connect processing and becomes available for TestFlight
       review/testing.
 - [ ] App Store privacy answers, support email, privacy-policy/support URLs, terms, age rating,
-      and screenshots match actual local-only behavior.
+      and screenshots match actual local-only behavior. Drafted from the binary/source in
+      `Docs/APP_STORE_LISTING.md` (2026-08-18); owner confirmation in App Store Connect pending.
 - [ ] Support URL (`https://priyanshchordia.com/apps/hindsight/support/`), Privacy Policy URL
       (`https://priyanshchordia.com/apps/hindsight/privacy/`), and Marketing URL
       (`https://priyanshchordia.com/products/hindsight/`) confirmed live: verified 2026-08-14 via
       `curl -sI`, all three returned `HTTP/2 200`.
-- [ ] `fix/todayview-forecast-crash` (commit `59938e2`) merged to `origin/main` and a new build
-      (1.0 (5) or later) archived/uploaded. Build 4 predates this fix and almost certainly still
-      traps in `TodayView` when an outcome review is saved; see `Docs/STATUS.md` "Known blocker"
-      and `Docs/BUGS.md` HIND-B05. **No build should be promoted to TestFlight tester/review or
-      submitted until this gate is checked.**
+- [x] Resolved 2026-08-18 (was a gate 2026-08-14): the TodayView index-out-of-range crash
+      (`Docs/BUGS.md` HIND-B05) is **not in build 4**. `git diff` shows the build-4 commit
+      `f7935cd` (2026-08-10) has the safe `ForEach(Array(upcomingDecisions.prefix(5)))` shape;
+      the index-then-resubscript regression first appears in WIP checkpoint `c66c690`
+      (2026-08-11) and is fixed by `59938e2` (2026-08-14). No new build is required for 1.0.
+      Any 1.1 build must be cut from a branch containing `59938e2` (as of 2026-08-18 that includes
+      local `factory/pilot-1.1`; `origin/main` is behind and has neither commit); see
+      `Docs/STATUS.md` "Resolved (2026-08-18)".
+- [ ] Owner enters and approves the App Store listing pack (`Docs/APP_STORE_LISTING.md`,
+      2026-08-18: name/subtitle/promo/description/keywords, URLs, category, App Privacy "Data
+      Not Collected", age rating, export compliance "No", review notes, Free / all territories)
+      and uploads the simulator screenshots from `quality/store-assets/1.0-4/` (iPhone
+      1284x2778 derived from iPhone 17 Pro Max captures, native 1320x2868 also kept; iPad Pro
+      13-inch 2064x2752). Owner decision 2026-08-14 / 2026-08-18: ship 1.0 from build 4, free,
+      no IAP.
 
 ## Completion rule
 
 Do not mark the candidate `done` or ready/shipped until every applicable gate has dated evidence.
 Build 3 is superseded/historical; previous Build 1 or Future Postcards results, including the
-`1.0 (2)` upload, do not satisfy a build-4 gate. Build 4 additionally does not satisfy the
-crash-fix gate above; a later build is required before this candidate can be considered
-release-ready.
+`1.0 (2)` upload, do not satisfy a build-4 gate. The former crash-fix gate was withdrawn on
+2026-08-18 because build 4 predates the defect; the physical-device and manual accessibility gates
+above remain open and are not satisfied by simulator evidence or screenshots.

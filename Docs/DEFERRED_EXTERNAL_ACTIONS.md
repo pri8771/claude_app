@@ -7,11 +7,12 @@ items here do not pause unrelated implementation or verification.
 
 - [ ] Re-authenticate App Store Connect if the active session expires or MFA is requested.
 - [ ] Confirm that uploaded build `1.0 (4)` finishes App Store Connect processing, becomes
-      available in TestFlight, and clears the intended tester/review gate. Note: build 4 predates
-      the `fix/todayview-forecast-crash` fix (commit `59938e2`, unmerged as of 2026-08-14) and
-      almost certainly still crashes when an outcome review is saved — see `Docs/STATUS.md`
-      "Known blocker". Confirming build 4's processing status does not make it release-ready; a
-      later build carrying the fix is still required.
+      available in TestFlight, and clears the intended tester/review gate. (The 2026-08-14 note
+      here that build 4 "almost certainly still crashes when an outcome review is saved" was
+      withdrawn 2026-08-18: `git diff` shows the build-4 commit `f7935cd` predates the TodayView
+      regression, which entered WIP at `c66c690` on 2026-08-11 and is fixed by `59938e2`; see
+      `Docs/STATUS.md` "Resolved (2026-08-18)" and `Docs/BUGS.md` HIND-B05. No replacement build
+      is required for 1.0.)
 - [ ] Install and launch build `1.0 (4)` on an available physical device, then complete the manual
       device pass. Build 3 had previously been installed on the paired iPhone 16 Pro Max, which is
       now unavailable.
@@ -20,9 +21,13 @@ items here do not pause unrelated implementation or verification.
 
 ## Public release identity
 
-- [ ] Provide a durable public support email.
-- [ ] Publish the final privacy-policy and support URLs on a public domain.
-- [ ] Approve final App Store privacy answers, age rating, Terms, and screenshots before submission.
+- [ ] Provide a durable public support email (`support@priyanshchordia.com` is proposed in
+      `Docs/APP_STORE_LISTING.md`; the owner must confirm the mailbox is monitored).
+- [ ] Publish the final privacy-policy and support URLs on a public domain (all three URLs
+      returned `HTTP/2 200` on 2026-08-14 per `Docs/RELEASE_CHECKLIST.md`; owner confirms content).
+- [ ] Enter and approve in App Store Connect the listing pack in `Docs/APP_STORE_LISTING.md`
+      (2026-08-18): copy, App Privacy answers, age rating, export-compliance answer, review notes,
+      pricing Free / all territories, and the screenshots in `quality/store-assets/1.0-4/`.
 
 ## Networked Social v2 (deferred; personal release remains functional without it)
 

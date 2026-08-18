@@ -7,6 +7,10 @@
 
 > Do not submit the App Store version or invite external testers until every `USER-OWNED` field
 > below is replaced and the pending release gates are supported by dated evidence.
+>
+> **2026-08-18:** the App Store listing values to enter for the 1.0 submission from build 4 are
+> consolidated in `Docs/APP_STORE_LISTING.md`, which supersedes the product-page copy, privacy,
+> age-rating, export-compliance, and screenshot sections below where they differ.
 
 ## Current candidate facts
 
@@ -295,14 +299,16 @@ Existing simulator screenshots are release evidence, not automatically App Store
 
 - The build-4 product has no network service, backend, custom cryptography feature, secure
   messaging, VPN, payment system, or third-party crypto library.
-- A targeted source/project check found no `CryptoKit`, `CommonCrypto`, `SecKey`, or `SecItem` use
-  and no current `ITSAppUsesNonExemptEncryption` declaration.
+- A targeted source/project check found no `CryptoKit`, `CommonCrypto`, `SecKey`, or `SecItem` use.
+  **Correction 2026-08-18:** `Hindsight-Info.plist` *does* declare `ITSAppUsesNonExemptEncryption =
+  NO` (since commit `1351174`, 2026-07-30) and the key is present in the build-4 source
+  (`f7935cd`); the earlier statement that no declaration existed was stale. No new build is needed
+  for this. See `Docs/APP_STORE_LISTING.md` section 6.
 - Proposed App Store Connect classification: the app **does not use non-exempt encryption** and no
   export-compliance documentation is expected. The Account Holder must confirm this conclusion
   against Apple’s current questions and applicable law.
-- If that conclusion is approved, add `ITSAppUsesNonExemptEncryption = NO` to the app target in a
-  separately reviewed build so future uploads state the classification explicitly. Do not alter
-  the already-uploaded build’s recorded facts.
+- (Superseded 2026-08-18: the key is already in the app target and in build 4; no follow-up build
+  is required for it.)
 
 ## Final submission gates
 
