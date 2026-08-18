@@ -108,3 +108,12 @@
 - **Decision:** VoiceOver manual review is deferred, not descoped — unlike Mala/Japa's `DEC-010` (permanent, product decision, VoiceOver ruled out entirely for that app), Hindsight's VoiceOver work is expected to resume later, once free-tier real-world testing across the portfolio is done. Discrete, already-identified VoiceOver gaps found during code review (e.g. the two unlabeled icon buttons fixed 2026-08-17) are still fixed as found — this defers the *systematic device pass*, not opportunistic fixes. Dynamic Type remains in scope and is not deferred.
 - **Consequences:** `RELEASE_CHECKLIST.md` and `TEST_PLAN.md`'s VoiceOver line items are not launch-blocking until this is revisited. Do not claim VoiceOver support is verified or complete in any release notes or store copy while this stands.
 - **Related Files:** `Docs/RELEASE_CHECKLIST.md`, `Docs/TEST_PLAN.md`, `Docs/BUGS.md`
+
+## DEC-011 — Ship 1.0 (4) to App Review on simulator evidence; device/accessibility gates waived, not done
+
+- **Status:** accepted
+- **Date:** 2026-08-18
+- **Context:** Version 1.0 with build `1.0 (4)` was ready to submit (listing pack in `APP_STORE_LISTING.md`, build processed in App Store Connect). The two remaining open gates in `RELEASE_CHECKLIST.md` — the build-4 physical-device pass and the manual notification-permission / largest Dynamic Type / contrast / reduced-motion review — could not be run: the paired iPhone 16 Pro Max is unavailable and no other device was at hand. VoiceOver is already deferred by DEC-010.
+- **Decision:** The owner consciously waived those two gates for the 2026-08-18 App Store submission of 1.0 (4) only, and version 1.0 was submitted for App Review the same day (ASC "Waiting for Review"). The gates are recorded as **waived**, not satisfied; the checklist items stay unchecked. The candidate stays `verification_pending` until App Review approves and the release is live.
+- **Consequences:** Waiver record: `quality/waivers/1.0-4-device-and-accessibility-owner-waiver-2026-08-18.md`. Any later build (a 1.0 resubmission after rejection, or 1.1) must run the gates with dated evidence or obtain a new explicit waiver. Do not describe 1.0 as device-verified in any doc, release note, or store copy.
+- **Related Files:** `Docs/RELEASE_CHECKLIST.md`, `Docs/STATUS.md`, `Docs/DEFERRED_EXTERNAL_ACTIONS.md`, `quality/evidence/app-store-submission-1.0-4-2026-08-18.md`

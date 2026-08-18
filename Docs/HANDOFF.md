@@ -19,13 +19,14 @@ known to be **processing**; App Store Connect completion and TestFlight availabi
 confirmed. See `Docs/STATUS.md` for full evidence and `Docs/RELEASE_CHECKLIST.md` for the gated
 checklist.
 
-**Known blocker (new as of 2026-08-14):** commit `59938e2` on the unmerged branch
-`fix/todayview-forecast-crash` fixes an `EXC_BREAKPOINT` index-out-of-range crash in `TodayView`
-triggered by saving an outcome review. This fix postdates the build-4 upload, so build 4 almost
-certainly still contains this crash. **Do not treat build 4 as release-ready.** The next required
-action when this app is picked back up is to land that fix and upload a new build before any
-TestFlight tester or reviewer exercises the app. See `Docs/STATUS.md` "Known blocker" and
-`Docs/BUGS.md` HIND-B05.
+**2026-08-18 update:** the 2026-08-14 "known blocker" claim below was withdrawn — `git diff`
+shows build 4 (`f7935cd`) predates the TodayView crash (HIND-B05), which entered WIP at `c66c690`
+and is fixed by `59938e2` (any 1.1 build must contain `59938e2`). On **2026-08-18** the listing in
+`Docs/APP_STORE_LISTING.md` was entered in App Store Connect and **version 1.0 (build 4) was
+submitted for App Review** (~13:33 local, "Waiting for Review", release automatic). The physical-
+device pass and manual accessibility review were consciously waived by the owner for this
+submission (DEC-011; not done). See `Docs/STATUS.md` "Submitted for App Review (2026-08-18)" and
+`quality/evidence/app-store-submission-1.0-4-2026-08-18.md`.
 
 Build 1 and the pre-pivot Future Postcards direction are superseded/historical and are not the
 current candidate; do not use them as a description of present state.
@@ -71,9 +72,9 @@ Physical-device accessibility/notification/export checks and final distribution 
 
 ## Known issues
 
-See `Docs/BUGS.md` and `Docs/RISKS.md`. In particular, HIND-B05 (`Docs/BUGS.md`) is a
-release-blocking crash fixed in an unmerged branch — the currently uploaded build 4 almost
-certainly still has it.
+See `Docs/BUGS.md` and `Docs/RISKS.md`. HIND-B05 (`Docs/BUGS.md`) is a TodayView crash that
+is **not** in the uploaded build 4 (established 2026-08-18); its fix `59938e2` must be in any
+1.1 build.
 
 ## Next recommended task
 

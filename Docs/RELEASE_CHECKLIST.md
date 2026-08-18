@@ -1,6 +1,8 @@
 # Hindsight 1.0 (4) Release Checklist — Adult Decision Observatory
 
-**Lifecycle:** `verification_pending`
+**Lifecycle:** `verification_pending` — 1.0 (4) **submitted for App Review 2026-08-18** (App
+Store Connect "Waiting for Review"). Apple's review outcome and the go-live are the remaining
+external gates. See `quality/evidence/app-store-submission-1.0-4-2026-08-18.md`.
 
 ## Candidate contract
 
@@ -38,22 +40,33 @@
 - [x] Build 3 was previously installed on the paired physical iPhone 16 Pro Max (historical only).
 - [ ] Build-4 physical-device install/launch, Capture-to-resolution core loop, notification/deep-link,
       export, deletion, and relaunch pass. The previously paired iPhone 16 Pro Max is unavailable.
+      **Not run. Consciously waived by the owner for the 1.0 submission on 2026-08-18** (1.0
+      shipped on simulator evidence; see the waiver record
+      `quality/waivers/1.0-4-device-and-accessibility-owner-waiver-2026-08-18.md` and DEC-011).
+      This gate stays open and unsatisfied for any later build.
 - [ ] Manual VoiceOver, notification permission, largest Dynamic Type, contrast, and reduced
-      motion review pass.
+      motion review pass. **Not run.** VoiceOver is deferred per DEC-010; the remaining manual
+      accessibility items were **consciously waived by the owner for the 1.0 submission on
+      2026-08-18** (same waiver record). This gate stays open and unsatisfied.
 - [x] Signed `1.0 (4)` archive succeeded at `/private/tmp/Hindsight-1.0-4.xcarchive`; exported IPA
       `/private/tmp/Hindsight-1.0-4-export/Hindsight.ipa` is 3.1 MB (`com.pchordia.hindsight`,
       minimum iOS 17, arm64).
 - [x] App Store Connect accepted the build-4 upload at 2026-08-10 17:15:06Z (app ID `6796111127`,
       delivery UUID `f572a99b-eb57-4cd6-8757-4e41db82310a`); it is processing.
-- [ ] Build 4 completes App Store Connect processing and becomes available for TestFlight
-      review/testing.
-- [ ] App Store privacy answers, support email, privacy-policy/support URLs, terms, age rating,
+- [x] Build 4 completed App Store Connect processing: on 2026-08-18 it was selectable in the
+      version 1.0 build picker, attached, and submitted (see below). TestFlight availability was
+      not separately checked and is not claimed.
+- [x] App Store privacy answers, support email, privacy-policy/support URLs, terms, age rating,
       and screenshots match actual local-only behavior. Drafted from the binary/source in
-      `Docs/APP_STORE_LISTING.md` (2026-08-18); owner confirmation in App Store Connect pending.
+      `Docs/APP_STORE_LISTING.md` (2026-08-18); entered in App Store Connect and owner-approved
+      2026-08-18: App Privacy "Data Not Collected" published, age rating computed 4+, content
+      rights none, privacy URL set.
 - [ ] Support URL (`https://priyanshchordia.com/apps/hindsight/support/`), Privacy Policy URL
       (`https://priyanshchordia.com/apps/hindsight/privacy/`), and Marketing URL
       (`https://priyanshchordia.com/products/hindsight/`) confirmed live: verified 2026-08-14 via
-      `curl -sI`, all three returned `HTTP/2 200`.
+      `curl -sI`, all three returned `HTTP/2 200`. All three were entered in ASC on 2026-08-18;
+      the owner's confirmation that the page text matches the published "Data Not Collected"
+      answers is not separately recorded.
 - [x] Resolved 2026-08-18 (was a gate 2026-08-14): the TodayView index-out-of-range crash
       (`Docs/BUGS.md` HIND-B05) is **not in build 4**. `git diff` shows the build-4 commit
       `f7935cd` (2026-08-10) has the safe `ForEach(Array(upcomingDecisions.prefix(5)))` shape;
@@ -62,13 +75,19 @@
       Any 1.1 build must be cut from a branch containing `59938e2` (as of 2026-08-18 that includes
       local `factory/pilot-1.1`; `origin/main` is behind and has neither commit); see
       `Docs/STATUS.md` "Resolved (2026-08-18)".
-- [ ] Owner enters and approves the App Store listing pack (`Docs/APP_STORE_LISTING.md`,
+- [x] Owner enters and approves the App Store listing pack (`Docs/APP_STORE_LISTING.md`,
       2026-08-18: name/subtitle/promo/description/keywords, URLs, category, App Privacy "Data
       Not Collected", age rating, export compliance "No", review notes, Free / all territories)
       and uploads the simulator screenshots from `quality/store-assets/1.0-4/` (iPhone
       1284x2778 derived from iPhone 17 Pro Max captures, native 1320x2868 also kept; iPad Pro
       13-inch 2064x2752). Owner decision 2026-08-14 / 2026-08-18: ship 1.0 from build 4, free,
-      no IAP.
+      no IAP. **Done 2026-08-18** via the ASC web UI (owner's assistant, owner-approved):
+      subtitle "Measure your judgment", Productivity + Lifestyle, Free in 175 territories,
+      availability all, review contact + notes, sign-in not required, 5 iPhone 6.5" (1284×2778)
+      + 5 iPad 13" screenshots uploaded, build 1.0 (4) attached, release automatic.
+- [x] Version 1.0 (build 4) **submitted for App Review 2026-08-18 at ~13:33 local**; App Store
+      Connect showed "Waiting for Review" / "1 Item Submitted".
+- [ ] Apple App Review approves 1.0 (4) and the automatic release goes live.
 
 ## Completion rule
 
@@ -76,4 +95,7 @@ Do not mark the candidate `done` or ready/shipped until every applicable gate ha
 Build 3 is superseded/historical; previous Build 1 or Future Postcards results, including the
 `1.0 (2)` upload, do not satisfy a build-4 gate. The former crash-fix gate was withdrawn on
 2026-08-18 because build 4 predates the defect; the physical-device and manual accessibility gates
-above remain open and are not satisfied by simulator evidence or screenshots.
+above remain open and are not satisfied by simulator evidence or screenshots. On 2026-08-18 the
+owner consciously waived those two open gates for the 1.0 submission only (they are recorded as
+waived, not done); the submission therefore does not make the candidate `done`, and the gates
+must be executed or re-waived explicitly for any subsequent build.

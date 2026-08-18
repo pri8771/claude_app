@@ -2,7 +2,34 @@
 
 ## Lifecycle status
 
-`verification_pending`
+`verification_pending` — **1.0 (4) submitted for App Review on 2026-08-18** (App Store Connect
+status "Waiting for Review"). Apple's review outcome is the remaining external gate; the candidate
+is not `done` until it is approved and live.
+
+## Submitted for App Review (2026-08-18)
+
+Entered in App Store Connect on 2026-08-18 by the owner's assistant via the ASC web UI, owner
+approved, per `Docs/APP_STORE_LISTING.md` (app ID `6796111127`, version 1.0, build `1.0 (4)`):
+
+- Version 1.0 was submitted at about **13:33 local (America/New_York)**; ASC showed **"Waiting for
+  Review"** and **"1 Item Submitted"** immediately afterwards.
+- Build 4 was selectable and attached to the version, which establishes that App Store Connect
+  processing of the 2026-08-10 upload completed. Release option: automatic on approval.
+- Listing entered: name `Hindsight — Decision Journal`, subtitle "Measure your judgment", primary
+  Productivity, secondary Lifestyle, content rights "none" (no third-party content), age rating
+  computed **4+**, App Privacy **"Data Not Collected"** published, pricing **Free** in 175
+  territories, availability all, privacy-policy URL set, promotional text / description /
+  keywords / support + marketing URLs / copyright, review contact + review notes, sign-in not
+  required.
+- Screenshots uploaded: 5 iPhone 6.5" (`quality/store-assets/1.0-4/iphone-6.5-1284x2778/`, the
+  1284×2778 derived set) and 5 iPad 13" (`ipad-13-2064x2752/`).
+- Owner decision (2026-08-18): the physical-device pass and manual accessibility review were
+  **not** run before submission; 1.0 shipped on simulator evidence. Those gates stay open in
+  `Docs/RELEASE_CHECKLIST.md` and are recorded as consciously waived by the owner for the 1.0
+  submission (`quality/waivers/1.0-4-device-and-accessibility-owner-waiver-2026-08-18.md`,
+  `Docs/DECISIONS.md` DEC-011). They are not satisfied.
+
+Dated record: `quality/evidence/app-store-submission-1.0-4-2026-08-18.md`.
 
 ## Current release candidate
 
@@ -88,16 +115,20 @@ build 4 either.
 
 ## Verification pending
 
-- App Store Connect processing, TestFlight availability, and tester/review confirmation for build
-  4.
+- Apple App Review outcome for the 1.0 (4) submission of 2026-08-18 (currently "Waiting for
+  Review"), then the automatic release going live. TestFlight availability was never separately
+  confirmed and is not claimed.
 - Install and launch build 4 on a physical device, then complete the manual capture-to-resolution
   core loop and relaunch check. The previously paired iPhone 16 Pro Max is unavailable.
-- Physical-device notification/deep-link, export/share, and delete/reset checks.
+  **Waived by the owner for the 1.0 submission on 2026-08-18** (not run, not satisfied).
+- Physical-device notification/deep-link, export/share, and delete/reset checks. **Waived by the
+  owner for the 1.0 submission on 2026-08-18** (not run, not satisfied).
 - Manual VoiceOver, notification-permission, largest Dynamic Type, contrast, and reduced-motion
   review. Automated responsive light/dark, narrow-phone, and iPad visual smoke is already green.
-- Owner entry/approval in App Store Connect of the listing pack (`Docs/APP_STORE_LISTING.md`,
-  prepared 2026-08-18: copy, URLs, App Privacy, age rating, export compliance, review notes) and
-  of the simulator screenshots in `quality/store-assets/1.0-4/`.
+  VoiceOver is deferred per DEC-010; the rest was **waived by the owner for the 1.0 submission on
+  2026-08-18** (not run, not satisfied).
+- ~~Owner entry/approval in App Store Connect of the listing pack and screenshots~~ — done
+  2026-08-18; see "Submitted for App Review (2026-08-18)" above.
 
 ## Deferred external actions
 

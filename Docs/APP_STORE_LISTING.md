@@ -9,8 +9,13 @@ in-app purchase, all territories.
 tree; every claim was checked against code on 2026-08-18. Where this pack differs from
 `Docs/TESTFLIGHT_RELEASE_METADATA.md` (2026-08-10), this pack is newer and the difference is noted.
 
-Nothing here is entered in App Store Connect yet. The account owner types/pastes these values;
-that entry and Apple's acceptance remain open gates in `Docs/RELEASE_CHECKLIST.md`.
+**2026-08-18 update:** the values in this pack were entered in App Store Connect on 2026-08-18
+(owner's assistant via the ASC web UI, owner-approved) and version 1.0 with build 4 was
+submitted for App Review at ~13:33 local ("Waiting for Review"). Age rating computed 4+; App
+Privacy "Data Not Collected" published; Free in 175 territories; 5 iPhone 6.5" + 5 iPad 13"
+screenshots uploaded; release automatic. Dated record:
+`quality/evidence/app-store-submission-1.0-4-2026-08-18.md`. Apple's acceptance remains an open
+gate in `Docs/RELEASE_CHECKLIST.md`.
 
 ---
 
