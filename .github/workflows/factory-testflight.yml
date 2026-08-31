@@ -1,0 +1,255 @@
+# Gen 8 release rail - stages S7-S9 (archive/sign -> upload -> TestFlight).
+# Canonical copy: pri8771/orchestrator_gen8 factory/apps/hindsight/factory-testflight.yml
+# Install location: pri8771/hindsight .github/workflows/factory-testflight.yml
+#
+# Required repo secrets (set on pri8771/hindsight, scoped to the
+# "testflight-release" environment - see docs/gen8/02_M1_RUNBOOK.md):
+#   ASC_KEY_ID          App Store Connect API key ID
+#   ASC_ISSUER_ID       App Store Connect issuer ID
+#   ASC_KEY_P8_B64      base64 of the .p8 private key
+#   DIST_CERT_P12_B64   base64 of the Apple Distribution certificate (.p12)
+#   DIST_CERT_PASSWORD  password for the .p12
+# Optional repo secret:
+#   FACTORY_TOKEN       fine-grained PAT with contents:read/write on
+#                       pri8771/orchestrator_gen8 - enables the kill-switch
+#                       check and evidence-receipt commit. Without it those
+#                       steps degrade to warnings/artifacts.
+
+name: "Factory: TestFlight release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      beta_group:
+        description: "TestFlight group to receive the build"
+        required: false
+        default: "Internal Testers"
+      marketing_version:
+        description: "Override MARKETING_VERSION (blank = keep project value)"
+        required: false
+        default: ""
+
+concurrency:
+  group: factory-testflight-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: "Archive, upload, distribute"
+    runs-on: macos-15
+    environment: testflight-release
+    timeout-minutes: 90
+    env:
+      XCODE_PROJECT: Hindsight.xcodeproj
+      XCODE_SCHEME: Hindsight
+      BUNDLE_ID: com.pchordia.hindsight
+      TEAM_ID: "796XH483R4"
+      CONTROL_REPO: pri8771/orchestrator_gen8
+    steps:
+      - name: Check factory kill switch
+        env:
+          FACTORY_TOKEN: ${{ secrets.FACTORY_TOKEN }}
+        run: |
+          if [ -z "$FACTORY_TOKEN" ]; then
+            echo "::notice::FACTORY_TOKEN not set - kill-switch check skipped."
+            exit 0
+          fi
+          mode=$(curl -sf -H "Authorization: Bearer $FACTORY_TOKEN" \
+            -H "Accept: application/vnd.github.raw" \
+            "https://api.github.com/repos/${CONTROL_REPO}/contents/factory/control.json" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["mode"])')
+          echo "factory control mode: $mode"
+          if [ "$mode" != "RUN" ]; then
+            echo "::error::Factory control mode is $mode - refusing to release."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Release hygiene gate (S6)
+        run: |
+          python3 Scripts/factory/check_release_hygiene.py \
+            --bundle-id "$BUNDLE_ID" --team "$TEAM_ID"
+
+      - name: Install App Store Connect API key
+        env:
+          ASC_KEY_P8_B64: ${{ secrets.ASC_KEY_P8_B64 }}
+        run: |
+          echo "$ASC_KEY_P8_B64" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+          if [ ! -s "$RUNNER_TEMP/AuthKey.p8" ]; then
+            echo "::error::decoded .p8 is empty - the ASC_KEY_P8_B64 secret has no content (this exact failure sat unnoticed for weeks in a prior generation; refusing to continue)."
+            exit 1
+          fi
+
+      - name: Import signing certificate into ephemeral keychain
+        env:
+          DIST_CERT_P12_B64: ${{ secrets.DIST_CERT_P12_B64 }}
+          DIST_CERT_PASSWORD: ${{ secrets.DIST_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/factory-release.keychain-db"
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          echo "$DIST_CERT_P12_B64" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/dist.p12" -k "$KEYCHAIN_PATH" \
+            -P "$DIST_CERT_PASSWORD" -A -t cert -f pkcs12
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          rm -f "$RUNNER_TEMP/dist.p12"
+
+      - name: Compute build number
+        id: buildnum
+        run: |
+          BUILD_NUMBER=$(date -u +%Y%m%d%H%M)
+          echo "value=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "Build number: $BUILD_NUMBER"
+
+      - name: Archive (S7)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          MARKETING_VERSION_OVERRIDE: ${{ inputs.marketing_version }}
+        run: |
+          EXTRA_SETTINGS=()
+          if [ -n "$MARKETING_VERSION_OVERRIDE" ]; then
+            EXTRA_SETTINGS+=("MARKETING_VERSION=$MARKETING_VERSION_OVERRIDE")
+          fi
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            CURRENT_PROJECT_VERSION="${{ steps.buildnum.outputs.value }}" \
+            "${EXTRA_SETTINGS[@]}" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            archive
+
+      - name: Export and upload to App Store Connect (S8)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Wait for App Store Connect processing (S8)
+        id: processing
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_PATH: ${{ runner.temp }}/AuthKey.p8
+        run: |
+          python3 -m pip install --quiet "PyJWT[crypto]" requests
+          python3 Scripts/factory/asc_testflight.py wait-processing \
+            --bundle-id "$BUNDLE_ID" \
+            --build-number "${{ steps.buildnum.outputs.value }}" \
+            | tee "$RUNNER_TEMP/receipt-processing.json"
+          echo "receipt=$(cat "$RUNNER_TEMP/receipt-processing.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Assign build to TestFlight group (S9)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_PATH: ${{ runner.temp }}/AuthKey.p8
+        run: |
+          python3 Scripts/factory/asc_testflight.py assign-group \
+            --bundle-id "$BUNDLE_ID" \
+            --build-number "${{ steps.buildnum.outputs.value }}" \
+            --group "${{ inputs.beta_group }}" \
+            | tee "$RUNNER_TEMP/receipt-group.json"
+
+      - name: Write evidence receipt
+        if: always()
+        env:
+          FACTORY_TOKEN: ${{ secrets.FACTORY_TOKEN }}
+        run: |
+          OUTCOME="FAILED"
+          [ "${{ job.status }}" = "success" ] && OUTCOME="VERIFIED"
+          python3 - <<'PY'
+          import json, os
+          receipt = {
+              "schema": "gen8/evidence/v1",
+              "stage": "release-testflight",
+              "app": "hindsight",
+              "repo": os.environ["GITHUB_REPOSITORY"],
+              "sha": os.environ["GITHUB_SHA"],
+              "run_url": "{server}/{repo}/actions/runs/{run}".format(
+                  server=os.environ["GITHUB_SERVER_URL"],
+                  repo=os.environ["GITHUB_REPOSITORY"],
+                  run=os.environ["GITHUB_RUN_ID"],
+              ),
+              "build_number": "${{ steps.buildnum.outputs.value }}",
+              "outcome": "${{ job.status }}" == "success" and "VERIFIED" or "FAILED",
+              "set_by": "ci",
+          }
+          for name in ("receipt-processing.json", "receipt-group.json"):
+              path = os.path.join(os.environ["RUNNER_TEMP"], name)
+              if os.path.exists(path):
+                  with open(path) as fh:
+                      try:
+                          receipt[name.replace("receipt-", "").replace(".json", "")] = json.load(fh)
+                      except json.JSONDecodeError:
+                          pass
+          out = os.path.join(os.environ["RUNNER_TEMP"], "evidence-receipt.json")
+          with open(out, "w") as fh:
+              json.dump(receipt, fh, indent=2)
+          print(json.dumps(receipt, indent=2))
+          PY
+          {
+            echo "## Factory release receipt"
+            echo '```json'
+            cat "$RUNNER_TEMP/evidence-receipt.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$FACTORY_TOKEN" ]; then
+            CONTENT=$(base64 < "$RUNNER_TEMP/evidence-receipt.json" | tr -d '\n')
+            STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+            curl -sf -X PUT \
+              -H "Authorization: Bearer $FACTORY_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${CONTROL_REPO}/contents/evidence/hindsight/release-${STAMP}.json" \
+              -d "{\"message\":\"evidence(hindsight): release receipt ${STAMP} [${OUTCOME}]\",\"content\":\"${CONTENT}\"}" \
+              > /dev/null && echo "receipt committed to ${CONTROL_REPO}" \
+              || echo "::warning::could not commit receipt to control repo"
+          else
+            echo "::notice::FACTORY_TOKEN not set - receipt kept as artifact only."
+          fi
+
+      - name: Upload receipt artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-receipt
+          path: ${{ runner.temp }}/evidence-receipt.json
+
+      - name: Delete ephemeral keychain
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/factory-release.keychain-db" || true
+          rm -f "$RUNNER_TEMP/AuthKey.p8"

@@ -1,0 +1,109 @@
+# Gen 8 preflight - runs on push/PR and on demand. NO SECRETS REQUIRED.
+#
+# Proves, on a clean GitHub-hosted macOS runner (free for public repos):
+#   1. release hygiene passes deterministically (S6)
+#   2. the app compiles from a clean checkout (S3 build evidence)
+#   3. the test suite ACTUALLY RUNS, with the executed test count reported -
+#      a wired-test receipt, not "the suite is green" prose
+#
+# Canonical copy: pri8771/orchestrator_gen8 factory/apps/hindsight/factory-preflight.yml
+
+name: "Factory: preflight"
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  XCODE_PROJECT: Hindsight.xcodeproj
+  XCODE_SCHEME: Hindsight
+  BUNDLE_ID: com.pchordia.hindsight
+  TEAM_ID: "796XH483R4"
+
+jobs:
+  hygiene:
+    name: "Release hygiene (S6)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deterministic hygiene checks
+        run: |
+          python3 Scripts/factory/check_release_hygiene.py \
+            --bundle-id "$BUNDLE_ID" --team "$TEAM_ID"
+
+      - name: Receipt
+        if: always()
+        run: |
+          python3 Scripts/factory/check_release_hygiene.py \
+            --bundle-id "$BUNDLE_ID" --team "$TEAM_ID" --json > hygiene-receipt.json || true
+          {
+            echo "## Release hygiene receipt"
+            echo '```json'
+            cat hygiene-receipt.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hygiene-receipt
+          path: hygiene-receipt.json
+
+  build_and_test:
+    name: "Build + wired-test receipt (S3/S4)"
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Resolve a simulator destination
+        id: sim
+        run: |
+          UDID=$(python3 Scripts/factory/pick_simulator.py)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Using simulator $UDID"
+
+      - name: Build and run tests
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -resultBundlePath "$RUNNER_TEMP/TestResults.xcresult" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            test
+
+      - name: Wired-test receipt (executed count, not prose)
+        if: always()
+        run: |
+          python3 Scripts/factory/test_receipt.py "$RUNNER_TEMP/TestResults.xcresult" \
+            | tee "$RUNNER_TEMP/test-receipt.json"
+
+      - name: Publish receipt to summary
+        if: always()
+        run: |
+          {
+            echo "## Wired-test receipt"
+            echo '```json'
+            cat "$RUNNER_TEMP/test-receipt.json"
+            echo '```'
+            echo "_An UNVERIFIED outcome or a zero count means the suite did not"
+            echo "actually run. Compilation success is never correctness evidence._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-receipt
+          path: ${{ runner.temp }}/test-receipt.json
